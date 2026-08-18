@@ -77,6 +77,11 @@
     let selectedLatLng = null;
     let adminMarker = null;
 
+    let currentUserSavedLocations = [];
+let currentUserViewedLocations = [];
+let exploreViewMode = "saved";
+let exploreSearchTerm = "";
+
 
     /* =========================================================
        DOM
@@ -96,6 +101,7 @@
 
     const accountSidebar =
         document.getElementById("accountSidebar");
+        
 
     const sidebarOverlay =
         document.getElementById("sidebarOverlay");
@@ -127,31 +133,7 @@ const locationPickerMap =
     );
 
 
-const streetLayer = L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-        attribution:
-            '&copy; OpenStreetMap contributors'
-    }
-);
 
-const satelliteLayer = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-        attribution:
-            'Tiles &copy; Esri'
-    }
-);
-
-
-/* Main map starts in street mode */
-
-streetLayer.addTo(map);
-
-
-/* Admin picker starts in street mode */
-
-streetLayer.addTo(locationPickerMap);
 
 
     /* =========================================================
@@ -460,59 +442,221 @@ streetLayer.addTo(locationPickerMap);
     }
 
 
-    function createMarker(location) {
+   function createMarker(location) {
 
-        if (
-            typeof location.latitude !== "number" ||
-            typeof location.longitude !== "number"
-        ) {
-            return;
-        }
+    if (
+        typeof location.latitude !== "number" ||
+        typeof location.longitude !== "number"
+    ) {
+        return;
+    }
 
-        const marker = L.marker([
-            location.latitude,
-            location.longitude
-        ]).addTo(map);
+    const marker = L.marker([
+        location.latitude,
+        location.longitude
+    ]).addTo(map);
 
-        const type =
-            Array.isArray(location.tags) &&
-            location.tags.length
-                ? location.tags[0]
-                : "Location";
+    const tags =
+        Array.isArray(location.tags)
+            ? location.tags
+            : [];
 
-        marker.bindPopup(`
-            <div class="popup-type">
+    const type =
+        tags.length
+            ? tags[0]
+            : "Location";
+
+    /*
+        Create a short version of the description
+        for the map preview.
+    */
+
+    const fullDescription =
+        String(
+            location.description ||
+            "No description provided."
+        );
+
+    const shortDescription =
+        fullDescription.length > 150
+            ? fullDescription.slice(0, 150).trim() + "..."
+            : fullDescription;
+
+
+    /*
+        Create the tag pills.
+    */
+
+    const tagHtml =
+        tags
+            .slice(0, 3)
+            .map(tag => `
+                <span class="map-popup-tag">
+                    ${escapeHtml(tag)}
+                </span>
+            `)
+            .join("");
+
+
+    /*
+        Create the popup.
+    */
+
+    const popupHtml = `
+        <div class="map-popup">
+
+            <div class="map-popup-type">
                 ${escapeHtml(type)}
             </div>
 
-            <div class="popup-title">
-                ${escapeHtml(location.name || "Unnamed location")}
+            <div class="map-popup-title">
+                ${escapeHtml(
+                    location.name ||
+                    "Unnamed location"
+                )}
             </div>
-        `);
 
-        marker.on(
-            "click",
-            () => {
+            <div class="map-popup-description">
+                ${escapeHtml(shortDescription)}
+            </div>
 
-                const card =
-                    document.querySelector(
-                        `[data-location-id="${location.id}"]`
-                    );
+            <div class="map-popup-tags">
+                ${tagHtml}
+            </div>
 
-                if (card) {
+            <button
+                type="button"
+                class="map-popup-more"
+                data-location-id="${escapeHtml(location.id)}"
+            >
+                Find out more
+                <span>→</span>
+            </button>
 
-                    card.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center"
-                    });
+        </div>
+    `;
 
-                }
 
-            }
+    marker.bindPopup(
+        popupHtml,
+        {
+            maxWidth: 320,
+            minWidth: 260,
+            closeButton: true,
+            autoPan: true
+        }
+    );
+
+    marker.on(
+    "mouseover",
+    () => {
+
+        marker.openPopup();
+
+    }
+);
+
+
+    /*
+        Open the popup when the marker is clicked.
+    */
+
+    marker.on(
+        "click",
+        () => {
+
+            marker.openPopup();
+
+        }
+    );
+
+
+    markers.push(marker);
+}
+
+/* =========================================================
+   MAP POPUP → FIND OUT MORE
+========================================================= */
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const button =
+            event.target.closest(
+                ".map-popup-more"
+            );
+
+        if (!button) {
+            return;
+        }
+
+
+        const locationId =
+            button.dataset.locationId;
+
+
+        if (!locationId) {
+            return;
+        }
+
+        recordLocationViewed(locationId);
+
+
+        const card =
+            document.querySelector(
+                `.location-card[data-location-id="${CSS.escape(locationId)}"]`
+            );
+
+
+        if (!card) {
+
+            console.warn(
+                "Location card not found:",
+                locationId
+            );
+
+            return;
+        }
+
+
+        /*
+            Close the Leaflet popup.
+        */
+
+        map.closePopup();
+
+
+        /*
+            Scroll to the full database location.
+        */
+
+        card.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+
+        /*
+            Temporarily highlight the location
+            so the user knows exactly where they landed.
+        */
+
+        card.classList.add(
+            "location-card-highlight"
         );
 
-        markers.push(marker);
+
+        setTimeout(() => {
+
+            card.classList.remove(
+                "location-card-highlight"
+            );
+
+        }, 1800);
+
     }
+);
 
 
     /* =========================================================
@@ -564,6 +708,25 @@ streetLayer.addTo(locationPickerMap);
                             ${escapeHtml(tag)}
                         </span>
                     `).join("");
+
+                    const isSaved =
+    currentUser &&
+    Array.isArray(currentUserSavedLocations) &&
+    currentUserSavedLocations.includes(location.id);
+
+const saveButton =
+    currentUser
+        ? `
+            <button
+                type="button"
+                class="location-save-button ${isSaved ? "saved" : ""}"
+                data-save-location="${escapeHtml(location.id)}"
+            >
+                ${isSaved ? "Saved" : "Save location"}
+                <span>${isSaved ? "✓" : "♡"}</span>
+            </button>
+        `
+        : "";
 
 
                 const adminActions =
@@ -617,11 +780,17 @@ streetLayer.addTo(locationPickerMap);
                             )}
                         </p>
 
-                        <div class="tags">
-                            ${tagHtml}
-                        </div>
+<div class="tags">
+    ${tagHtml}
+</div>
 
-                        ${adminActions}
+<div class="location-card-actions">
+
+    ${saveButton}
+
+</div>
+
+${adminActions}
 
                     </article>
                 `;
@@ -645,6 +814,714 @@ streetLayer.addTo(locationPickerMap);
             .replaceAll("'", "&#039;");
 
     }
+
+    /* =========================================================
+   USER EXPLORE DATA
+========================================================= */
+
+async function loadUserExploreData() {
+
+    if (!currentUser) {
+
+        currentUserSavedLocations = [];
+        currentUserViewedLocations = [];
+
+        return;
+
+    }
+
+    try {
+
+        const userRef =
+            doc(
+                db,
+                "users",
+                currentUser.uid
+            );
+
+        const snapshot =
+            await getDoc(userRef);
+
+        if (!snapshot.exists()) {
+
+            currentUserSavedLocations = [];
+            currentUserViewedLocations = [];
+
+            return;
+
+        }
+
+        const data =
+            snapshot.data();
+
+        currentUserSavedLocations =
+            Array.isArray(data.savedLocations)
+                ? data.savedLocations
+                : [];
+
+        currentUserViewedLocations =
+            Array.isArray(data.viewedLocations)
+                ? data.viewedLocations
+                : [];
+
+                updateUserStats(data);
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load explore data:",
+            error
+        );
+
+        currentUserSavedLocations = [];
+        currentUserViewedLocations = [];
+
+    }
+
+}
+
+/* =========================================================
+   USER STATS
+========================================================= */
+
+function updateUserStats(userData = null) {
+
+    const exploreSince =
+        document.getElementById("exploreSince");
+
+    const locationsViewedCount =
+        document.getElementById("locationsViewedCount");
+
+    const locationsSavedCount =
+        document.getElementById("locationsSavedCount");
+
+
+    /*
+        User is signed out
+    */
+
+    if (!currentUser) {
+
+        exploreSince.textContent = "—";
+
+        locationsViewedCount.textContent = "0";
+
+        locationsSavedCount.textContent = "0";
+
+        return;
+
+    }
+
+
+    /*
+        Locations viewed
+    */
+
+    locationsViewedCount.textContent =
+        Array.isArray(currentUserViewedLocations)
+            ? currentUserViewedLocations.length
+            : 0;
+
+
+    /*
+        Locations saved
+    */
+
+    locationsSavedCount.textContent =
+        Array.isArray(currentUserSavedLocations)
+            ? currentUserSavedLocations.length
+            : 0;
+
+
+    /*
+        Explore since
+    */
+
+    let createdAt =
+        userData?.createdAt;
+
+
+    if (
+        createdAt &&
+        typeof createdAt.toDate === "function"
+    ) {
+
+        createdAt =
+            createdAt.toDate();
+
+    }
+
+
+    if (createdAt instanceof Date) {
+
+        exploreSince.textContent =
+            createdAt.toLocaleDateString(
+                "en-GB",
+                {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric"
+                }
+            );
+
+    } else {
+
+        exploreSince.textContent =
+            "—";
+
+    }
+
+}
+
+/* =========================================================
+   SAVE / UNSAVE LOCATION
+========================================================= */
+
+async function toggleSavedLocation(locationId) {
+
+    if (!currentUser) {
+
+        toast("Sign in to save locations.");
+
+        return;
+
+    }
+
+    try {
+
+        const userRef =
+            doc(
+                db,
+                "users",
+                currentUser.uid
+            );
+
+        const snapshot =
+            await getDoc(userRef);
+
+        let saved =
+            snapshot.exists() &&
+            Array.isArray(snapshot.data().savedLocations)
+                ? [...snapshot.data().savedLocations]
+                : [];
+
+        const index =
+            saved.indexOf(locationId);
+
+        if (index === -1) {
+
+            saved.push(locationId);
+
+            toast("Location saved.");
+
+        } else {
+
+            saved.splice(index, 1);
+
+            toast("Location removed from saved.");
+
+        }
+
+        await setDoc(
+            userRef,
+            {
+                savedLocations: saved
+            },
+            {
+                merge: true
+            }
+        );
+
+        currentUserSavedLocations = saved;
+
+        updateUserStats();
+
+        renderLocations();
+
+        if (
+            document
+                .getElementById("exploreLocationsView")
+                .style.display !== "none"
+        ) {
+
+            renderExploreLocations();
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        toast(
+            "Unable to save this location."
+        );
+
+    }
+
+}
+
+document.addEventListener("click", event => {
+
+    const button =
+        event.target.closest(
+            "[data-save-location]"
+        );
+
+    if (!button) {
+        return;
+    }
+
+    const locationId =
+        button.dataset.saveLocation;
+
+    if (!locationId) {
+        return;
+    }
+
+    toggleSavedLocation(locationId);
+
+});
+
+/* =========================================================
+   RECORD VIEWED LOCATION
+========================================================= */
+
+async function recordLocationViewed(locationId) {
+
+    if (!currentUser) {
+        return;
+    }
+
+    if (
+        currentUserViewedLocations.includes(locationId)
+    ) {
+        return;
+    }
+
+    try {
+
+        currentUserViewedLocations.push(
+            locationId
+        );
+
+        updateUserStats();
+
+        await setDoc(
+            doc(
+                db,
+                "users",
+                currentUser.uid
+            ),
+            {
+                viewedLocations:
+                    currentUserViewedLocations
+            },
+            {
+                merge: true
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to record viewed location:",
+            error
+        );
+
+    }
+
+}
+
+/* =========================================================
+   EXPLORE SIDEBAR
+========================================================= */
+
+const exploreLocationsView =
+    document.getElementById(
+        "exploreLocationsView"
+    );
+
+const exploreLocationList =
+    document.getElementById(
+        "exploreLocationList"
+    );
+
+const exploreViewTitle =
+    document.getElementById(
+        "exploreViewTitle"
+    );
+
+const exploreLocationSearch =
+    document.getElementById(
+        "exploreLocationSearch"
+    );
+
+
+function openExploreView(mode) {
+
+    if (!currentUser) {
+
+        toast("Sign in to use this feature.");
+
+        return;
+
+    }
+
+    exploreViewMode = mode;
+
+    exploreSearchTerm = "";
+
+    exploreLocationSearch.value = "";
+
+
+    /* ==========================================
+       HIDE NORMAL ACCOUNT CONTENT
+    ========================================== */
+
+    document.getElementById(
+        "loggedInAccount"
+    ).style.display = "none";
+
+
+    /* ==========================================
+       SHOW EXPLORE CONTENT
+    ========================================== */
+
+    exploreLocationsView.style.display =
+        "block";
+
+
+    /* ==========================================
+       CHANGE TITLE
+    ========================================== */
+
+    exploreViewTitle.textContent =
+        mode === "saved"
+            ? "Saved locations"
+            : "Locations viewed";
+
+
+    /* ==========================================
+       RENDER LOCATIONS
+    ========================================== */
+
+    renderExploreLocations();
+
+}
+
+
+function closeExploreView() {
+
+    /* ==========================================
+       HIDE EXPLORE SCREEN
+    ========================================== */
+
+    exploreLocationsView.style.display =
+        "none";
+
+
+    /* ==========================================
+       SHOW NORMAL ACCOUNT SCREEN
+    ========================================== */
+
+    document.getElementById(
+        "loggedInAccount"
+    ).style.display =
+        "block";
+
+}
+
+
+document
+    .getElementById("savedLocationsButton")
+    .addEventListener(
+        "click",
+        () => openExploreView("saved")
+    );
+
+
+document
+    .getElementById("viewedLocationsButton")
+    .addEventListener(
+        "click",
+        () => openExploreView("viewed")
+    );
+
+
+document
+    .getElementById("exploreBackButton")
+    .addEventListener(
+        "click",
+        closeExploreView
+    );
+
+
+document
+    .getElementById("exploreCloseButton")
+    .addEventListener(
+        "click",
+        closeSidebar
+    );
+
+
+exploreLocationSearch.addEventListener(
+    "input",
+    () => {
+
+        exploreSearchTerm =
+            exploreLocationSearch.value
+                .trim()
+                .toLowerCase();
+
+        renderExploreLocations();
+
+    }
+);
+
+function renderExploreLocations() {
+
+    if (!currentUser) {
+
+        exploreLocationList.innerHTML = `
+            <div class="empty-state">
+                Sign in to use Explore.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    const ids =
+        exploreViewMode === "saved"
+            ? currentUserSavedLocations
+            : currentUserViewedLocations;
+
+    let locations =
+        ids
+            .map(id =>
+                allLocations.find(
+                    location =>
+                        location.id === id
+                )
+            )
+            .filter(Boolean);
+
+
+    if (exploreSearchTerm) {
+
+        locations =
+            locations.filter(location => {
+
+                const name =
+                    String(
+                        location.name || ""
+                    ).toLowerCase();
+
+                const description =
+                    String(
+                        location.description || ""
+                    ).toLowerCase();
+
+                const tags =
+                    Array.isArray(location.tags)
+                        ? location.tags
+                        : [];
+
+                return (
+                    name.includes(
+                        exploreSearchTerm
+                    ) ||
+
+                    description.includes(
+                        exploreSearchTerm
+                    ) ||
+
+                    tags.some(tag =>
+                        tag
+                            .toLowerCase()
+                            .includes(
+                                exploreSearchTerm
+                            )
+                    )
+                );
+
+            });
+
+    }
+
+
+    if (!locations.length) {
+
+        exploreLocationList.innerHTML = `
+            <div class="explore-empty">
+
+                <div class="explore-empty-icon">
+                    ${exploreViewMode === "saved" ? "♡" : "◷"}
+                </div>
+
+                <div class="explore-empty-title">
+                    ${
+                        exploreViewMode === "saved"
+                            ? "No saved locations"
+                            : "No locations viewed"
+                    }
+                </div>
+
+                <div class="explore-empty-text">
+                    ${
+                        exploreViewMode === "saved"
+                            ? "Locations you save will appear here."
+                            : "Locations you explore will appear here."
+                    }
+                </div>
+
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    exploreLocationList.innerHTML =
+        locations.map(location => {
+
+            const tags =
+                Array.isArray(location.tags)
+                    ? location.tags
+                    : [];
+
+            const type =
+                tags[0] || "Location";
+
+
+            return `
+                <button
+                    type="button"
+                    class="explore-location-item"
+                    data-explore-location="${escapeHtml(location.id)}"
+                >
+
+                    <div class="explore-location-type">
+                        ${escapeHtml(type)}
+                    </div>
+
+                    <div class="explore-location-name">
+                        ${escapeHtml(
+                            location.name ||
+                            "Unnamed location"
+                        )}
+                    </div>
+
+                    <div class="explore-location-description">
+                        ${escapeHtml(
+                            String(
+                                location.description ||
+                                "No description provided."
+                            ).slice(0, 100)
+                        )}
+                        ${
+                            String(
+                                location.description || ""
+                            ).length > 100
+                                ? "..."
+                                : ""
+                        }
+                    </div>
+
+                    <div class="explore-location-arrow">
+                        →
+                    </div>
+
+                </button>
+            `;
+
+        }).join("");
+
+}
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const item =
+            event.target.closest(
+                "[data-explore-location]"
+            );
+
+        if (!item) {
+            return;
+        }
+
+        const locationId =
+            item.dataset.exploreLocation;
+
+        const location =
+            allLocations.find(
+                item =>
+                    item.id === locationId
+            );
+
+        if (!location) {
+
+            toast(
+                "This location is no longer available."
+            );
+
+            return;
+
+        }
+
+        closeExploreView();
+        closeSidebar();
+
+        const card =
+            document.querySelector(
+                `.location-card[data-location-id="${CSS.escape(locationId)}"]`
+            );
+
+        if (card) {
+
+            card.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+            card.classList.add(
+                "location-card-highlight"
+            );
+
+            setTimeout(() => {
+
+                card.classList.remove(
+                    "location-card-highlight"
+                );
+
+            }, 1800);
+
+        }
+
+        if (
+            typeof location.latitude === "number" &&
+            typeof location.longitude === "number"
+        ) {
+
+            map.setView(
+                [
+                    location.latitude,
+                    location.longitude
+                ],
+                Math.max(
+                    map.getZoom(),
+                    13
+                )
+            );
+
+        }
+
+    }
+);
 
 
     /* =========================================================
@@ -930,6 +1807,19 @@ streetLayer.addTo(locationPickerMap);
 
             currentUser = user;
 
+            if (user) {
+
+    await loadUserExploreData();
+
+} else {
+
+    currentUserSavedLocations = [];
+    currentUserViewedLocations = [];
+
+    updateUserStats();
+
+}
+
             if (!user) {
 
                 currentUsername = "";
@@ -973,10 +1863,15 @@ streetLayer.addTo(locationPickerMap);
 
 if (userSnapshot.exists()) {
 
+    const userData =
+        userSnapshot.data();
+
     currentUsername =
-        userSnapshot.data().username ||
+        userData.username ||
         user.email?.split("@")[0] ||
         "User";
+
+    updateUserStats(userData);
 
 } else {
 
@@ -1094,6 +1989,40 @@ if (userSnapshot.exists()) {
 
     }
 
+    /* =========================================================
+   LOCATION CARD CLICK
+========================================================= */
+
+document.addEventListener("click", event => {
+
+    const card =
+        event.target.closest(".location-card");
+
+    if (!card) {
+        return;
+    }
+
+    /*
+        Don't treat buttons such as Save/Edit/Delete
+        as opening the location.
+    */
+
+    if (
+        event.target.closest("button")
+    ) {
+        return;
+    }
+
+    const locationId =
+        card.dataset.locationId;
+
+    if (!locationId) {
+        return;
+    }
+
+    recordLocationViewed(locationId);
+
+});
 
     /* =========================================================
        SIGN OUT
@@ -2589,3 +3518,23 @@ document
             .classList.add("active");
 
     });
+
+    // =========================================================
+// EXPLORER SAFETY NOTICE
+// =========================================================
+
+const safetyNotice = document.getElementById("safetyNotice");
+const safetyAgree = document.getElementById("safetyAgree");
+
+if (safetyNotice && safetyAgree) {
+
+    // Show the notice every time the page is opened
+    safetyNotice.classList.remove("hidden");
+
+    safetyAgree.addEventListener("click", () => {
+
+        safetyNotice.classList.add("hidden");
+
+    });
+
+}

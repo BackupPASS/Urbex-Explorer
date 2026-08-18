@@ -16,19 +16,20 @@
         EmailAuthProvider
     } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-    import {
-        collection,
-        addDoc,
-        getDocs,
-        doc,
-        getDoc,
-        setDoc,
-        updateDoc,
-        deleteDoc,
-        query,
-        orderBy,
-        serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import {
+    collection,
+    addDoc,
+    getDocs,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
+    orderBy,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
     /* =========================================================
@@ -77,8 +78,10 @@
     let selectedLatLng = null;
     let adminMarker = null;
 
-    let currentUserSavedLocations = [];
+let currentUserSavedLocations = [];
 let currentUserViewedLocations = [];
+let currentUserExploredLocations = [];
+
 let exploreViewMode = "saved";
 let exploreSearchTerm = "";
 
@@ -432,6 +435,62 @@ const locationPickerMap =
        MAP MARKERS
     ========================================================= */
 
+    function getLocationMarkerIcon(location) {
+
+    const isSaved =
+        currentUser &&
+        Array.isArray(currentUserSavedLocations) &&
+        currentUserSavedLocations.includes(location.id);
+
+    const isExplored =
+        currentUser &&
+        Array.isArray(currentUserExploredLocations) &&
+        currentUserExploredLocations.some(
+            item => item.id === location.id
+        );
+
+    // EXPLORED = GREEN
+    if (isExplored) {
+
+        return L.divIcon({
+            className: "custom-location-marker",
+
+            html: `
+                <div class="location-pin explored">
+                    <div class="location-pin-dot"></div>
+                </div>
+            `,
+
+            iconSize: [26, 34],
+            iconAnchor: [13, 34],
+            popupAnchor: [0, -34]
+        });
+
+    }
+
+    // SAVED = RED
+    if (isSaved) {
+
+        return L.divIcon({
+            className: "custom-location-marker",
+
+            html: `
+                <div class="location-pin saved">
+                    <div class="location-pin-dot"></div>
+                </div>
+            `,
+
+            iconSize: [26, 34],
+            iconAnchor: [13, 34],
+            popupAnchor: [0, -34]
+        });
+
+    }
+
+    // DEFAULT = NORMAL LEAFLET MARKER
+    return null;
+}
+
     function clearMarkers() {
 
         markers.forEach(marker => {
@@ -450,11 +509,22 @@ const locationPickerMap =
     ) {
         return;
     }
+    
+const markerIcon = getLocationMarkerIcon(location);
 
-    const marker = L.marker([
+const markerOptions = {};
+
+if (markerIcon) {
+    markerOptions.icon = markerIcon;
+}
+
+const marker = L.marker(
+    [
         location.latitude,
         location.longitude
-    ]).addTo(map);
+    ],
+    markerOptions
+).addTo(map);
 
     const tags =
         Array.isArray(location.tags)
@@ -487,15 +557,31 @@ const locationPickerMap =
         Create the tag pills.
     */
 
-    const tagHtml =
-        tags
-            .slice(0, 3)
-            .map(tag => `
-                <span class="map-popup-tag">
-                    ${escapeHtml(tag)}
-                </span>
-            `)
-            .join("");
+const ratingHtml =
+    typeof location.ratingAverage === "number" &&
+    typeof location.ratingCount === "number" &&
+    location.ratingCount > 0
+        ? `
+            <button
+                type="button"
+                class="map-popup-tag map-popup-rating"
+                data-rating-location="${escapeHtml(location.id)}"
+            >
+                ★ ${location.ratingAverage.toFixed(1)}/10
+            </button>
+        `
+        : "";
+
+const tagHtml =
+    tags
+        .slice(0, 3)
+        .map(tag => `
+            <span class="map-popup-tag">
+                ${escapeHtml(tag)}
+            </span>
+        `)
+        .join("") +
+    ratingHtml;
 
 
     /*
@@ -524,14 +610,31 @@ const locationPickerMap =
                 ${tagHtml}
             </div>
 
-            <button
-                type="button"
-                class="map-popup-more"
-                data-location-id="${escapeHtml(location.id)}"
-            >
-                Find out more
-                <span>→</span>
-            </button>
+<div class="map-popup-actions">
+
+<button
+    class="map-popup-more"
+    type="button"
+    data-location-id="${escapeHtml(location.id)}"
+>
+    Find Out More
+    <span>→</span>
+</button>
+
+<button
+    class="map-popup-google"
+    type="button"
+    onclick="window.open(
+        'https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}',
+        '_blank',
+        'noopener,noreferrer'
+    )"
+>
+    Google Maps
+    <span>↗</span>
+</button>
+
+</div>
 
         </div>
     `;
@@ -547,28 +650,101 @@ const locationPickerMap =
         }
     );
 
-    marker.on(
-    "mouseover",
-    () => {
+// ==========================================
+// MAP POPUP HOVER / CLICK BEHAVIOUR
+// ==========================================
 
+let popupLocked = false;
+let markerHovered = false;
+let popupHovered = false;
+
+// ------------------------------------------
+// Mouse enters marker
+// ------------------------------------------
+
+marker.on("mouseover", () => {
+
+    markerHovered = true;
+
+    // Don't do anything if the popup
+    // has been permanently opened by clicking
+    if (!popupLocked) {
         marker.openPopup();
-
     }
-);
 
+});
 
-    /*
-        Open the popup when the marker is clicked.
-    */
+// ------------------------------------------
+// Mouse leaves marker
+// ------------------------------------------
 
-    marker.on(
-        "click",
-        () => {
+marker.on("mouseout", () => {
 
-            marker.openPopup();
+    markerHovered = false;
 
+    setTimeout(() => {
+
+        if (
+            !popupLocked &&
+            !markerHovered &&
+            !popupHovered
+        ) {
+            marker.closePopup();
         }
-    );
+
+    }, 100);
+
+});
+
+// ------------------------------------------
+// Click marker = lock popup open
+// ------------------------------------------
+
+marker.on("click", () => {
+
+    popupLocked = true;
+
+    marker.openPopup();
+
+});
+
+// ==========================================
+// KEEP POPUP OPEN WHILE MOUSE IS OVER IT
+// ==========================================
+
+marker.on("popupopen", () => {
+
+    const popupElement = marker.getPopup().getElement();
+
+    if (!popupElement) {
+        return;
+    }
+
+    popupElement.addEventListener("mouseenter", () => {
+
+        popupHovered = true;
+
+    });
+
+    popupElement.addEventListener("mouseleave", () => {
+
+        popupHovered = false;
+
+        setTimeout(() => {
+
+            if (
+                !popupLocked &&
+                !markerHovered &&
+                !popupHovered
+            ) {
+                marker.closePopup();
+            }
+
+        }, 100);
+
+    });
+
+});
 
 
     markers.push(marker);
@@ -714,6 +890,69 @@ document.addEventListener(
     Array.isArray(currentUserSavedLocations) &&
     currentUserSavedLocations.includes(location.id);
 
+    const exploredEntry =
+    currentUser &&
+    Array.isArray(currentUserExploredLocations)
+        ? currentUserExploredLocations.find(
+            item =>
+                item.id === location.id
+        )
+        : null;
+
+const isExplored =
+    !!exploredEntry;
+
+    const ratingAverage =
+    typeof location.ratingAverage === "number"
+        ? location.ratingAverage
+        : null;
+
+const ratingCount =
+    typeof location.ratingCount === "number"
+        ? location.ratingCount
+        : 0;
+
+const ratingHtml =
+    ratingAverage !== null
+        ? `
+            <button
+                type="button"
+                class="location-rating"
+                data-rating-location="${escapeHtml(location.id)}"
+            >
+
+                <span class="location-rating-star">
+                    ★
+                </span>
+
+                <span class="location-rating-score">
+                    ${ratingAverage.toFixed(1)}
+                </span>
+
+                <span class="location-rating-out-of">
+                    / 10
+                </span>
+
+                <span class="location-rating-count">
+                    (${ratingCount})
+                </span>
+
+            </button>
+        `
+        : `
+            <div class="location-rating unrated">
+
+                <span class="location-rating-star">
+                    ★
+                </span>
+
+                <span>
+                    Not rated
+                </span>
+
+            </div>
+        `;
+
 const saveButton =
     currentUser
         ? `
@@ -780,13 +1019,44 @@ const saveButton =
                             )}
                         </p>
 
-<div class="tags">
-    ${tagHtml}
+<div class="location-meta-row">
+
+    <div class="tags">
+        ${tagHtml}
+
+        ${ratingHtml}
+    </div>
+
 </div>
 
 <div class="location-card-actions">
 
     ${saveButton}
+
+${currentUser ? `
+    <button
+        type="button"
+        class="location-explored-button ${
+            isExplored ? "explored" : ""
+        }"
+        data-explore-location="${escapeHtml(location.id)}"
+    >
+        ${
+            isExplored
+                ? "Explored ✓"
+                : "Mark as explored"
+        }
+    </button>
+` : ""}
+<a
+    class="location-google-maps-button"
+    href="https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}"
+    target="_blank"
+    rel="noopener noreferrer"
+>
+    Open in Google Maps
+    <span>↗</span>
+</a>
 
 </div>
 
@@ -798,6 +1068,28 @@ ${adminActions}
             }).join("");
 
     }
+
+    // ==========================================
+// CLICKING ELSEWHERE UNLOCKS POPUP
+// ==========================================
+
+map.on("click", () => {
+
+    markers.forEach(marker => {
+
+        const popup = marker.getPopup();
+
+        if (popup && popup.isOpen()) {
+
+            // Only unlock/close if the click
+            // wasn't on the marker itself
+            popup._source._popupLocked = false;
+
+        }
+
+    });
+
+});
 
 
     /* =========================================================
@@ -815,7 +1107,7 @@ ${adminActions}
 
     }
 
-    /* =========================================================
+  /* =========================================================
    USER EXPLORE DATA
 ========================================================= */
 
@@ -825,9 +1117,11 @@ async function loadUserExploreData() {
 
         currentUserSavedLocations = [];
         currentUserViewedLocations = [];
+        currentUserExploredLocations = [];
+
+        updateUserStats();
 
         return;
-
     }
 
     try {
@@ -846,25 +1140,81 @@ async function loadUserExploreData() {
 
             currentUserSavedLocations = [];
             currentUserViewedLocations = [];
+            currentUserExploredLocations = [];
+
+            updateUserStats();
 
             return;
-
         }
 
         const data =
             snapshot.data();
+
+
+        /*
+            Saved locations
+        */
 
         currentUserSavedLocations =
             Array.isArray(data.savedLocations)
                 ? data.savedLocations
                 : [];
 
+
+        /*
+            Recently viewed locations
+
+            Supports both the NEW format:
+
+            {
+                id,
+                viewedAt
+            }
+
+            and your OLD format:
+
+            "locationID"
+        */
+
         currentUserViewedLocations =
             Array.isArray(data.viewedLocations)
-                ? data.viewedLocations
+                ? data.viewedLocations.map(item => {
+
+                    if (typeof item === "string") {
+
+                        return {
+                            id: item,
+                            viewedAt: null
+                        };
+
+                    }
+
+                    return item;
+
+                })
                 : [];
 
-                updateUserStats(data);
+
+        /*
+            Explored locations
+
+            Each item:
+
+            {
+                id,
+                exploredAt,
+                rating
+            }
+        */
+
+        currentUserExploredLocations =
+            Array.isArray(data.exploredLocations)
+                ? data.exploredLocations
+                : [];
+
+
+        updateUserStats(data);
+updateAccountUI();
 
     } catch (error) {
 
@@ -875,6 +1225,9 @@ async function loadUserExploreData() {
 
         currentUserSavedLocations = [];
         currentUserViewedLocations = [];
+        currentUserExploredLocations = [];
+
+        updateUserStats();
 
     }
 
@@ -895,42 +1248,83 @@ function updateUserStats(userData = null) {
     const locationsSavedCount =
         document.getElementById("locationsSavedCount");
 
+    const locationsExploredCount =
+        document.getElementById("locationsExploredCount");
 
-    /*
-        User is signed out
-    */
+    const exploreProgress =
+        document.getElementById("exploreProgress");
+
+    const exploreProgressText =
+        document.getElementById("exploreProgressText");
+
 
     if (!currentUser) {
 
-        exploreSince.textContent = "—";
+        if (exploreSince)
+            exploreSince.textContent = "—";
 
-        locationsViewedCount.textContent = "0";
+        if (locationsViewedCount)
+            locationsViewedCount.textContent = "0";
 
-        locationsSavedCount.textContent = "0";
+        if (locationsSavedCount)
+            locationsSavedCount.textContent = "0";
+
+        if (locationsExploredCount)
+            locationsExploredCount.textContent = "0";
+
+        if (exploreProgress)
+            exploreProgress.style.width = "0%";
+
+        if (exploreProgressText)
+            exploreProgressText.textContent = "0% explored";
 
         return;
-
     }
 
 
     /*
-        Locations viewed
+        Saved
     */
 
-    locationsViewedCount.textContent =
+    const savedCount =
+        Array.isArray(currentUserSavedLocations)
+            ? currentUserSavedLocations.length
+            : 0;
+
+
+    /*
+        Explored
+    */
+
+    const exploredCount =
+        Array.isArray(currentUserExploredLocations)
+            ? currentUserExploredLocations.length
+            : 0;
+
+
+    /*
+        Recently viewed
+    */
+
+    const viewedCount =
         Array.isArray(currentUserViewedLocations)
             ? currentUserViewedLocations.length
             : 0;
 
 
-    /*
-        Locations saved
-    */
+    if (locationsSavedCount)
+        locationsSavedCount.textContent =
+            savedCount;
 
-    locationsSavedCount.textContent =
-        Array.isArray(currentUserSavedLocations)
-            ? currentUserSavedLocations.length
-            : 0;
+
+    if (locationsViewedCount)
+        locationsViewedCount.textContent =
+            viewedCount;
+
+
+    if (locationsExploredCount)
+        locationsExploredCount.textContent =
+            exploredCount;
 
 
     /*
@@ -954,20 +1348,710 @@ function updateUserStats(userData = null) {
 
     if (createdAt instanceof Date) {
 
-        exploreSince.textContent =
-            createdAt.toLocaleDateString(
-                "en-GB",
-                {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric"
-                }
-            );
+        if (exploreSince) {
+
+            exploreSince.textContent =
+                createdAt.toLocaleDateString(
+                    "en-GB",
+                    {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                    }
+                );
+
+        }
 
     } else {
 
-        exploreSince.textContent =
-            "—";
+        if (exploreSince)
+            exploreSince.textContent = "—";
+
+    }
+
+
+    /*
+        Exploration percentage
+    */
+
+    const totalLocations =
+        allLocations.length;
+
+
+    let percentage = 0;
+
+
+    if (totalLocations > 0) {
+
+        percentage =
+            Math.round(
+                (exploredCount / totalLocations) * 100
+            );
+
+    }
+
+
+    /*
+        Never allow percentage
+        to exceed 100%.
+    */
+
+    percentage =
+        Math.min(
+            100,
+            Math.max(0, percentage)
+        );
+
+
+    if (exploreProgress) {
+
+        exploreProgress.style.width =
+            `${percentage}%`;
+
+    }
+
+
+    if (exploreProgressText) {
+
+        exploreProgressText.textContent =
+            `${percentage}% explored`;
+
+    }
+
+}
+
+/* =========================================================
+   RATING MODAL
+========================================================= */
+
+let ratingLocationId = null;
+
+
+/*
+    Open rating modal
+*/
+
+function openRatingModal(locationId) {
+
+    if (!currentUser) {
+        return;
+    }
+
+    ratingLocationId = locationId;
+
+    const ratingButtons =
+        document.getElementById(
+            "ratingButtons"
+        );
+
+    const ratingMessage =
+        document.getElementById(
+            "ratingMessage"
+        );
+
+    ratingButtons.innerHTML = "";
+
+    ratingMessage.textContent = "";
+
+    for (let rating = 1; rating <= 10; rating++) {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+
+        button.className =
+            "rating-button";
+
+        button.dataset.rating =
+            rating;
+
+        button.textContent =
+            rating;
+
+        button.addEventListener(
+            "click",
+            () => saveLocationRating(
+                locationId,
+                rating
+            )
+        );
+
+        ratingButtons.appendChild(
+            button
+        );
+
+    }
+
+    openModal("ratingModal");
+
+}
+
+
+/*
+    Save rating
+*/
+
+async function saveLocationRating(
+    locationId,
+    rating
+) {
+
+    if (!currentUser) {
+        return;
+    }
+
+    try {
+
+        const userRef =
+            doc(
+                db,
+                "users",
+                currentUser.uid
+            );
+
+        const userSnapshot =
+            await getDoc(userRef);
+
+        const userData =
+            userSnapshot.exists()
+                ? userSnapshot.data()
+                : {};
+
+        let explored =
+            Array.isArray(
+                userData.exploredLocations
+            )
+                ? [...userData.exploredLocations]
+                : [];
+
+
+        /*
+            Find the explored location
+        */
+
+        const exploredIndex =
+            explored.findIndex(
+                item =>
+                    item.id === locationId
+            );
+
+
+        if (exploredIndex === -1) {
+
+            toast(
+                "Unable to find your explored location."
+            );
+
+            return;
+
+        }
+
+
+        /*
+            Add the rating to the user's
+            explored location record.
+        */
+const oldRating =
+    typeof explored[exploredIndex].rating === "number"
+        ? explored[exploredIndex].rating
+        : null;
+
+
+explored[exploredIndex] = {
+
+    ...explored[exploredIndex],
+
+    rating: rating,
+
+    previousRating: oldRating
+
+};
+
+
+        /*
+            Save user's rating
+        */
+
+        await setDoc(
+            userRef,
+            {
+                exploredLocations:
+                    explored
+            },
+            {
+                merge: true
+            }
+        );
+
+        // ==========================================
+// SAVE PUBLIC RATING RECORD
+// ==========================================
+
+const username =
+    currentUsername ||
+    userData.username ||
+    "Anonymous";
+
+const ratingQuery = query(
+    collection(db, "explorations"),
+    where("userId", "==", currentUser.uid),
+    where("locationId", "==", locationId)
+);
+
+const ratingSnapshot =
+    await getDocs(ratingQuery);
+
+if (!ratingSnapshot.empty) {
+
+    const ratingDoc =
+        ratingSnapshot.docs[0];
+
+    await updateDoc(
+        ratingDoc.ref,
+        {
+            username: username,
+            rating: rating
+        }
+    );
+
+} else {
+
+    await addDoc(
+        collection(db, "explorations"),
+        {
+            userId: currentUser.uid,
+            username: username,
+            locationId: locationId,
+            rating: rating,
+            createdAt: serverTimestamp()
+        }
+    );
+}
+
+
+        /*
+            Update local data
+        */
+
+        currentUserExploredLocations =
+            explored;
+
+
+        /*
+            Update the public location rating
+        */
+
+        await updateLocationRating(
+            locationId,
+            rating,
+            oldRating
+        );
+
+
+        closeModal(
+            "ratingModal"
+        );
+
+
+        renderLocations();
+
+        toast(
+            `Rated ${rating}/10.`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to save rating:",
+            error
+        );
+
+        document.getElementById(
+            "ratingMessage"
+        ).textContent =
+            "Unable to save your rating.";
+
+    }
+
+}
+
+
+/*
+    Skip rating
+*/
+
+document
+    .getElementById("skipRatingButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            ratingLocationId = null;
+
+            closeModal(
+                "ratingModal"
+            );
+
+        }
+    );
+
+    // ==========================================
+// SHOW LOCATION RATINGS
+// ==========================================
+
+async function showLocationRatings(locationId) {
+
+    if (!currentUser) {
+        toast("Sign in to view ratings.");
+        return;
+    }
+
+    const location =
+        allLocations.find(
+            item => item.id === locationId
+        );
+
+    if (!location) {
+        return;
+    }
+
+    const title =
+        document.getElementById(
+            "ratingListTitle"
+        );
+
+    const content =
+        document.getElementById(
+            "ratingListContent"
+        );
+
+    title.textContent =
+        location.name || "Location ratings";
+
+    content.innerHTML = `
+        <div class="empty-state">
+            Loading ratings...
+        </div>
+    `;
+
+    openModal("ratingListModal");
+
+    try {
+
+        const ratingsQuery = query(
+            collection(db, "explorations"),
+            where(
+                "locationId",
+                "==",
+                locationId
+            )
+        );
+
+        const snapshot =
+            await getDocs(ratingsQuery);
+
+        const ratings = snapshot.docs
+            .map(documentSnapshot => ({
+                id: documentSnapshot.id,
+                ...documentSnapshot.data()
+            }))
+            .filter(
+                item =>
+                    typeof item.rating === "number"
+            );
+
+if (!ratings.length) {
+
+    document.getElementById(
+        "ratingOverallScore"
+    ).textContent = "—";
+
+    document.getElementById(
+        "ratingOverallCount"
+    ).textContent = "Based on 0 ratings";
+
+
+    content.innerHTML = `
+        <div class="explore-empty">
+
+            <div class="explore-empty-title">
+                No ratings yet
+            </div>
+
+            <div class="explore-empty-text">
+                Nobody has rated this location yet.
+            </div>
+
+        </div>
+    `;
+
+    return;
+}
+
+
+/* ==========================================
+   CALCULATE OVERALL RATING
+========================================== */
+
+const totalRating =
+    ratings.reduce(
+        (total, item) =>
+            total + item.rating,
+        0
+    );
+
+const averageRating =
+    totalRating / ratings.length;
+
+
+document.getElementById(
+    "ratingOverallScore"
+).textContent =
+    averageRating.toFixed(1);
+
+
+document.getElementById(
+    "ratingOverallCount"
+).textContent =
+    `Based on ${ratings.length} rating${
+        ratings.length === 1 ? "" : "s"
+    }`;
+
+        ratings.sort(
+            (a, b) =>
+                b.rating - a.rating
+        );
+
+        content.innerHTML =
+            ratings.map(rating => {
+
+                const username =
+                    escapeHtml(
+                        rating.username ||
+                        "Anonymous"
+                    );
+
+return `
+    <div class="rating-user-row">
+
+        <div class="rating-user-info">
+
+            <div class="rating-user-label">
+                Username
+            </div>
+
+            <div class="rating-user-name">
+                ${username}
+            </div>
+
+        </div>
+
+        <div class="rating-user-score">
+
+            <div class="rating-user-label">
+                Rating given
+            </div>
+
+            <div class="rating-user-rating">
+                ★ ${rating.rating}/10
+            </div>
+
+        </div>
+
+    </div>
+`;
+
+            }).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load ratings:",
+            error
+        );
+
+        content.innerHTML = `
+            <div class="empty-state">
+                Unable to load ratings.
+            </div>
+        `;
+    }
+}
+
+// ==========================================
+// RATING TAG CLICK
+// ==========================================
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const ratingButton =
+            event.target.closest(
+                "[data-rating-location]"
+            );
+
+        if (!ratingButton) {
+            return;
+        }
+
+        const locationId =
+            ratingButton.dataset.ratingLocation;
+
+        if (!locationId) {
+            return;
+        }
+
+        showLocationRatings(
+            locationId
+        );
+
+    }
+);
+
+  /* =========================================================
+   UPDATE LOCATION RATING
+========================================================= */
+
+async function updateLocationRating(
+    locationId,
+    newRating,
+    oldRating = null
+) {
+
+    const locationRef =
+        doc(
+            db,
+            "locations",
+            locationId
+        );
+
+    const locationSnapshot =
+        await getDoc(locationRef);
+
+
+    if (!locationSnapshot.exists()) {
+
+        throw new Error(
+            "Location does not exist."
+        );
+
+    }
+
+
+    const locationData =
+        locationSnapshot.data();
+
+
+    const currentAverage =
+        typeof locationData.ratingAverage === "number"
+            ? locationData.ratingAverage
+            : 0;
+
+
+    const currentCount =
+        typeof locationData.ratingCount === "number"
+            ? locationData.ratingCount
+            : 0;
+
+
+    let newAverage;
+    let newCount;
+
+
+    /*
+        Existing rating:
+        replace it.
+    */
+
+    if (
+        typeof oldRating === "number" &&
+        currentCount > 0
+    ) {
+
+        const total =
+            currentAverage *
+            currentCount;
+
+        newAverage =
+            (
+                total -
+                oldRating +
+                newRating
+            ) /
+            currentCount;
+
+        newCount =
+            currentCount;
+
+    }
+
+
+    /*
+        First rating:
+        add it.
+    */
+
+    else {
+
+        const total =
+            currentAverage *
+            currentCount;
+
+        newCount =
+            currentCount + 1;
+
+        newAverage =
+            (
+                total +
+                newRating
+            ) /
+            newCount;
+
+    }
+
+
+    newAverage =
+        Math.round(
+            newAverage * 10
+        ) / 10;
+
+
+    await setDoc(
+        locationRef,
+        {
+            ratingAverage:
+                newAverage,
+
+            ratingCount:
+                newCount
+        },
+        {
+            merge: true
+        }
+    );
+
+
+    /*
+        Update local copy
+    */
+
+    const localLocation =
+        allLocations.find(
+            location =>
+                location.id === locationId
+        );
+
+
+    if (localLocation) {
+
+        localLocation.ratingAverage =
+            newAverage;
+
+        localLocation.ratingCount =
+            newCount;
 
     }
 
@@ -1060,6 +2144,259 @@ async function toggleSavedLocation(locationId) {
 
 }
 
+/* =========================================================
+   MARK LOCATION AS EXPLORED
+========================================================= */
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const button =
+            event.target.closest(
+                "[data-explore-location]"
+            );
+
+        if (!button) {
+            return;
+        }
+
+
+        const locationId =
+            button.dataset.exploreLocation;
+
+
+        if (!locationId) {
+            return;
+        }
+
+
+        toggleExploredLocation(
+            locationId
+        );
+
+    }
+);
+
+/* =========================================================
+   TOGGLE EXPLORED
+========================================================= */
+
+async function toggleExploredLocation(locationId) {
+
+    if (!currentUser) {
+
+        toast(
+            "Sign in to mark locations as explored."
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        let explored =
+            Array.isArray(
+                currentUserExploredLocations
+            )
+                ? [...currentUserExploredLocations]
+                : [];
+
+
+        const existingIndex =
+            explored.findIndex(
+                item =>
+                    item.id === locationId
+            );
+
+
+        /*
+            ==========================================
+            UNEXPLORE
+            ==========================================
+        */
+
+        if (existingIndex !== -1) {
+
+            const existingEntry =
+                explored[existingIndex];
+
+
+            /*
+                Get the user's existing rating.
+
+                If they rated the location, we need
+                to remove that rating from the
+                public location statistics.
+            */
+
+            const oldRating =
+                typeof existingEntry.rating === "number"
+                    ? existingEntry.rating
+                    : null;
+
+
+            /*
+                Remove the explored location
+                from the user's profile.
+            */
+
+            explored.splice(
+                existingIndex,
+                1
+            );
+
+
+            /*
+                Save the updated explored list.
+            */
+
+            await setDoc(
+                doc(
+                    db,
+                    "users",
+                    currentUser.uid
+                ),
+                {
+                    exploredLocations:
+                        explored
+                },
+                {
+                    merge: true
+                }
+            );
+
+
+            /*
+                Update local state.
+            */
+
+            currentUserExploredLocations =
+                explored;
+
+
+            /*
+                Remove the user's rating from
+                the public location rating.
+            */
+
+            if (typeof oldRating === "number") {
+
+                await removeLocationRating(
+                    locationId,
+                    oldRating
+                );
+
+            }
+
+
+            /*
+                Update the page.
+            */
+
+            updateUserStats();
+
+            renderLocations();
+
+
+            toast(
+                "Location unexplored and review removed."
+            );
+
+
+            return;
+
+        }
+
+
+        /*
+            ==========================================
+            EXPLORE
+            ==========================================
+        */
+
+
+        explored.push({
+
+            id: locationId,
+
+            exploredAt:
+                new Date(),
+
+            rating:
+                null,
+
+            previousRating:
+                null
+
+        });
+
+
+        /*
+            Update local state.
+        */
+
+        currentUserExploredLocations =
+            explored;
+
+
+        /*
+            Save to Firestore.
+        */
+
+        await setDoc(
+            doc(
+                db,
+                "users",
+                currentUser.uid
+            ),
+            {
+                exploredLocations:
+                    explored
+            },
+            {
+                merge: true
+            }
+        );
+
+
+        updateUserStats();
+
+        renderLocations();
+
+
+        toast(
+            "Location marked as explored."
+        );
+
+
+        /*
+            Open rating prompt.
+        */
+
+        openRatingModal(
+            locationId
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to update explored location:",
+            error
+        );
+
+
+        toast(
+            "Unable to update this location."
+        );
+
+    }
+
+}
+
 document.addEventListener("click", event => {
 
     const button =
@@ -1083,7 +2420,161 @@ document.addEventListener("click", event => {
 });
 
 /* =========================================================
-   RECORD VIEWED LOCATION
+   REMOVE LOCATION RATING
+========================================================= */
+
+async function removeLocationRating(
+    locationId,
+    ratingToRemove
+) {
+
+    const locationRef =
+        doc(
+            db,
+            "locations",
+            locationId
+        );
+
+
+    const locationSnapshot =
+        await getDoc(locationRef);
+
+
+    if (!locationSnapshot.exists()) {
+
+        throw new Error(
+            "Location does not exist."
+        );
+
+    }
+
+
+    const locationData =
+        locationSnapshot.data();
+
+
+    const currentAverage =
+        typeof locationData.ratingAverage === "number"
+            ? locationData.ratingAverage
+            : 0;
+
+
+    const currentCount =
+        typeof locationData.ratingCount === "number"
+            ? locationData.ratingCount
+            : 0;
+
+
+    /*
+        If this was the last rating,
+        remove the rating statistics entirely.
+    */
+
+    if (currentCount <= 1) {
+
+        await updateDoc(
+            locationRef,
+            {
+                ratingAverage: 0,
+                ratingCount: 0
+            }
+        );
+
+
+        const localLocation =
+            allLocations.find(
+                location =>
+                    location.id === locationId
+            );
+
+
+        if (localLocation) {
+
+            localLocation.ratingAverage = 0;
+
+            localLocation.ratingCount = 0;
+
+        }
+
+
+        return;
+
+    }
+
+
+    /*
+        Calculate the old total.
+    */
+
+    const oldTotal =
+        currentAverage *
+        currentCount;
+
+
+    /*
+        Remove this user's rating.
+    */
+
+    const newTotal =
+        oldTotal -
+        ratingToRemove;
+
+
+    const newCount =
+        currentCount -
+        1;
+
+
+    const newAverage =
+        Math.round(
+            (
+                newTotal /
+                newCount
+            ) * 10
+        ) / 10;
+
+
+    /*
+        Save the new public rating.
+    */
+
+    await updateDoc(
+        locationRef,
+        {
+            ratingAverage:
+                newAverage,
+
+            ratingCount:
+                newCount
+        }
+    );
+
+
+    /*
+        Update local location data.
+    */
+
+    const localLocation =
+        allLocations.find(
+            location =>
+                location.id === locationId
+        );
+
+
+    if (localLocation) {
+
+        localLocation.ratingAverage =
+            newAverage;
+
+        localLocation.ratingCount =
+            newCount;
+
+    }
+
+}
+
+/* =========================================================
+   RECORD RECENTLY VIEWED LOCATION
 ========================================================= */
 
 async function recordLocationViewed(locationId) {
@@ -1092,19 +2583,61 @@ async function recordLocationViewed(locationId) {
         return;
     }
 
-    if (
-        currentUserViewedLocations.includes(locationId)
-    ) {
-        return;
-    }
 
     try {
 
-        currentUserViewedLocations.push(
-            locationId
-        );
+        let viewed =
+            Array.isArray(
+                currentUserViewedLocations
+            )
+                ? [...currentUserViewedLocations]
+                : [];
 
-        updateUserStats();
+
+        /*
+            Remove existing entry.
+
+            This allows the location to move
+            back to the top when viewed again.
+        */
+
+        viewed =
+            viewed.filter(item => {
+
+                const id =
+                    typeof item === "string"
+                        ? item
+                        : item.id;
+
+                return id !== locationId;
+
+            });
+
+
+        /*
+            Add newest view to the beginning.
+        */
+
+        viewed.unshift({
+
+            id: locationId,
+
+            viewedAt: new Date()
+
+        });
+
+
+        /*
+            Keep only the latest 10.
+        */
+
+        viewed =
+            viewed.slice(0, 10);
+
+
+        currentUserViewedLocations =
+            viewed;
+
 
         await setDoc(
             doc(
@@ -1113,13 +2646,15 @@ async function recordLocationViewed(locationId) {
                 currentUser.uid
             ),
             {
-                viewedLocations:
-                    currentUserViewedLocations
+                viewedLocations: viewed
             },
             {
                 merge: true
             }
         );
+
+
+        updateUserStats();
 
     } catch (error) {
 
@@ -1195,10 +2730,22 @@ function openExploreView(mode) {
        CHANGE TITLE
     ========================================== */
 
+if (mode === "saved") {
+
     exploreViewTitle.textContent =
-        mode === "saved"
-            ? "Saved locations"
-            : "Locations viewed";
+        "Saved locations";
+
+} else if (mode === "viewed") {
+
+    exploreViewTitle.textContent =
+        "Recently viewed";
+
+} else {
+
+    exploreViewTitle.textContent =
+        "Locations explored";
+
+}
 
 
     /* ==========================================
@@ -1247,6 +2794,13 @@ document
         () => openExploreView("viewed")
     );
 
+    document
+    .getElementById("exploredLocationsButton")
+    .addEventListener(
+        "click",
+        () => openExploreView("explored")
+    );
+
 
 document
     .getElementById("exploreBackButton")
@@ -1292,13 +2846,12 @@ function renderExploreLocations() {
 
     }
 
-    const ids =
-        exploreViewMode === "saved"
-            ? currentUserSavedLocations
-            : currentUserViewedLocations;
+let locations = [];
 
-    let locations =
-        ids
+if (exploreViewMode === "saved") {
+
+    locations =
+        currentUserSavedLocations
             .map(id =>
                 allLocations.find(
                     location =>
@@ -1306,6 +2859,39 @@ function renderExploreLocations() {
                 )
             )
             .filter(Boolean);
+
+} else if (exploreViewMode === "viewed") {
+
+    locations =
+        currentUserViewedLocations
+            .map(item => {
+
+                const id =
+                    typeof item === "string"
+                        ? item
+                        : item.id;
+
+                return allLocations.find(
+                    location =>
+                        location.id === id
+                );
+
+            })
+            .filter(Boolean);
+
+} else if (exploreViewMode === "explored") {
+
+    locations =
+        currentUserExploredLocations
+            .map(item =>
+                allLocations.find(
+                    location =>
+                        location.id === item.id
+                )
+            )
+            .filter(Boolean);
+
+}
 
 
     if (exploreSearchTerm) {
@@ -1360,21 +2946,29 @@ function renderExploreLocations() {
                     ${exploreViewMode === "saved" ? "♡" : "◷"}
                 </div>
 
-                <div class="explore-empty-title">
-                    ${
-                        exploreViewMode === "saved"
-                            ? "No saved locations"
-                            : "No locations viewed"
-                    }
-                </div>
+<div class="explore-empty-title">
 
-                <div class="explore-empty-text">
-                    ${
-                        exploreViewMode === "saved"
-                            ? "Locations you save will appear here."
-                            : "Locations you explore will appear here."
-                    }
-                </div>
+    ${
+        exploreViewMode === "saved"
+            ? "No saved locations"
+            : exploreViewMode === "viewed"
+                ? "No locations viewed"
+                : "No locations explored"
+    }
+
+</div>
+
+<div class="explore-empty-text">
+
+    ${
+        exploreViewMode === "saved"
+            ? "Locations you save will appear here."
+            : exploreViewMode === "viewed"
+                ? "Locations you view will appear here."
+                : "Locations you mark as explored will appear here."
+    }
+
+</div>
 
             </div>
         `;
@@ -1397,11 +2991,11 @@ function renderExploreLocations() {
 
 
             return `
-                <button
-                    type="button"
-                    class="explore-location-item"
-                    data-explore-location="${escapeHtml(location.id)}"
-                >
+<button 
+    type="button" 
+    class="explore-location-item" 
+    data-explore-view-location="${escapeHtml(location.id)}" 
+>
 
                     <div class="explore-location-type">
                         ${escapeHtml(type)}
@@ -1447,7 +3041,7 @@ document.addEventListener(
 
         const item =
             event.target.closest(
-                "[data-explore-location]"
+                "[data-explore-view-location]"
             );
 
         if (!item) {
@@ -1455,7 +3049,7 @@ document.addEventListener(
         }
 
         const locationId =
-            item.dataset.exploreLocation;
+            item.dataset.exploreViewLocation;
 
         const location =
             allLocations.find(
@@ -1470,7 +3064,6 @@ document.addEventListener(
             );
 
             return;
-
         }
 
         closeExploreView();
@@ -1546,6 +3139,9 @@ document.addEventListener(
         const submit =
             document.getElementById("authSubmit");
 
+            const forgotPasswordButton =
+    document.getElementById("forgotPasswordButton");
+
         signInTab.classList.toggle(
             "active",
             mode === "signin"
@@ -1560,6 +3156,11 @@ document.addEventListener(
             mode === "register"
                 ? "block"
                 : "none";
+
+                forgotPasswordButton.style.display =
+    mode === "signin"
+        ? "block"
+        : "none";
 
         submit.textContent =
             mode === "register"
@@ -1796,29 +3397,100 @@ document.addEventListener(
 
     }
 
+    /* =========================================================
+   ACCOUNT UI VISIBILITY
+========================================================= */
+
+function updateAccountUI() {
+
+    const loggedOutAccount =
+        document.getElementById("loggedOutAccount");
+
+    const loggedInAccount =
+        document.getElementById("loggedInAccount");
+
+    const adminSection =
+        document.getElementById("adminSection");
+
+    if (!currentUser) {
+
+        if (loggedOutAccount) {
+            loggedOutAccount.style.display = "block";
+        }
+
+        if (loggedInAccount) {
+            loggedInAccount.style.display = "none";
+        }
+
+        if (adminSection) {
+            adminSection.style.display = "none";
+        }
+
+        return;
+    }
+
+    /*
+        User is logged in.
+        Always force the logged-in account
+        section to be visible.
+    */
+
+    if (loggedOutAccount) {
+        loggedOutAccount.style.display = "none";
+    }
+
+    if (loggedInAccount) {
+        loggedInAccount.style.display = "block";
+        loggedInAccount.hidden = false;
+    }
+
+    /*
+        Admin section
+    */
+
+    if (adminSection) {
+
+        adminSection.style.display =
+            currentUser.uid === ADMIN_UID
+                ? "block"
+                : "none";
+
+    }
+
+}
 
     /* =========================================================
        AUTH STATE
     ========================================================= */
 
     onAuthStateChanged(
-        auth,
-        async user => {
+    auth,
+    async user => {
 
-            currentUser = user;
+        currentUser = user;
 
-            if (user) {
+        /*
+            Immediately update the account UI.
+            This prevents the logged-in section
+            from staying hidden while Firestore loads.
+        */
 
-    await loadUserExploreData();
+        updateAccountUI();
 
-} else {
+        if (user) {
 
-    currentUserSavedLocations = [];
-    currentUserViewedLocations = [];
+            await loadUserExploreData();
 
-    updateUserStats();
+        } else {
 
-}
+            currentUserSavedLocations = [];
+            currentUserViewedLocations = [];
+            currentUserExploredLocations = [];
+
+            updateUserStats();
+
+        }
+
 
             if (!user) {
 
@@ -1948,13 +3620,7 @@ if (userSnapshot.exists()) {
                 user.email || "";
 
 
-            document.getElementById(
-                "loggedOutAccount"
-            ).style.display = "none";
-
-            document.getElementById(
-                "loggedInAccount"
-            ).style.display = "block";
+           updateAccountUI();
 
 
             if (
@@ -2080,7 +3746,67 @@ document.addEventListener("click", event => {
             }
         );
 
+            /* =========================================================
+       Forgot PASS Sign in
+    ========================================================= */
+    
+document
+    .getElementById("forgotPasswordButton")
+    .addEventListener(
+        "click",
+        async () => {
 
+            const emailInput =
+                document.getElementById("authEmail");
+
+            const email =
+                emailInput.value.trim();
+
+            const message =
+                document.getElementById("authMessage");
+
+
+            if (!email) {
+
+                message.className =
+                    "auth-message error";
+
+                message.textContent =
+                    "Enter your email address first.";
+
+                emailInput.focus();
+
+                return;
+            }
+
+
+            try {
+
+                await sendPasswordResetEmail(
+                    auth,
+                    email
+                );
+
+                message.className =
+                    "auth-message success";
+
+                message.textContent =
+                    "Password reset email sent.";
+
+            } catch (error) {
+
+                console.error(error);
+
+                message.className =
+                    "auth-message error";
+
+                message.textContent =
+                    friendlyAuthError(error);
+
+            }
+
+        }
+    );
     /* =========================================================
        CHANGE USERNAME
     ========================================================= */

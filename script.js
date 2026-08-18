@@ -25,6 +25,7 @@ import {
     setDoc,
     updateDoc,
     deleteDoc,
+    deleteField,
     query,
     where,
     orderBy,
@@ -71,6 +72,7 @@ import {
 
     let currentUser = null;
     let currentUsername = "";
+    let currentUserData = {};
 
     let locationModalMode = "add";
     let editingLocationId = null;
@@ -246,6 +248,90 @@ const locationPickerMap =
         "click",
         closeSidebar
     );
+
+    /* =========================================================
+   ACCOUNT PROFILE DROPDOWN
+========================================================= */
+
+const accountProfileToggle =
+    document.getElementById(
+        "accountProfileToggle"
+    );
+
+const accountProfileDetails =
+    document.getElementById(
+        "accountProfileDetails"
+    );
+
+const statsDropdownButton =
+    document.getElementById("statsDropdownButton");
+
+const statsProfileDetails =
+    document.getElementById("statsProfileDetails");
+
+statsDropdownButton.addEventListener("click", () => {
+
+    const isOpen =
+        statsProfileDetails.style.display !== "none";
+
+    statsProfileDetails.style.display =
+        isOpen ? "none" : "block";
+
+});
+    
+
+const accountProfileArrow =
+    document.getElementById(
+        "accountProfileArrow"
+    );
+
+const accountDetailUsername =
+    document.getElementById(
+        "accountDetailUsername"
+    );
+
+const accountDetailEmail =
+    document.getElementById(
+        "accountDetailEmail"
+    );
+
+
+if (accountProfileToggle) {
+
+    accountProfileToggle.addEventListener(
+        "click",
+        () => {
+
+            const isOpen =
+                accountProfileDetails.style.display !== "none";
+
+            if (isOpen) {
+
+                accountProfileDetails.style.display = "none";
+
+                accountProfileToggle.setAttribute(
+                    "aria-expanded",
+                    "false"
+                );
+
+            } else {
+
+                accountProfileDetails.style.display = "block";
+
+                accountProfileToggle.setAttribute(
+                    "aria-expanded",
+                    "true"
+                );
+
+            }
+
+            // Keep the arrow exactly the same
+            accountProfileArrow.textContent = "›";
+
+        }
+    );
+
+}
 
 
     /* =========================================================
@@ -902,13 +988,16 @@ document.addEventListener(
 const isExplored =
     !!exploredEntry;
 
-    const ratingAverage =
-    typeof location.ratingAverage === "number"
+const ratingAverage =
+    typeof location.ratingAverage === "number" &&
+    typeof location.ratingCount === "number" &&
+    location.ratingCount > 0
         ? location.ratingAverage
         : null;
 
 const ratingCount =
-    typeof location.ratingCount === "number"
+    typeof location.ratingCount === "number" &&
+    location.ratingCount > 0
         ? location.ratingCount
         : 0;
 
@@ -1239,6 +1328,8 @@ updateAccountUI();
 
 function updateUserStats(userData = null) {
 
+    userData = userData || currentUserData;
+
     const exploreSince =
         document.getElementById("exploreSince");
 
@@ -1562,9 +1653,7 @@ explored[exploredIndex] = {
 
     ...explored[exploredIndex],
 
-    rating: rating,
-
-    previousRating: oldRating
+    rating: rating
 
 };
 
@@ -1698,6 +1787,89 @@ document
     );
 
     // ==========================================
+// GET REAL COMMUNITY RATING
+// ==========================================
+
+async function getRealLocationRating(locationId) {
+
+    try {
+
+        const ratingsQuery =
+            query(
+                collection(db, "explorations"),
+                where(
+                    "locationId",
+                    "==",
+                    locationId
+                )
+            );
+
+        const snapshot =
+            await getDocs(
+                ratingsQuery
+            );
+
+
+        const ratings =
+            snapshot.docs
+                .map(doc => doc.data())
+                .filter(
+                    item =>
+                        typeof item.rating === "number" &&
+                        item.rating >= 1 &&
+                        item.rating <= 10
+                );
+
+
+        if (!ratings.length) {
+
+            return {
+                average: null,
+                count: 0
+            };
+
+        }
+
+
+        const total =
+            ratings.reduce(
+                (sum, item) =>
+                    sum + item.rating,
+                0
+            );
+
+
+        return {
+
+            average:
+                Math.round(
+                    (total / ratings.length) * 10
+                ) / 10,
+
+            count:
+                ratings.length
+
+        };
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to get real location rating:",
+            error
+        );
+
+
+        return {
+            average: null,
+            count: 0
+        };
+
+    }
+
+}
+
+  // ==========================================
 // SHOW LOCATION RATINGS
 // ==========================================
 
@@ -1727,143 +1899,251 @@ async function showLocationRatings(locationId) {
             "ratingListContent"
         );
 
-    title.textContent =
-        location.name || "Location ratings";
+    const overallScore =
+        document.getElementById(
+            "ratingOverallScore"
+        );
 
-    content.innerHTML = `
-        <div class="empty-state">
-            Loading ratings...
-        </div>
-    `;
+    const overallCount =
+        document.getElementById(
+            "ratingOverallCount"
+        );
+
+
+    // ------------------------------------------
+    // SET TITLE
+    // ------------------------------------------
+
+    if (title) {
+        title.textContent =
+            location.name ||
+            "Location ratings";
+    }
+
+
+    // ------------------------------------------
+    // RESET OVERALL RATING
+    // ------------------------------------------
+
+    if (overallScore) {
+        overallScore.textContent = "—";
+    }
+
+    if (overallCount) {
+        overallCount.textContent =
+            "Based on 0 ratings";
+    }
+
+
+    // ------------------------------------------
+    // SHOW LOADING
+    // ------------------------------------------
+
+    if (content) {
+        content.innerHTML = `
+            <div class="explore-empty">
+
+                <div class="explore-empty-title">
+                    Loading ratings...
+                </div>
+
+            </div>
+        `;
+    }
+
 
     openModal("ratingListModal");
 
+
     try {
 
-        const ratingsQuery = query(
-            collection(db, "explorations"),
-            where(
-                "locationId",
-                "==",
-                locationId
-            )
-        );
+        // ------------------------------------------
+        // LOAD ALL PUBLIC RATINGS
+        // ------------------------------------------
 
-        const snapshot =
-            await getDocs(ratingsQuery);
-
-        const ratings = snapshot.docs
-            .map(documentSnapshot => ({
-                id: documentSnapshot.id,
-                ...documentSnapshot.data()
-            }))
-            .filter(
-                item =>
-                    typeof item.rating === "number"
+        const ratingsQuery =
+            query(
+                collection(
+                    db,
+                    "explorations"
+                ),
+                where(
+                    "locationId",
+                    "==",
+                    locationId
+                )
             );
 
-if (!ratings.length) {
 
-    document.getElementById(
-        "ratingOverallScore"
-    ).textContent = "—";
-
-    document.getElementById(
-        "ratingOverallCount"
-    ).textContent = "Based on 0 ratings";
+        const snapshot =
+            await getDocs(
+                ratingsQuery
+            );
 
 
-    content.innerHTML = `
-        <div class="explore-empty">
+        // ------------------------------------------
+        // ONLY KEEP VALID RATINGS
+        // ------------------------------------------
 
-            <div class="explore-empty-title">
-                No ratings yet
-            </div>
+        const ratings =
+            snapshot.docs
+                .map(
+                    documentSnapshot => ({
+                        id:
+                            documentSnapshot.id,
 
-            <div class="explore-empty-text">
-                Nobody has rated this location yet.
-            </div>
-
-        </div>
-    `;
-
-    return;
-}
-
-
-/* ==========================================
-   CALCULATE OVERALL RATING
-========================================== */
-
-const totalRating =
-    ratings.reduce(
-        (total, item) =>
-            total + item.rating,
-        0
-    );
-
-const averageRating =
-    totalRating / ratings.length;
+                        ...documentSnapshot.data()
+                    })
+                )
+                .filter(
+                    item =>
+                        typeof item.rating === "number" &&
+                        item.rating >= 1 &&
+                        item.rating <= 10
+                );
 
 
-document.getElementById(
-    "ratingOverallScore"
-).textContent =
-    averageRating.toFixed(1);
+        // ------------------------------------------
+        // NO RATINGS
+        // ------------------------------------------
+
+        if (!ratings.length) {
+
+            if (overallScore) {
+                overallScore.textContent = "—";
+            }
+
+            if (overallCount) {
+                overallCount.textContent =
+                    "Based on 0 ratings";
+            }
 
 
-document.getElementById(
-    "ratingOverallCount"
-).textContent =
-    `Based on ${ratings.length} rating${
-        ratings.length === 1 ? "" : "s"
-    }`;
+            if (content) {
+
+                content.innerHTML = `
+                    <div class="explore-empty">
+
+                        <div class="explore-empty-title">
+                            No ratings yet
+                        </div>
+
+                        <div class="explore-empty-text">
+                            Nobody has rated this location yet.
+                        </div>
+
+                    </div>
+                `;
+
+            }
+
+            return;
+        }
+
+
+        // ------------------------------------------
+        // CALCULATE OVERALL RATING
+        // ------------------------------------------
+
+        const totalRating =
+            ratings.reduce(
+                (total, item) =>
+                    total + item.rating,
+                0
+            );
+
+
+        const averageRating =
+            totalRating / ratings.length;
+
+
+        // ------------------------------------------
+        // DISPLAY OVERALL RATING
+        // ------------------------------------------
+
+        if (overallScore) {
+
+            overallScore.textContent =
+                averageRating.toFixed(1);
+
+        }
+
+
+        if (overallCount) {
+
+            overallCount.textContent =
+                `Based on ${ratings.length} rating${
+                    ratings.length === 1
+                        ? ""
+                        : "s"
+                }`;
+
+        }
+
+
+        // ------------------------------------------
+        // SORT HIGHEST → LOWEST
+        // ------------------------------------------
 
         ratings.sort(
             (a, b) =>
                 b.rating - a.rating
         );
 
-        content.innerHTML =
-            ratings.map(rating => {
 
-                const username =
-                    escapeHtml(
-                        rating.username ||
-                        "Anonymous"
-                    );
+        // ------------------------------------------
+        // DISPLAY EVERY PERSON WHO RATED IT
+        // ------------------------------------------
 
-return `
-    <div class="rating-user-row">
+        if (content) {
 
-        <div class="rating-user-info">
+            content.innerHTML =
+                ratings.map(
+                    rating => {
 
-            <div class="rating-user-label">
-                Username
-            </div>
+                        const username =
+                            escapeHtml(
+                                rating.username ||
+                                "Anonymous"
+                            );
 
-            <div class="rating-user-name">
-                ${username}
-            </div>
 
-        </div>
+                        return `
+                            <div class="rating-user-row">
 
-        <div class="rating-user-score">
+                                <div class="rating-user-info">
 
-            <div class="rating-user-label">
-                Rating given
-            </div>
+                                    <div class="rating-user-label">
+                                        Username
+                                    </div>
 
-            <div class="rating-user-rating">
-                ★ ${rating.rating}/10
-            </div>
+                                    <div class="rating-user-name">
+                                        ${username}
+                                    </div>
 
-        </div>
+                                </div>
 
-    </div>
-`;
 
-            }).join("");
+                                <div class="rating-user-score">
+
+                                    <div class="rating-user-label">
+                                        Rating given
+                                    </div>
+
+                                    <div class="rating-user-rating">
+                                        ★ ${rating.rating}/10
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                ).join("");
+
+        }
+
 
     } catch (error) {
 
@@ -1872,12 +2152,30 @@ return `
             error
         );
 
-        content.innerHTML = `
-            <div class="empty-state">
-                Unable to load ratings.
-            </div>
-        `;
+
+        if (overallScore) {
+            overallScore.textContent = "—";
+        }
+
+
+        if (overallCount) {
+            overallCount.textContent =
+                "Unable to load ratings";
+        }
+
+
+        if (content) {
+
+            content.innerHTML = `
+                <div class="empty-state">
+                    Unable to load ratings.
+                </div>
+            `;
+
+        }
+
     }
+
 }
 
 // ==========================================
@@ -2466,8 +2764,62 @@ async function removeLocationRating(
 
 
     /*
-        If this was the last rating,
-        remove the rating statistics entirely.
+        ==========================================
+        DELETE THE PUBLIC RATING RECORD
+        ==========================================
+
+        This is important.
+
+        The community ratings modal reads
+        from the "explorations" collection.
+
+        If we don't delete the record here,
+        the old rating will continue to appear.
+    */
+
+const ratingQuery = query(
+    collection(db, "explorations"),
+    where(
+        "locationId",
+        "==",
+        locationId
+    )
+);
+
+
+    const ratingSnapshot =
+        await getDocs(ratingQuery);
+
+
+for (const ratingDoc of ratingSnapshot.docs) {
+
+    const ratingData =
+        ratingDoc.data();
+
+    if (
+        ratingData.userId ===
+        currentUser.uid
+    ) {
+
+        await deleteDoc(
+            ratingDoc.ref
+        );
+
+    }
+
+}
+
+
+    /*
+        ==========================================
+        NO RATINGS LEFT
+        ==========================================
+
+        If this was the final rating, remove
+        ratingAverage and ratingCount entirely.
+
+        This means the location is genuinely
+        "not rated" rather than 0.0/10.
     */
 
     if (currentCount <= 1) {
@@ -2475,11 +2827,18 @@ async function removeLocationRating(
         await updateDoc(
             locationRef,
             {
-                ratingAverage: 0,
-                ratingCount: 0
+                ratingAverage:
+                    deleteField(),
+
+                ratingCount:
+                    deleteField()
             }
         );
 
+
+        /*
+            Update local location data.
+        */
 
         const localLocation =
             allLocations.find(
@@ -2490,9 +2849,8 @@ async function removeLocationRating(
 
         if (localLocation) {
 
-            localLocation.ratingAverage = 0;
-
-            localLocation.ratingCount = 0;
+            delete localLocation.ratingAverage;
+            delete localLocation.ratingCount;
 
         }
 
@@ -2503,17 +2861,15 @@ async function removeLocationRating(
 
 
     /*
-        Calculate the old total.
+        ==========================================
+        OTHER RATINGS STILL EXIST
+        ==========================================
     */
 
     const oldTotal =
         currentAverage *
         currentCount;
 
-
-    /*
-        Remove this user's rating.
-    */
 
     const newTotal =
         oldTotal -
@@ -3496,6 +3852,8 @@ function updateAccountUI() {
 
                 currentUsername = "";
 
+                currentUserData = {};
+
                 document.getElementById(
                     "loggedOutAccount"
                 ).style.display = "block";
@@ -3537,6 +3895,9 @@ if (userSnapshot.exists()) {
 
     const userData =
         userSnapshot.data();
+
+    currentUserData =
+        userData;
 
     currentUsername =
         userData.username ||
@@ -3618,6 +3979,32 @@ if (userSnapshot.exists()) {
                 "sidebarEmail"
             ).textContent =
                 user.email || "";
+
+                const accountDetailUsername =
+    document.getElementById(
+        "accountDetailUsername"
+    );
+
+const accountDetailEmail =
+    document.getElementById(
+        "accountDetailEmail"
+    );
+
+
+if (accountDetailUsername) {
+
+    accountDetailUsername.textContent =
+        username;
+
+}
+
+
+if (accountDetailEmail) {
+
+    accountDetailEmail.textContent =
+        email;
+
+}
 
 
            updateAccountUI();
@@ -3827,6 +4214,32 @@ document
                 ).textContent = "";
 
                 openModal("usernameModal");
+
+                const accountDetailUsername =
+    document.getElementById(
+        "accountDetailUsername"
+    );
+
+const accountDetailEmail =
+    document.getElementById(
+        "accountDetailEmail"
+    );
+
+
+if (accountDetailUsername) {
+
+    accountDetailUsername.textContent =
+        currentUsername;
+
+}
+
+
+if (accountDetailEmail) {
+
+    accountDetailEmail.textContent =
+        currentUser.email;
+
+}
 
             }
         );
@@ -5262,5 +5675,32 @@ if (safetyNotice && safetyAgree) {
         safetyNotice.classList.add("hidden");
 
     });
+
+}
+
+function closeAccountProfileDropdown() {
+
+    if (accountProfileDetails) {
+
+        accountProfileDetails.style.display =
+            "none";
+
+    }
+
+    if (accountProfileToggle) {
+
+        accountProfileToggle.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+
+    }
+
+    if (accountProfileArrow) {
+
+        accountProfileArrow.textContent =
+            "›";
+
+    }
 
 }

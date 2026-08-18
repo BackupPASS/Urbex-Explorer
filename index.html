@@ -344,6 +344,7 @@
             </div>
 
         </div>
+        
 
 
         <div class="sidebar-section">
@@ -375,6 +376,103 @@
             </div>
 
         </div>
+        
+           <!-- =========================
+             STATS
+        ========================= -->
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-section-title">
+                Stats
+            </div>
+
+            <div class="stats-box">
+
+                <div class="stat-item">
+
+                    <div class="stat-label">
+                        Explore since
+                    </div>
+
+                    <div
+                        id="exploreSince"
+                        class="stat-value"
+                    >
+                        —
+                    </div>
+
+                </div>
+
+
+                <div class="stat-item">
+
+                    <div class="stat-label">
+                        Locations viewed
+                    </div>
+
+                    <div
+                        id="locationsViewedCount"
+                        class="stat-value"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="stat-item">
+
+                    <div class="stat-label">
+                        Locations saved
+                    </div>
+
+                    <div
+                        id="locationsSavedCount"
+                        class="stat-value"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =========================
+     EXPLORE
+========================= -->
+
+<div class="sidebar-section">
+
+    <div class="sidebar-section-title">
+        Explore
+    </div>
+
+    <div class="account-menu">
+
+        <button
+            id="viewedLocationsButton"
+            class="menu-button"
+            type="button"
+        >
+            Locations viewed
+            <span>›</span>
+        </button>
+
+        <button
+            id="savedLocationsButton"
+            class="menu-button"
+            type="button"
+        >
+            Saved locations
+            <span>›</span>
+        </button>
+
+    </div>
+
+</div>
 
 
         <!-- Admin only -->
@@ -435,7 +533,70 @@
 
         </div>
 
+</div>
+
+
+<!-- =========================
+     SAVED / VIEWED LOCATIONS
+========================= -->
+
+<div
+    id="exploreLocationsView"
+    class="explore-locations-view"
+    style="display:none;"
+>
+
+    <div class="sidebar-header">
+
+        <button
+            id="exploreBackButton"
+            class="sidebar-back-button"
+            type="button"
+        >
+            ←
+        </button>
+
+        <div class="sidebar-title" id="exploreViewTitle">
+            Saved locations
+        </div>
+
+        <button
+            id="exploreCloseButton"
+            class="close-button"
+            type="button"
+        >
+            ×
+        </button>
+
     </div>
+
+
+    <div class="explore-search">
+
+        <input
+            id="exploreLocationSearch"
+            class="input"
+            type="search"
+            placeholder="Search locations..."
+            autocomplete="off"
+        >
+
+    </div>
+
+
+    <div
+        id="exploreLocationList"
+        class="explore-location-list"
+    >
+
+        <div class="empty-state">
+            No locations yet.
+        </div>
+
+    </div>
+
+</div>
+
 
 </aside>
 
@@ -915,6 +1076,70 @@
 
 </div>
 
+<!-- =========================================================
+     EXPLORER SAFETY NOTICE
+========================================================= -->
+
+<div id="safetyNotice" class="safety-notice">
+
+    <div class="safety-modal">
+
+        <div class="safety-icon">!</div>
+
+        <div class="safety-kicker">
+            IMPORTANT NOTICE
+        </div>
+
+        <h2>Before you continue</h2>
+
+        <p>
+            PlingifyPlug Explorer provides information about locations
+            for informational and exploration purposes only.
+        </p>
+
+        <p>
+            <strong>Do not enter a location unless you have permission
+            and it is lawful to do so.</strong>
+            Access to abandoned buildings, rooftops and other locations
+            may be restricted or prohibited. Attempting to access them
+            could result in injury or legal consequences.
+        </p>
+
+        <p>
+            Locations can change over time. A place listed here may no
+            longer be abandoned, may have restricted access, or may have
+            become unsafe since it was added.
+        </p>
+
+        <p>
+            Never damage, break into, climb, or remove anything from a
+            location. Respect property, security measures, residents,
+            businesses and emergency services.
+        </p>
+
+        <p>
+            <strong>
+                PlingifyPlug does not guarantee that any location is safe,
+                accessible or legally accessible, and does not encourage
+                trespassing or other unlawful activity.
+            </strong>
+        </p>
+
+        <p class="safety-final">
+            By continuing, you acknowledge that you are responsible for
+            checking the current laws, access restrictions and conditions
+            yourself.
+        </p>
+
+        <button id="safetyAgree" class="safety-agree">
+            I Understand &amp; Agree
+            <span>→</span>
+        </button>
+
+    </div>
+
+</div>
+
 
 <div id="toastContainer" class="toast-container"></div>
 
@@ -926,4 +1151,4 @@
 <script type="module" src="script.js"></script>
 
 </body>
-</html>
+</html>>

@@ -36,7 +36,7 @@
 <nav class="navbar">
 
     <div class="brand">
-        <div class="brand-icon">P</div>
+        <div class="brand-icon">PUE</div>
         <div class="brand-text">PlingifyPlug Urbex Explorer</div>
         <span class="beta-tag">BETA</span>
     </div>
@@ -311,50 +311,68 @@
 
     <!-- Logged in -->
 
-    <div id="loggedInAccount" style="display:none;">
+   <!-- Logged in -->
 
-        <div class="account-profile">
+<div id="loggedInAccount" style="display:none;">
 
-            <div class="profile-top">
+    <!-- ACCOUNT PROFILE -->
+    <div class="account-profile-dropdown">
+
+        <button
+            id="accountProfileToggle"
+            class="account-profile-toggle"
+            type="button"
+            aria-expanded="false"
+        >
+
+            <div
+                id="sidebarAvatar"
+                class="large-avatar"
+            >
+                PP
+            </div>
+
+            <div class="account-profile-main">
 
                 <div
-                    id="sidebarAvatar"
-                    class="large-avatar"
+                    id="sidebarUsername"
+                    class="profile-name"
                 >
-                    PP
+                    Username
                 </div>
 
-                <div>
-
-                    <div
-                        id="sidebarUsername"
-                        class="profile-name"
-                    >
-                        Username
-                    </div>
-
-                    <div
-                        id="sidebarEmail"
-                        class="profile-email"
-                    >
-                        email@example.com
-                    </div>
-
+                <div
+                    id="sidebarEmail"
+                    class="profile-email"
+                >
+                    email@example.com
                 </div>
 
             </div>
 
-        </div>
-        
+            <span
+                id="accountProfileArrow"
+                class="account-profile-arrow"
+            >
+                ›
+            </span>
+
+        </button>
 
 
-        <div class="sidebar-section">
+        <!-- ACCOUNT SETTINGS DROPDOWN -->
 
-            <div class="sidebar-section-title">
-                Account
+        <div
+            id="accountProfileDetails"
+            class="account-profile-details"
+            style="display:none;"
+        >
+
+            <div class="account-detail-label">
+                Account Settings
             </div>
 
-            <div class="account-menu">
+            <div class="account-profile-actions">
 
                 <button
                     id="changeUsernameButton"
@@ -376,60 +394,120 @@
 
             </div>
 
-        </div>
-        
-           <!-- =========================
-             STATS
-        ========================= -->
 
-        <div class="sidebar-section">
+            <div class="sidebar-section">
 
-            <div class="sidebar-section-title">
-                Stats
+                <div class="sidebar-section-title">
+                    Account actions
+                </div>
+
+                <div class="account-menu">
+
+                    <button
+                        id="deleteAccountButton"
+                        class="menu-button danger"
+                        type="button"
+                    >
+                        Delete account
+                        <span>›</span>
+                    </button>
+
+                    <button
+                        id="signOutButton"
+                        class="menu-button"
+                        type="button"
+                    >
+                        Sign out
+                        <span>→</span>
+                    </button>
+
+                </div>
+
             </div>
 
-            <div class="stats-box">
+        </div>
 
-                <div class="stat-item">
+    </div>
 
-                    <div class="stat-label">
+
+    <!-- STATS -->
+
+    <div class="sidebar-section">
+
+        <div class="account-profile-dropdown">
+
+            <button
+                id="statsDropdownButton"
+                class="account-profile-toggle"
+                type="button"
+                aria-expanded="false"
+            >
+
+                <div class="account-profile-main">
+
+                    <div class="profile-name">
+                        Stats
+                    </div>
+
+                </div>
+
+                <span
+                    id="statsDropdownArrow"
+                    class="account-profile-arrow"
+                >
+                    ›
+                </span>
+
+            </button>
+
+
+            <div
+                id="statsProfileDetails"
+                class="account-profile-details"
+                style="display:none;"
+            >
+
+                <div class="account-detail">
+
+                    <div class="account-detail-label">
                         Explorer since
                     </div>
 
                     <div
                         id="exploreSince"
-                        class="stat-value"
+                        class="account-detail-value"
                     >
                         —
                     </div>
 
                 </div>
 
-                <div class="stat-item">
 
-    <div class="stat-label">
-        Locations explored
-    </div>
+                <div class="account-detail">
 
-    <div
-        id="locationsExploredCount"
-        class="stat-value"
-    >
-        0
-    </div>
+                    <div class="account-detail-label">
+                        Locations explored
+                    </div>
 
-</div>
+                    <div
+                        id="locationsExploredCount"
+                        class="account-detail-value"
+                    >
+                        0
+                    </div>
+
+                </div>
 
 
-                <div class="stat-item">
+                <div class="account-detail">
 
-                    <div class="stat-label">
+                    <div class="account-detail-label">
                         Recently viewed
                     </div>
 
                     <div
                         id="locationsViewedCount"
-                        class="stat-value"
+                        class="account-detail-value"
                     >
                         0
                     </div>
@@ -437,150 +515,118 @@
                 </div>
 
 
-                <div class="stat-item">
+                <div class="account-detail">
 
-                    <div class="stat-label">
+                    <div class="account-detail-label">
                         Locations saved
                     </div>
 
-                    <div
-                        id="locationsSavedCount"
-                        class="stat-value"
-                    >
+                    <div class="account-detail-value">
                         0
                     </div>
 
                 </div>
 
-                <div class="stat-item explore-progress-stat">
 
-    <div class="stat-label">
-        Explore progress
+                <div class="account-detail">
+
+                    <div class="account-detail-label">
+                        Explore progress
+                    </div>
+
+                    <div class="explore-progress">
+
+                        <div
+                            id="exploreProgress"
+                            class="explore-progress-fill"
+                        ></div>
+
+                    </div>
+
+                    <div
+                        id="exploreProgressText"
+                        class="explore-progress-text"
+                    >
+                        0% explored
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
-    <div class="explore-progress">
 
-        <div
-            id="exploreProgress"
-            class="explore-progress-fill"
-        ></div>
+    <!-- EXPLORE -->
+
+    <div class="sidebar-section">
+
+        <div class="sidebar-section-title">
+            Explore
+        </div>
+
+        <div class="account-menu">
+
+            <button
+                id="viewedLocationsButton"
+                class="menu-button"
+                type="button"
+            >
+                Recently viewed
+                <span>›</span>
+            </button>
+
+            <button
+                id="savedLocationsButton"
+                class="menu-button"
+                type="button"
+            >
+                Saved locations
+                <span>›</span>
+            </button>
+
+            <button
+                id="exploredLocationsButton"
+                class="menu-button"
+                type="button"
+            >
+                Locations explored
+                <span>›</span>
+            </button>
+
+        </div>
 
     </div>
+
+
+    <!-- ADMIN -->
 
     <div
-        id="exploreProgressText"
-        class="explore-progress-text"
+        id="adminSection"
+        class="sidebar-section"
+        style="display:none;"
     >
-        0% explored
-    </div>
 
-</div>
+        <div class="sidebar-section-title">
+            Explorer Administration
+        </div>
 
-            </div>
+        <div class="account-menu">
+
+            <button
+                id="addLocationButton"
+                class="menu-button"
+                type="button"
+            >
+                Add to map
+                <span>+</span>
+            </button>
 
         </div>
 
-        <!-- =========================
-     EXPLORE
-========================= -->
-
-<div class="sidebar-section">
-
-    <div class="sidebar-section-title">
-        Explore
     </div>
-
-    <div class="account-menu">
-
-        <button
-            id="viewedLocationsButton"
-            class="menu-button"
-            type="button"
-        >
-            Recently viewed
-            <span>›</span>
-        </button>
-
-        <button
-            id="savedLocationsButton"
-            class="menu-button"
-            type="button"
-        >
-            Saved locations
-            <span>›</span>
-        </button>
-
-                <button
-            id="exploredLocationsButton"
-            class="menu-button"
-            type="button"
-        >
-            Locations explored
-            <span>›</span>
-        </button>
-
-    </div>
-
-</div>
-
-
-        <!-- Admin only -->
-
-        <div
-            id="adminSection"
-            class="sidebar-section"
-            style="display:none;"
-        >
-
-            <div class="sidebar-section-title">
-                Explorer Administration
-            </div>
-
-            <div class="account-menu">
-
-                <button
-                    id="addLocationButton"
-                    class="menu-button"
-                    type="button"
-                >
-                    Add to map
-                    <span>+</span>
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="sidebar-section">
-
-            <div class="sidebar-section-title">
-                Account actions
-            </div>
-
-            <div class="account-menu">
-
-                <button
-                    id="deleteAccountButton"
-                    class="menu-button danger"
-                    type="button"
-                >
-                    Delete account
-                    <span>›</span>
-                </button>
-
-                <button
-                    id="signOutButton"
-                    class="menu-button"
-                    type="button"
-                >
-                    Sign out
-                    <span>→</span>
-                </button>
-
-            </div>
-
-        </div>
 
 </div>
 

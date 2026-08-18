@@ -943,13 +943,25 @@ main {
 }
 
 .sidebar-header {
+    position: sticky;
+    top: -22px;
+
+    z-index: 10;
+
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 
-    margin-bottom: 24px;
+    margin: -22px -22px 24px;
+    padding: 22px;
+
+    background: #0d0f11;
+
+    border-bottom: 1px solid transparent;
+
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
 }
 
 .sidebar-title {
@@ -1860,4 +1872,977 @@ textarea:focus-visible {
 
         transition-duration: 0.01ms !important;
     }
+}
+
+/* =========================================================
+   MAP LOCATION POPUP — PLINGIFYPLUG STYLE
+========================================================= */
+
+.map-popup {
+    width: 100%;
+    min-width: 240px;
+    max-width: 290px;
+
+    padding: 3px 2px 2px;
+
+    font-family: "Inter", sans-serif;
+    color: #ffffff;
+}
+
+
+/* =========================
+   TYPE
+========================= */
+
+.map-popup-type {
+    display: inline-flex;
+    align-items: center;
+
+    margin-bottom: 7px;
+
+    color: #aeb4ba;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+
+/* =========================
+   TITLE
+========================= */
+
+.map-popup-title {
+    margin: 0 0 8px;
+
+    color: #ffffff;
+
+    font-size: 18px;
+    font-weight: 800;
+
+    line-height: 1.2;
+    letter-spacing: -0.4px;
+}
+
+
+/* =========================
+   DESCRIPTION
+========================= */
+
+.map-popup-description {
+    margin: 0 0 13px;
+
+    color: #c7cbd0;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    line-height: 1.6;
+}
+
+
+/* =========================
+   TAGS
+========================= */
+
+.map-popup-tags {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    margin-bottom: 14px;
+}
+
+.map-popup-tag {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 5px 8px;
+
+    color: #dfe2e5;
+
+    background: #17191c;
+
+    border: 1px solid #2a2e33;
+
+    border-radius: 7px;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: default;
+
+    transition:
+        color 0.18s cubic-bezier(.2,.7,.3,1),
+        background 0.18s cubic-bezier(.2,.7,.3,1),
+        border-color 0.18s cubic-bezier(.2,.7,.3,1),
+        transform 0.18s cubic-bezier(.2,.7,.3,1),
+        box-shadow 0.18s cubic-bezier(.2,.7,.3,1);
+}
+
+.map-popup-tag:hover {
+    color: #ffffff;
+
+    background: #202428;
+
+    border-color: #3b4147;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 5px 14px rgba(0, 0, 0, 0.3);
+}
+
+.map-popup-tag:active {
+    transform: translateY(0) scale(0.95);
+}
+
+
+/* =========================
+   FIND OUT MORE BUTTON
+========================= */
+
+.map-popup-more {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 10px 12px;
+
+    color: #080900;
+
+    background: #d7ff3f;
+
+    border: 1px solid #d7ff3f;
+
+    border-radius: 9px;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s cubic-bezier(.2,.7,.3,1),
+        border-color 0.18s cubic-bezier(.2,.7,.3,1),
+        transform 0.18s cubic-bezier(.2,.7,.3,1),
+        box-shadow 0.18s cubic-bezier(.2,.7,.3,1);
+}
+
+.map-popup-more:hover {
+    color: #080900;
+
+    background: #e0ff63;
+
+    border-color: #e0ff63;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.map-popup-more:active {
+    transform: translateY(0) scale(0.97);
+
+    box-shadow: none;
+}
+
+.map-popup-more span {
+    font-size: 15px;
+
+    transition:
+        transform 0.18s cubic-bezier(.2,.7,.3,1);
+}
+
+.map-popup-more:hover span {
+    transform: translateX(3px);
+}
+
+
+/* =========================================================
+   LEAFLET POPUP — DARK BLACK
+========================================================= */
+
+.leaflet-popup-content-wrapper {
+    padding: 0;
+
+    background: #08090a !important;
+
+    color: #ffffff !important;
+
+    border: 1px solid #25292d;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+.leaflet-popup-content {
+    margin: 14px;
+}
+
+
+/* =========================
+   POPUP ARROW
+========================= */
+
+.leaflet-popup-tip {
+    background: #08090a !important;
+
+    box-shadow: none;
+
+    border: 1px solid #25292d;
+}
+
+
+/* =========================
+   CLOSE BUTTON
+========================= */
+
+.leaflet-popup-close-button {
+    top: 7px !important;
+    right: 7px !important;
+
+    width: 27px !important;
+    height: 27px !important;
+
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+
+    color: #969ba1 !important;
+
+    background: #111315 !important;
+
+    border: 1px solid #25292d !important;
+
+    border-radius: 7px !important;
+
+    font-size: 17px !important;
+    font-weight: 500 !important;
+
+    line-height: 1 !important;
+
+    transition:
+        color 0.18s cubic-bezier(.2,.7,.3,1),
+        background 0.18s cubic-bezier(.2,.7,.3,1),
+        border-color 0.18s cubic-bezier(.2,.7,.3,1),
+        transform 0.18s cubic-bezier(.2,.7,.3,1);
+}
+
+.leaflet-popup-close-button:hover {
+    color: #ffffff !important;
+
+    background: #1b1e21 !important;
+
+    border-color: #353a40 !important;
+
+    transform: rotate(3deg) scale(1.05);
+}
+
+.leaflet-popup-close-button:active {
+    transform: scale(0.9);
+}
+
+
+/* =========================================================
+   LOCATION CARD HIGHLIGHT
+========================================================= */
+
+.location-card-highlight {
+    transform: translateY(-3px);
+
+    background: var(--panel-hover);
+
+    border-color: var(--accent);
+
+    box-shadow:
+        0 0 0 1px var(--accent),
+        0 12px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================================
+   SAFETY NOTICE
+========================================================= */
+
+.safety-notice {
+    position: fixed;
+    inset: 0;
+
+    z-index: 10000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(8, 9, 10, 0.78);
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    opacity: 1;
+    visibility: visible;
+
+    transition:
+        opacity 0.22s ease,
+        visibility 0.22s ease;
+}
+
+.safety-notice.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   SAFETY MODAL
+========================================================= */
+
+.safety-modal {
+    width: min(620px, 100%);
+    max-height: calc(100vh - 40px);
+
+    overflow-y: auto;
+
+    padding: 28px;
+
+    background: var(--panel);
+
+    color: var(--text);
+
+    border: 1px solid var(--border);
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.5);
+
+    transform: translateY(12px) scale(0.98);
+
+    animation:
+        safety-modal-in 0.28s
+        cubic-bezier(.2,.7,.3,1)
+        forwards;
+}
+
+@keyframes safety-modal-in {
+
+    to {
+        transform: translateY(0) scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   SAFETY ICON
+========================================================= */
+
+.safety-icon {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    margin-bottom: 17px;
+
+    background: var(--accent);
+
+    color: var(--accent-text);
+
+    border-radius: 10px;
+
+    font-size: 17px;
+    font-weight: 900;
+
+    transition:
+        transform var(--transition),
+        border-radius var(--transition);
+}
+
+.safety-icon:hover {
+    transform: rotate(-3deg) scale(1.04);
+
+    border-radius: 11px;
+}
+
+
+/* =========================================================
+   KICKER
+========================================================= */
+
+.safety-kicker {
+    margin-bottom: 7px;
+
+    color: var(--muted-2);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 0.13em;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.safety-modal h2 {
+    margin: 0 0 16px;
+
+    color: var(--text);
+
+    font-size: 26px;
+
+    line-height: 1.15;
+
+    letter-spacing: -0.8px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   TEXT
+========================================================= */
+
+.safety-modal p {
+    margin: 0 0 13px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.65;
+}
+
+.safety-modal strong {
+    color: var(--text);
+
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   FINAL NOTICE
+========================================================= */
+
+.safety-final {
+    margin-top: 18px !important;
+
+    padding-top: 16px;
+
+    border-top: 1px solid var(--border);
+
+    color: var(--muted-2) !important;
+}
+
+
+/* =========================================================
+   AGREE BUTTON
+========================================================= */
+
+.safety-agree {
+    width: 100%;
+
+    min-height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-top: 21px;
+
+    padding: 0 13px;
+
+    color: var(--accent-text);
+
+    background: var(--accent);
+
+    border: 1px solid var(--accent);
+
+    border-radius: 9px;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+
+/* BUTTON HOVER */
+
+.safety-agree:hover {
+    background: var(--accent-hover);
+
+    border-color: var(--accent-hover);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 22px rgba(215, 255, 63, 0.12);
+}
+
+
+/* ARROW */
+
+.safety-agree span {
+    font-size: 16px;
+
+    transition:
+        transform var(--transition);
+}
+
+.safety-agree:hover span {
+    transform: translateX(4px);
+}
+
+
+/* BUTTON CLICK */
+
+.safety-agree:active {
+    transform: scale(0.97);
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 560px) {
+
+    .safety-notice {
+        padding: 10px;
+    }
+
+    .safety-modal {
+        padding: 21px;
+
+        max-height: calc(100vh - 20px);
+
+        border-radius: 13px;
+    }
+
+    .safety-modal h2 {
+        font-size: 23px;
+    }
+
+    .safety-modal p {
+        font-size: 11px;
+
+        line-height: 1.65;
+    }
+
+}
+
+/* =========================================================
+   EXPLORE SIDEBAR
+========================================================= */
+
+.explore-locations-view {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================================================
+   EXPLORE SIDEBAR — BACK BUTTON
+========================================================= */
+
+.sidebar-back-button {
+    width: 38px;
+    height: 38px;
+
+    display: grid;
+    place-items: center;
+
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+
+    border-radius: 9px;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition),
+        color var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.sidebar-back-button:hover {
+    background: var(--panel-hover);
+    color: var(--text);
+    border-color: var(--border-hover);
+
+    transform: translateX(-2px);
+
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.sidebar-back-button:active {
+    transform: translateX(0) scale(0.94);
+
+    box-shadow: none;
+}
+
+.sidebar-back-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.explore-search {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.explore-location-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+
+/* =========================================================
+   EXPLORE LOCATION ITEM
+========================================================= */
+
+.explore-location-item {
+    position: relative;
+
+    display: block;
+    width: 100%;
+
+    text-align: left;
+
+    padding: 14px;
+    margin-bottom: 8px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    background: var(--panel);
+    color: var(--text);
+
+    cursor: pointer;
+
+    transition:
+        transform var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+.explore-location-item:hover {
+    transform: translateX(3px);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.explore-location-item:active {
+    transform: translateX(1px) scale(0.99);
+}
+
+.explore-location-type {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+
+    color: var(--muted);
+
+    margin-bottom: 5px;
+}
+
+.explore-location-name {
+    font-size: 14px;
+    font-weight: 700;
+
+    padding-right: 25px;
+}
+
+.explore-location-description {
+    margin-top: 6px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+    line-height: 1.5;
+
+    padding-right: 20px;
+}
+
+.explore-location-arrow {
+    position: absolute;
+
+    right: 14px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: var(--muted);
+
+    font-size: 18px;
+
+    transition:
+        color var(--transition),
+        transform var(--transition);
+}
+
+.explore-location-item:hover .explore-location-arrow {
+    color: var(--accent);
+
+    transform: translate(3px, -50%);
+}
+
+.explore-location-item:hover
+.explore-location-arrow {
+    transform:
+        translate(3px, -50%);
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.explore-empty {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.explore-empty-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.explore-empty-title {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.explore-empty-text {
+    margin-top: 6px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
+
+.location-card-actions {
+    display: flex;
+    align-items: center;
+
+    margin-top: 14px;
+}
+
+.location-save-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 36px;
+
+    padding: 0 11px;
+
+    color: var(--muted);
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.location-save-button:hover {
+    color: var(--text);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+.location-save-button:active {
+    transform: scale(0.95);
+
+    box-shadow: none;
+}
+
+/* SAVED STATE */
+
+.location-save-button.saved {
+    color: var(--accent-text);
+
+    background: var(--accent);
+
+    border-color: var(--accent);
+
+    box-shadow:
+        0 5px 18px rgba(215, 255, 63, 0.08);
+}
+
+.location-save-button.saved:hover {
+    color: var(--accent-text);
+
+    background: var(--accent-hover);
+
+    border-color: var(--accent-hover);
+
+    box-shadow:
+        0 7px 22px rgba(215, 255, 63, 0.12);
+}
+
+.location-save-button span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 14px;
+
+    line-height: 1;
+
+    transition:
+        transform var(--transition);
+}
+
+.location-save-button:hover span {
+    transform: translateY(-1px);
+}
+
+.location-save-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* =========================================================
+   LOCATION CARD CLICK
+========================================================= */
+
+.location-card {
+    cursor: pointer;
+}
+
+.location-card-highlight {
+    animation:
+        locationHighlight 1.8s ease;
+}
+
+@keyframes locationHighlight {
+
+    0% {
+        transform: scale(1);
+    }
+
+    20% {
+        transform: scale(1.015);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+/* ==========================================
+   HIDE ACCOUNT HEADER ON SAVED / VIEWED
+========================================== */
+
+/* Hide the Account + X header when viewing
+   Saved / Viewed Locations */
+#accountSidebar:has(#exploreLocationsView[style*="display: block"]) > .sidebar-header {
+    display: none;
+}
+
+/* ==========================================
+   ACCOUNT STATS
+========================================== */
+
+.stats-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.stat-item {
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
 }

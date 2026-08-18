@@ -805,12 +805,9 @@ main {
 
 .tags {
     display: flex;
-
+    align-items: center;
     flex-wrap: wrap;
-
-    gap: 5px;
-
-    margin-top: 13px;
+    gap: 8px;
 }
 
 .tag {
@@ -840,6 +837,8 @@ main {
     background: #202428;
 
     border-color: var(--border-hover);
+
+    transform: translateY(-1px);
 }
 
 
@@ -2672,6 +2671,9 @@ textarea:focus-visible {
 .location-card-actions {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+
+    gap: 6px;
 
     margin-top: 14px;
 }
@@ -2845,4 +2847,741 @@ textarea:focus-visible {
     font-size: 14px;
     font-weight: 600;
     color: var(--text);
+}
+
+/* =========================================================
+   LOCATION META TAGS
+========================================================= */
+
+.location-rating {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    gap: 4px;
+
+    margin-top: 0px;
+    padding: 5px 8px;
+
+    color: #dfe2e5;
+
+    background: #191c1f;
+
+    border: 1px solid var(--border);
+
+    border-radius: 6px;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition);
+}
+
+.location-rating:hover {
+    color: var(--text);
+
+    background: #202428;
+
+    border-color: var(--border-hover);
+
+    transform: translateY(-1px);
+}
+
+.location-rating-stars {
+    display: inline-flex;
+    gap: 2px;
+
+    color: var(--accent);
+
+    font-size: 10px;
+    letter-spacing: 0;
+}
+
+.location-rating-value {
+    color: #dfe2e5;
+}
+
+.location-rating-count {
+    color: var(--muted-2);
+
+    font-weight: 600;
+}
+
+/* =========================================================
+   EXPLORED BUTTON
+========================================================= */
+
+.location-explored-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 36px;
+
+    padding: 0 11px;
+
+    color: var(--muted);
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.location-explored-button:hover {
+    color: var(--text);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+.location-explored-button:active {
+    transform: scale(0.95);
+
+    box-shadow: none;
+}
+
+
+/* EXPLORED */
+
+.location-explored-button.explored {
+    color: var(--accent-text);
+
+    background: var(--accent);
+
+    border-color: var(--accent);
+}
+
+.location-explored-button.explored:hover {
+    color: var(--accent-text);
+
+    background: var(--accent-hover);
+
+    border-color: var(--accent-hover);
+}
+
+/* =========================================================
+   LOCATION CARD — GOOGLE MAPS BUTTON
+========================================================= */
+
+.location-google-maps-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    min-height: 36px;
+
+    padding: 0 11px;
+
+    color: var(--muted);
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 9px;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.location-google-maps-button:hover {
+    color: var(--text);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+.location-google-maps-button:active {
+    transform: scale(0.95);
+
+    box-shadow: none;
+}
+
+.location-google-maps-button span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 14px;
+
+    line-height: 1;
+
+    transition:
+        transform var(--transition);
+}
+
+.location-google-maps-button:hover span {
+    transform: translate(2px, -2px);
+}
+
+/* =========================================================
+   MAP POPUP — GOOGLE MAPS BUTTON
+========================================================= */
+
+.map-popup-google {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    min-height: 40px;
+
+    padding: 0 12px;
+
+    color: var(--accent-text);
+
+    background: var(--accent);
+
+    border: 1px solid var(--accent);
+
+    border-radius: 9px;
+
+    font-family: inherit;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.map-popup-google:hover {
+    color: var(--accent-text);
+
+    background: var(--accent-hover);
+
+    border-color: var(--accent-hover);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.map-popup-google:active {
+    transform: scale(0.97);
+
+    box-shadow: none;
+}
+
+.map-popup-google span {
+    font-size: 15px;
+
+    transition:
+        transform var(--transition);
+}
+
+.map-popup-google:hover span {
+    transform: translate(3px, -2px);
+}
+
+/* =========================================================
+   MAP POPUP — ACTION BUTTONS
+========================================================= */
+
+.map-popup-actions {
+    display: flex;
+    align-items: stretch;
+
+    gap: 6px;
+
+    width: 100%;
+}
+
+.map-popup-actions .map-popup-google,
+.map-popup-actions .map-popup-more {
+    flex: 1;
+    width: auto;
+}
+
+/* =========================================================
+   RATING — 1 TO 10 BUTTONS
+========================================================= */
+
+#ratingButtons {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
+    gap: 6px;
+
+    margin-top: 10px;
+}
+
+.rating-button {
+    min-height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 7px 8px;
+
+    color: #bfc4c9;
+
+    background: #191c1f;
+
+    border: 1px solid var(--border);
+
+    border-radius: 7px;
+
+    font-size: 11px;
+    font-weight: 750;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+}
+
+.rating-button:hover {
+    color: var(--accent-text);
+
+    background: var(--accent);
+
+    border-color: var(--accent);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 6px 16px rgba(215, 255, 63, 0.08);
+}
+
+.rating-button:active {
+    transform: scale(0.94);
+
+    box-shadow: none;
+}
+
+/* =========================================================
+   AUTH SUBMIT ROW
+========================================================= */
+
+.auth-submit-row {
+    display: flex;
+    align-items: stretch;
+    gap: 7px;
+    width: 100%;
+    margin-top: 18px;
+}
+
+/* Make BOTH buttons look like .button primary */
+
+.auth-submit-row button {
+    flex: 1;
+    width: 100%;
+    min-height: 40px;
+
+    padding: 0 14px;
+
+    color: var(--accent-text);
+    background: var(--accent);
+
+    border: 1px solid var(--accent);
+    border-radius: 9px;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform 0.1s ease,
+        box-shadow var(--transition);
+}
+
+/* Hover */
+
+.auth-submit-row button:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+
+    transform: translateY(-1px);
+}
+
+/* Click */
+
+.auth-submit-row button:active {
+    transform: scale(0.96);
+    box-shadow: none;
+}
+
+.beta-tag {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 4px 8px;
+
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+
+    color: #fff;
+
+    background: #d5ff3f63;;
+    border: 1px solid #e0ff63;
+
+    border-radius: 999px;
+
+    line-height: 1;
+}
+
+/* =========================================================
+   LOCATION MAP PINS
+========================================================= */
+
+.custom-location-marker {
+    background: transparent;
+    border: none;
+}
+
+.location-pin {
+    width: 26px;
+    height: 34px;
+
+    position: relative;
+
+    transform: rotate(-45deg);
+
+    border-radius: 50% 50% 50% 0;
+
+    border: 3px solid #ffffff;
+
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.35);
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+/* Pin centre */
+
+.location-pin-dot {
+    position: absolute;
+
+    width: 8px;
+    height: 8px;
+
+    top: 50%;
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%)
+        rotate(45deg);
+
+    background: #ffffff;
+
+    border-radius: 50%;
+}
+
+/* SAVED */
+
+.location-pin.saved {
+    background: #ff4d5a;
+}
+
+/* EXPLORED */
+
+.location-pin.explored {
+    background: #48d597;
+}
+
+/* =========================================================
+   LOCATION RATINGS MODAL
+========================================================= */
+
+#ratingListModal .modal {
+    max-width: 500px;
+}
+
+
+/* =========================================================
+   MODAL EYEBROW
+========================================================= */
+
+#ratingListModal .modal-eyebrow {
+
+    margin-bottom: 4px;
+
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   OVERALL RATING
+========================================================= */
+
+.rating-overall {
+
+    margin-top: 18px;
+    margin-bottom: 20px;
+
+    padding: 18px;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: var(--surface);
+
+    text-align: center;
+}
+
+
+.rating-overall-label {
+
+    margin-bottom: 6px;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    color: var(--muted);
+}
+
+
+.rating-overall-score {
+
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+
+    gap: 3px;
+
+    font-size: 30px;
+    font-weight: 800;
+
+    color: var(--text);
+}
+
+
+.rating-overall-star {
+
+    font-size: 28px;
+
+    color: var(--text);
+}
+
+
+.rating-overall-out-of {
+
+    font-size: 15px;
+    font-weight: 600;
+
+    color: var(--muted);
+}
+
+
+.rating-overall-count {
+
+    margin-top: 5px;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   INDIVIDUAL RATINGS HEADING
+========================================================= */
+
+.rating-list-heading {
+
+    margin-bottom: 8px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    color: var(--text);
+
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+
+/* =========================================================
+   RATING LIST
+========================================================= */
+
+#ratingListContent {
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    max-height: 450px;
+
+    overflow-y: auto;
+}
+
+
+/* =========================================================
+   INDIVIDUAL RATING ROW
+========================================================= */
+
+.rating-user-row {
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 13px 14px;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--surface);
+}
+
+
+/* =========================================================
+   USERNAME SECTION
+========================================================= */
+
+.rating-user-info {
+
+    min-width: 0;
+    flex: 1;
+}
+
+
+.rating-user-label {
+
+    margin-bottom: 3px;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+
+    color: var(--muted);
+}
+
+
+.rating-user-name {
+
+    min-width: 0;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    color: var(--text);
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   USER RATING SECTION
+========================================================= */
+
+.rating-user-score {
+
+    flex-shrink: 0;
+
+    text-align: right;
+}
+
+
+.rating-user-rating {
+
+    font-size: 15px;
+    font-weight: 800;
+
+    color: var(--text);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 520px) {
+
+    #ratingListModal .modal {
+        width: calc(100% - 24px);
+        max-width: none;
+    }
+
+    .rating-user-row {
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .rating-overall {
+        padding: 16px;
+    }
+
 }

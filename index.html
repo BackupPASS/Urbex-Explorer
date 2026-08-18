@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Urbex Explorer — PlingifyPlug</title>
+    <title>Urbex Explorer - PlingifyPlug</title>
 
     <meta
         name="description"
-        content="PlingifyPlug Urbex Explorer — explore publicly shareable urban exploration locations across the UK."
+        content="PlingifyPlug Urbex Explorer - explore publicly shareable urban exploration locations across the UK."
     >
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,6 +38,7 @@
     <div class="brand">
         <div class="brand-icon">P</div>
         <div class="brand-text">PlingifyPlug Urbex Explorer</div>
+        <span class="beta-tag">BETA</span>
     </div>
 
     <div class="navbar-spacer"></div>
@@ -392,7 +393,7 @@
                 <div class="stat-item">
 
                     <div class="stat-label">
-                        Explore since
+                        Explorer since
                     </div>
 
                     <div
@@ -404,11 +405,26 @@
 
                 </div>
 
+                <div class="stat-item">
+
+    <div class="stat-label">
+        Locations explored
+    </div>
+
+    <div
+        id="locationsExploredCount"
+        class="stat-value"
+    >
+        0
+    </div>
+
+</div>
+
 
                 <div class="stat-item">
 
                     <div class="stat-label">
-                        Locations viewed
+                        Recently viewed
                     </div>
 
                     <div
@@ -436,6 +452,30 @@
 
                 </div>
 
+                <div class="stat-item explore-progress-stat">
+
+    <div class="stat-label">
+        Explore progress
+    </div>
+
+    <div class="explore-progress">
+
+        <div
+            id="exploreProgress"
+            class="explore-progress-fill"
+        ></div>
+
+    </div>
+
+    <div
+        id="exploreProgressText"
+        class="explore-progress-text"
+    >
+        0% explored
+    </div>
+
+</div>
+
             </div>
 
         </div>
@@ -457,7 +497,7 @@
             class="menu-button"
             type="button"
         >
-            Locations viewed
+            Recently viewed
             <span>›</span>
         </button>
 
@@ -467,6 +507,15 @@
             type="button"
         >
             Saved locations
+            <span>›</span>
+        </button>
+
+                <button
+            id="exploredLocationsButton"
+            class="menu-button"
+            type="button"
+        >
+            Locations explored
             <span>›</span>
         </button>
 
@@ -707,13 +756,24 @@
             </div>
 
 
-            <button
-                id="authSubmit"
-                class="button primary full"
-                type="submit"
-            >
-                Sign in
-            </button>
+<div class="auth-submit-row">
+
+    <button
+        type="button"
+        id="forgotPasswordButton"
+        class="forgot-password-button"
+    >
+        Forgot password?
+    </button>
+
+    <button
+        type="submit"
+        id="authSubmit"
+    >
+        Sign in
+    </button>
+
+</div>
 
             <div
                 id="authMessage"
@@ -1140,6 +1200,137 @@
 
 </div>
 
+<div
+    id="ratingModal"
+    class="modal-overlay"
+>
+
+    <div class="modal">
+
+        <h2>
+            Rate this location
+        </h2>
+
+        <p>
+            How would you rate your experience?
+        </p>
+
+        <div
+            id="ratingButtons"
+            class="rating-buttons"
+        ></div>
+
+        <div
+            id="ratingMessage"
+            class="auth-message"
+        ></div>
+
+        <button
+            type="button"
+            id="skipRatingButton"
+            class="button"
+        >
+            Skip
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     LOCATION RATINGS MODAL
+========================= -->
+
+<div
+    id="ratingListModal"
+    class="modal-overlay"
+>
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="modal-eyebrow">
+                    COMMUNITY RATINGS
+                </div>
+
+                <h2
+                    id="ratingListTitle"
+                    class="modal-title"
+                >
+                    Location ratings
+                </h2>
+
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                data-close-modal="ratingListModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             OVERALL RATING
+        ========================= -->
+
+        <div class="rating-overall">
+
+            <div class="rating-overall-label">
+                Overall rating
+            </div>
+
+            <div class="rating-overall-score">
+
+                <span class="rating-overall-star">
+                    ★
+                </span>
+
+                <span id="ratingOverallScore">
+                    —
+                </span>
+
+                <span class="rating-overall-out-of">
+                    / 10
+                </span>
+
+            </div>
+
+            <div
+                id="ratingOverallCount"
+                class="rating-overall-count"
+            >
+                Based on 0 ratings
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             INDIVIDUAL RATINGS
+        ========================= -->
+
+        <div class="rating-list-heading">
+            Individual ratings
+        </div>
+
+        <div id="ratingListContent">
+
+            <div class="empty-state">
+                Loading ratings...
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 <div id="toastContainer" class="toast-container"></div>
 
@@ -1151,4 +1342,4 @@
 <script type="module" src="script.js"></script>
 
 </body>
-</html>>
+</html>

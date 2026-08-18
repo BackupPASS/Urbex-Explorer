@@ -2462,9 +2462,14 @@ textarea:focus-visible {
 ========================================================= */
 
 .explore-locations-view {
+    width: 100%;
     height: 100%;
+    min-height: 100%;
+
     display: flex;
     flex-direction: column;
+
+    background: #0d0f11;
 }
 
 /* =========================================================
@@ -2520,14 +2525,21 @@ textarea:focus-visible {
 }
 
 .explore-search {
-    padding: 16px;
+    flex: 0 0 auto;
+
+    padding: 16px 20px;
+
     border-bottom: 1px solid var(--border);
 }
 
 .explore-location-list {
-    flex: 1;
+    flex: 1 1 auto;
+
+    min-height: 0;
+
     overflow-y: auto;
-    padding: 12px;
+
+    padding: 12px 20px 20px;
 }
 
 
@@ -2813,8 +2825,23 @@ textarea:focus-visible {
 
 /* Hide the Account + X header when viewing
    Saved / Viewed Locations */
-#accountSidebar:has(#exploreLocationsView[style*="display: block"]) > .sidebar-header {
+/* =========================================================
+   EXPLORE VIEW — FULL SIDEBAR TAKEOVER
+========================================================= */
+
+#accountSidebar.explore-mode {
+    padding: 0;
+}
+
+#accountSidebar.explore-mode .sidebar-header {
     display: none;
+}
+
+#accountSidebar.explore-mode #exploreLocationsView {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
 }
 
 /* ==========================================
@@ -3585,3 +3612,152 @@ textarea:focus-visible {
     }
 
 }
+
+/* =========================================================
+   ACCOUNT PROFILE DROPDOWN
+========================================================= */
+
+.account-profile-dropdown {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+}
+
+
+/* Main clickable profile */
+
+.account-profile-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 14px;
+
+    border: 0;
+    background: transparent;
+
+    color: inherit;
+    text-align: left;
+
+    cursor: pointer;
+}
+
+
+/* Keep the avatar from shrinking */
+
+.account-profile-toggle .large-avatar {
+    flex-shrink: 0;
+}
+
+
+/* Username + email */
+
+.account-profile-main {
+    min-width: 0;
+    flex: 1;
+}
+
+#accountSidebar.explore-mode {
+    padding: 0;
+}
+
+#accountSidebar.explore-mode .sidebar-header {
+    display: none;
+}
+
+#accountSidebar.explore-mode #exploreLocationsView {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+}
+
+/* Arrow */
+
+.account-profile-arrow {
+    flex-shrink: 0;
+
+    font-size: 22px;
+    line-height: 1;
+
+    color: var(--muted);
+
+    transition:
+        transform 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.account-profile-toggle:hover
+.account-profile-arrow {
+    color: var(--text);
+}
+
+
+/* Details area */
+
+.account-profile-details {
+    padding: 0 14px 14px;
+}
+
+#accountSidebar:has(#exploreLocationsView[style*="display: block"]) > .sidebar-header {
+    display: none;
+}
+
+
+
+/* Individual detail */
+
+.account-detail {
+    padding: 10px 0;
+
+    border-top: 1px solid var(--border);
+}
+
+
+/* Label */
+
+.account-detail-label {
+    margin-bottom: 4px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+
+    color: var(--muted);
+}
+
+
+/* Value */
+
+.account-detail-value {
+    font-size: 14px;
+    font-weight: 600;
+
+    color: var(--text);
+
+    overflow-wrap: anywhere;
+}
+
+
+/* Username/password buttons */
+
+.account-profile-actions {
+    margin-top: 8px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+
+/* Make the existing buttons fit nicely */
+
+.account-profile-actions .menu-button {
+    width: 100%;
+}
+

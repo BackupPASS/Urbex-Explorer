@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Urbex Explorer — PlingifyPlug</title>
+
+    <meta
+        name="description"
+        content="PlingifyPlug Urbex Explorer — explore publicly shareable urban exploration locations across the UK."
+    >
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        crossorigin=""
+    >
+</head>
+
+<body>
+
+<!-- =========================
+     NAVBAR
+========================= -->
+
+<nav class="navbar">
+
+    <div class="brand">
+        <div class="brand-icon">P</div>
+        <div class="brand-text">PlingifyPlug Urbex Explorer</div>
+    </div>
+
+    <div class="navbar-spacer"></div>
+
+    <div class="nav-actions">
+
+        <div id="searchWrapper" class="search-wrapper">
+            <input
+                id="navbarSearch"
+                class="navbar-search"
+                type="search"
+                placeholder="Search locations..."
+                autocomplete="off"
+            >
+        </div>
+
+        <button
+            id="searchButton"
+            class="nav-button"
+            type="button"
+            title="Search"
+        >
+            Search
+        </button>
+
+        <button
+            id="accountButton"
+            class="nav-button"
+            type="button"
+        >
+            <div id="accountAvatar" class="account-avatar">?</div>
+            <span id="accountButtonText">Account</span>
+        </button>
+
+    </div>
+
+</nav>
+
+
+<main>
+
+    <!-- =========================
+         HERO
+    ========================= -->
+
+    <section class="hero">
+
+        <div class="hero-kicker">
+            PlingifyPlug
+        </div>
+
+        <h1>
+            Urbex Explorer
+        </h1>
+
+        <p>
+            Explore publicly shareable urban exploration locations
+            across the United Kingdom.
+        </p>
+
+    </section>
+
+
+    <!-- =========================
+         FILTERS
+    ========================= -->
+
+    <section class="filters">
+
+        <button
+            class="filter active"
+            data-filter="all"
+            type="button"
+        >
+            All
+        </button>
+
+        <button
+            class="filter"
+            data-filter="Abandoned"
+            type="button"
+        >
+            Abandoned
+        </button>
+
+        <button
+            class="filter"
+            data-filter="Rooftop"
+            type="button"
+        >
+            Rooftop
+        </button>
+
+        <button
+            class="filter"
+            data-filter="Security on site"
+            type="button"
+        >
+            Security on site
+        </button>
+
+        <button
+            class="filter"
+            data-filter="Security checks on site frequently"
+            type="button"
+        >
+            Security checks on site frequently
+        </button>
+
+        <button
+            class="filter"
+            data-filter="Alarmed"
+            type="button"
+        >
+            Alarmed
+        </button>
+
+    </section>
+
+
+    <!-- =========================
+         MAP
+    ========================= -->
+
+    <section class="map-container">
+
+        <div id="map">
+
+    <div class="map-layer-control">
+
+        <button
+            id="mainStreetButton"
+            class="map-layer-button active"
+            type="button"
+        >
+            Map
+        </button>
+
+        <button
+            id="mainSatelliteButton"
+            class="map-layer-button"
+            type="button"
+        >
+            Satellite
+        </button>
+
+    </div>
+
+</div>
+
+        <div class="map-controls">
+
+            <button
+                id="myLocationButton"
+                class="map-control"
+                type="button"
+            >
+                My Location
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         DATABASE
+    ========================= -->
+
+    <section class="database-header">
+
+        <div>
+
+            <div class="database-small">
+                Database
+            </div>
+
+            <h2>
+                Locations
+            </h2>
+
+        </div>
+
+        <div id="resultCount" class="result-count">
+            0 results
+        </div>
+
+    </section>
+
+
+    <section id="locations" class="locations">
+
+        <div class="empty-state">
+            Loading locations...
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =========================
+     SIDEBAR OVERLAY
+========================= -->
+
+<div id="sidebarOverlay" class="overlay"></div>
+
+
+<!-- =========================
+     ACCOUNT SIDEBAR
+========================= -->
+
+<aside id="accountSidebar" class="sidebar">
+
+    <div class="sidebar-header">
+
+        <div class="sidebar-title">
+            Account
+        </div>
+
+        <button
+            id="closeSidebar"
+            class="close-button"
+            type="button"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <!-- Logged out -->
+
+    <div id="loggedOutAccount">
+
+        <div class="account-profile">
+
+            <div class="profile-top">
+
+                <div class="large-avatar">
+                    ?
+                </div>
+
+                <div>
+
+                    <div class="profile-name">
+                        Account
+                    </div>
+
+                    <div class="profile-email">
+                        Not signed in
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <button
+            id="openAuthButton"
+            class="button primary full"
+            type="button"
+        >
+            Sign in
+        </button>
+
+    </div>
+
+
+    <!-- Logged in -->
+
+    <div id="loggedInAccount" style="display:none;">
+
+        <div class="account-profile">
+
+            <div class="profile-top">
+
+                <div
+                    id="sidebarAvatar"
+                    class="large-avatar"
+                >
+                    PP
+                </div>
+
+                <div>
+
+                    <div
+                        id="sidebarUsername"
+                        class="profile-name"
+                    >
+                        Username
+                    </div>
+
+                    <div
+                        id="sidebarEmail"
+                        class="profile-email"
+                    >
+                        email@example.com
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-section-title">
+                Account
+            </div>
+
+            <div class="account-menu">
+
+                <button
+                    id="changeUsernameButton"
+                    class="menu-button"
+                    type="button"
+                >
+                    Change username
+                    <span>›</span>
+                </button>
+
+                <button
+                    id="resetPasswordButton"
+                    class="menu-button"
+                    type="button"
+                >
+                    Reset password
+                    <span>›</span>
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- Admin only -->
+
+        <div
+            id="adminSection"
+            class="sidebar-section"
+            style="display:none;"
+        >
+
+            <div class="sidebar-section-title">
+                Explorer Administration
+            </div>
+
+            <div class="account-menu">
+
+                <button
+                    id="addLocationButton"
+                    class="menu-button"
+                    type="button"
+                >
+                    Add to map
+                    <span>+</span>
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-section-title">
+                Account actions
+            </div>
+
+            <div class="account-menu">
+
+                <button
+                    id="deleteAccountButton"
+                    class="menu-button danger"
+                    type="button"
+                >
+                    Delete account
+                    <span>›</span>
+                </button>
+
+                <button
+                    id="signOutButton"
+                    class="menu-button"
+                    type="button"
+                >
+                    Sign out
+                    <span>→</span>
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+<!-- =========================
+     AUTH MODAL
+========================= -->
+
+<div
+    id="authModal"
+    class="modal-overlay"
+>
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 class="modal-title">
+                Account
+            </h2>
+
+            <button
+                class="close-button"
+                data-close-modal="authModal"
+                type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="auth-switch">
+
+            <button
+                id="signInTab"
+                class="auth-tab active"
+                type="button"
+            >
+                Sign in
+            </button>
+
+            <button
+                id="registerTab"
+                class="auth-tab"
+                type="button"
+            >
+                Register
+            </button>
+
+        </div>
+
+
+        <form id="authForm">
+
+            <div
+                id="usernameGroup"
+                class="form-group"
+                style="display:none;"
+            >
+
+                <label class="form-label">
+                    Username
+                </label>
+
+                <input
+                    id="authUsername"
+                    class="input"
+                    type="text"
+                    maxlength="30"
+                    autocomplete="username"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label class="form-label">
+                    Email
+                </label>
+
+                <input
+                    id="authEmail"
+                    class="input"
+                    type="email"
+                    required
+                    autocomplete="email"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label class="form-label">
+                    Password
+                </label>
+
+                <input
+                    id="authPassword"
+                    class="input"
+                    type="password"
+                    required
+                    autocomplete="current-password"
+                >
+
+            </div>
+
+
+            <button
+                id="authSubmit"
+                class="button primary full"
+                type="submit"
+            >
+                Sign in
+            </button>
+
+            <div
+                id="authMessage"
+                class="auth-message"
+            ></div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     ADD / EDIT LOCATION MODAL
+========================= -->
+
+<div
+    id="locationModal"
+    class="modal-overlay"
+>
+
+    <div class="modal large">
+
+        <div class="modal-header">
+
+            <h2
+                id="locationModalTitle"
+                class="modal-title"
+            >
+                Add location
+            </h2>
+
+            <button
+                class="close-button"
+                data-close-modal="locationModal"
+                type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+<div class="form-group">
+
+    <label class="form-label">
+        Location
+    </label>
+
+<div
+    id="locationPickerMap"
+    style="
+        width:100%;
+        height:320px;
+        border-radius:10px;
+        overflow:hidden;
+        border:1px solid var(--border);
+        margin-bottom:10px;
+        position:relative;
+    "
+>
+    <div class="map-layer-control">
+
+        <button
+            id="pickerStreetButton"
+            class="map-layer-button active"
+            type="button"
+        >
+            Map
+        </button>
+
+        <button
+            id="pickerSatelliteButton"
+            class="map-layer-button"
+            type="button"
+        >
+            Satellite
+        </button>
+
+    </div>
+</div>
+
+    <div
+        id="selectedLocation"
+        class="selected-location"
+    >
+        Click the map to choose a location.
+    </div>
+
+    <div class="form-help">
+        Click the map to place the marker.
+        You can also drag the marker after placing it.
+    </div>
+
+</div>
+
+
+        <div class="form-group">
+
+            <label class="form-label">
+                Name
+            </label>
+
+            <input
+                id="locationName"
+                class="input"
+                type="text"
+                maxlength="100"
+                placeholder="Location name"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label class="form-label">
+                Description
+            </label>
+
+            <textarea
+                id="locationDescription"
+                class="textarea"
+                maxlength="1000"
+                placeholder="Describe the location..."
+            ></textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label class="form-label">
+                Tags
+            </label>
+
+            <div class="tag-checkboxes">
+
+                <label class="tag-option">
+                    <input
+                        type="checkbox"
+                        value="Abandoned"
+                        class="location-tag"
+                    >
+                    Abandoned
+                </label>
+
+                <label class="tag-option">
+                    <input
+                        type="checkbox"
+                        value="Rooftop"
+                        class="location-tag"
+                    >
+                    Rooftop
+                </label>
+
+                <label class="tag-option">
+                    <input
+                        type="checkbox"
+                        value="Security on site"
+                        class="location-tag"
+                    >
+                    Security on site
+                </label>
+
+                <label class="tag-option">
+                    <input
+                        type="checkbox"
+                        value="Security checks on site frequently"
+                        class="location-tag"
+                    >
+                    Security checks on site frequently
+                </label>
+
+                <label class="tag-option">
+                    <input
+                        type="checkbox"
+                        value="Alarmed"
+                        class="location-tag"
+                    >
+                    Alarmed
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                id="cancelLocationButton"
+                class="button"
+                type="button"
+            >
+                Cancel
+            </button>
+
+            <button
+                id="publishLocationButton"
+                class="button primary"
+                type="button"
+            >
+                Publish
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     CHANGE USERNAME MODAL
+========================= -->
+
+<div
+    id="usernameModal"
+    class="modal-overlay"
+>
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 class="modal-title">
+                Change username
+            </h2>
+
+            <button
+                class="close-button"
+                data-close-modal="usernameModal"
+                type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="form-group">
+
+            <label class="form-label">
+                New username
+            </label>
+
+            <input
+                id="newUsername"
+                class="input"
+                type="text"
+                maxlength="30"
+            >
+
+        </div>
+
+        <div
+            id="usernameMessage"
+            class="auth-message"
+        ></div>
+
+        <div class="modal-actions">
+
+            <button
+                class="button"
+                data-close-modal="usernameModal"
+                type="button"
+            >
+                Cancel
+            </button>
+
+            <button
+                id="saveUsernameButton"
+                class="button primary"
+                type="button"
+            >
+                Save
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     DELETE ACCOUNT MODAL
+========================= -->
+
+<div
+    id="deleteAccountModal"
+    class="modal-overlay"
+>
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 class="modal-title">
+                Delete account
+            </h2>
+
+            <button
+                class="close-button"
+                data-close-modal="deleteAccountModal"
+                type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <p style="color:var(--muted);font-size:13px;line-height:1.6;">
+            This permanently deletes your Firebase account.
+            Enter your password to confirm.
+        </p>
+
+        <div class="form-group">
+
+            <label class="form-label">
+                Password
+            </label>
+
+            <input
+                id="deletePassword"
+                class="input"
+                type="password"
+                autocomplete="current-password"
+            >
+
+        </div>
+
+        <div
+            id="deleteMessage"
+            class="auth-message"
+        ></div>
+
+        <div class="modal-actions">
+
+            <button
+                class="button"
+                data-close-modal="deleteAccountModal"
+                type="button"
+            >
+                Cancel
+            </button>
+
+            <button
+                id="confirmDeleteButton"
+                class="button danger"
+                type="button"
+            >
+                Delete account
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+></script>
+
+<script type="module" src="script.js"></script>
+
+</body>
+</html>

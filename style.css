@@ -1139,6 +1139,23 @@ main {
     border-color: rgba(255,89,104,0.22);
 }
 
+.menu-button span:last-child {
+    display: inline-flex;
+
+    transition:
+        transform var(--transition),
+        color var(--transition);
+}
+
+.menu-button:hover span:last-child {
+    color: var(--accent);
+    transform: translateX(3px);
+}
+
+.menu-button:active span:last-child {
+    transform: translateX(1px);
+}
+
 
 /* =========================================================
    MODALS
@@ -1376,6 +1393,36 @@ main {
     accent-color: var(--accent);
 }
 
+/* =========================================================
+   ACCOUNT DROPDOWN — BUTTON FEEL
+========================================================= */
+
+.menu-button {
+    background: var(--panel);
+    border: 1px solid var(--border);
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform 0.1s ease,
+        box-shadow var(--transition);
+}
+
+.menu-button:hover {
+    background: var(--panel-hover);
+    border-color: var(--border-hover);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.menu-button:active {
+    transform: scale(0.96);
+
+    box-shadow: none;
+}
 
 /* =========================================================
    BUTTONS
@@ -2857,11 +2904,33 @@ textarea:focus-visible {
 
 .stat-item {
     padding: 13px 14px;
+
+    background: var(--panel);
+
     border-bottom: 1px solid var(--border);
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform 0.1s ease,
+        box-shadow var(--transition);
 }
 
-.stat-item:last-child {
-    border-bottom: none;
+.stat-item:hover {
+    background: var(--panel-hover);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.stat-item:active {
+    transform: scale(0.97);
+
+    box-shadow: none;
 }
 
 .stat-label {
@@ -3761,3 +3830,400 @@ textarea:focus-visible {
     width: 100%;
 }
 
+/* =========================================================
+   GLOBAL INTERACTION POLISH
+========================================================= */
+
+/* Standard clickable elements */
+.nav-button,
+.menu-button,
+.button,
+.sidebar-back-button,
+.location-save-button,
+.location-explored-button,
+.location-google-maps-button,
+.map-control,
+.rating-button,
+.auth-submit-row button,
+.safety-agree {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Stronger physical press */
+.nav-button:active,
+.menu-button:active,
+.button:active,
+.sidebar-back-button:active,
+.location-save-button:active,
+.location-explored-button:active,
+.location-google-maps-button:active,
+.map-control:active,
+.rating-button:active,
+.auth-submit-row button:active,
+.safety-agree:active {
+    transform: scale(0.96);
+    box-shadow: none;
+}
+
+/* =========================================================
+   ACCOUNT / STATS DROPDOWN — FULL CONTAINER EFFECT
+========================================================= */
+
+.account-profile-dropdown {
+    width: 100%;
+
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    overflow: hidden;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform 0.1s ease,
+        box-shadow var(--transition);
+}
+
+
+/* =========================================================
+   DROPDOWN HEADER
+========================================================= */
+
+.account-profile-toggle {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    background: transparent;
+    border: 0;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition);
+}
+
+
+/* =========================================================
+   WHOLE DROPDOWN HOVER
+========================================================= */
+
+.account-profile-dropdown:hover {
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   WHOLE DROPDOWN CLICK
+========================================================= */
+
+.account-profile-dropdown:has(.account-profile-toggle:active) {
+    transform: scale(0.985);
+
+    box-shadow: none;
+}
+
+
+/* Keep the header transparent so the parent's
+   hover background shows through */
+.account-profile-toggle:hover,
+.account-profile-toggle:active {
+    background: transparent;
+}
+
+.account-profile-arrow {
+    color: var(--muted);
+
+    transition:
+        color var(--transition),
+        transform var(--transition);
+}
+
+.account-profile-toggle:hover .account-profile-arrow {
+    color: var(--accent);
+    transform: translateX(3px);
+}
+
+/* =========================================================
+   SIGN OUT — AMBER
+========================================================= */
+
+.menu-button.sign-out {
+    color: #e8c95a;
+}
+
+.menu-button.sign-out:hover {
+    background: rgba(215, 255, 63, 0.07);
+    border-color: rgba(215, 255, 63, 0.22);
+    color: var(--accent);
+}
+
+.legal-popup {
+    display: none;
+}
+
+.legal-popup.open {
+    display: flex;
+}
+
+/* =========================================================
+   LEGAL MODAL
+========================================================= */
+
+.legal-modal {
+
+    width: min(900px, 94vw);
+    max-height: 90vh;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+}
+
+
+/* =========================================================
+   LEGAL MODAL HEADER
+========================================================= */
+
+.legal-modal-heading {
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+
+}
+
+
+.legal-modal-label {
+
+    font-size: 0.7rem;
+    font-weight: 700;
+
+    letter-spacing: 0.14em;
+
+    opacity: 0.55;
+
+}
+
+
+.legal-modal .modal-title {
+
+    margin: 0;
+
+}
+
+
+/* =========================================================
+   LEGAL CONTENT
+========================================================= */
+
+.legal-content {
+
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 28px 32px;
+
+    line-height: 1.7;
+
+    font-size: 0.95rem;
+
+}
+
+
+/* =========================================================
+   INTRODUCTION
+========================================================= */
+
+.legal-introduction {
+
+    margin-bottom: 30px;
+
+    padding-bottom: 22px;
+
+    border-bottom: 1px solid
+        rgba(128, 128, 128, 0.2);
+
+}
+
+
+.legal-label {
+
+    display: inline-block;
+
+    margin-bottom: 8px;
+
+    font-size: 0.7rem;
+
+    font-weight: 700;
+
+    letter-spacing: 0.14em;
+
+    opacity: 0.55;
+
+}
+
+
+.legal-introduction h3 {
+
+    margin-top: 0;
+
+    font-size: 1.45rem;
+
+}
+
+
+.legal-updated {
+
+    margin-top: 18px;
+
+    font-size: 0.82rem;
+
+    opacity: 0.65;
+
+}
+
+
+/* =========================================================
+   HEADINGS
+========================================================= */
+
+.legal-content h3 {
+
+    margin-top: 30px;
+    margin-bottom: 10px;
+
+    font-size: 1.05rem;
+
+}
+
+
+.legal-content h3:first-of-type {
+
+    margin-top: 0;
+
+}
+
+
+/* =========================================================
+   PARAGRAPHS
+========================================================= */
+
+.legal-content p {
+
+    margin: 0 0 14px;
+
+}
+
+
+/* =========================================================
+   LISTS
+========================================================= */
+
+.legal-content ul {
+
+    margin: 8px 0 18px;
+
+    padding-left: 24px;
+
+}
+
+
+.legal-content li {
+
+    margin-bottom: 7px;
+
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.legal-modal-footer {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 14px 24px;
+
+    border-top: 1px solid
+        rgba(128, 128, 128, 0.2);
+
+    font-size: 0.8rem;
+
+    opacity: 0.75;
+
+}
+
+
+.legal-footer-close {
+
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    font: inherit;
+
+    font-weight: 600;
+
+}
+
+
+/* =========================================================
+   BODY LOCK WHEN MODAL IS OPEN
+========================================================= */
+
+body.modal-open {
+
+    overflow: hidden;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .legal-modal {
+
+        width: 96vw;
+        max-height: 94vh;
+
+    }
+
+    .legal-content {
+
+        padding: 22px 20px;
+
+        font-size: 0.92rem;
+
+    }
+
+    .legal-modal-footer {
+
+        padding: 12px 18px;
+
+    }
+
+}

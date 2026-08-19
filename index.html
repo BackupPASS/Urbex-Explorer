@@ -414,7 +414,7 @@
 
                     <button
                         id="signOutButton"
-                        class="menu-button"
+                        class="menu-button sign-out"
                         type="button"
                     >
                         Sign out
@@ -627,6 +627,45 @@
         </div>
 
     </div>
+
+    <div class="sidebar-section">
+
+    <div class="sidebar-section-title">
+        Safety & Legal
+    </div>
+
+    <div class="account-menu">
+
+        <button
+            id="safetyInformationButton"
+            class="menu-button"
+            type="button"
+        >
+            Safety information
+            <span>›</span>
+        </button>
+
+         <button
+            id="privacyButton"
+            class="menu-button"
+            type="button"
+        >
+            Privacy Policy
+            <span>›</span>
+        </button>
+
+        <button
+            id="termsButton"
+            class="menu-button"
+            type="button"
+        >
+            Terms of Service
+            <span>›</span>
+        </button>
+
+    </div>
+
+</div>
 
 </div>
 
@@ -1200,41 +1239,77 @@
 
         <p>
             PlingifyPlug Explorer provides information about locations
-            for informational and exploration purposes only.
-        </p>
-
-        <p>
-            <strong>Do not enter a location unless you have permission
-            and it is lawful to do so.</strong>
-            Access to abandoned buildings, rooftops and other locations
-            may be restricted or prohibited. Attempting to access them
-            could result in injury or legal consequences.
-        </p>
-
-        <p>
-            Locations can change over time. A place listed here may no
-            longer be abandoned, may have restricted access, or may have
-            become unsafe since it was added.
-        </p>
-
-        <p>
-            Never damage, break into, climb, or remove anything from a
-            location. Respect property, security measures, residents,
-            businesses and emergency services.
+            for informational and exploration purposes only. Information
+            displayed on the Explorer may be incomplete, inaccurate or
+            outdated.
         </p>
 
         <p>
             <strong>
-                PlingifyPlug does not guarantee that any location is safe,
-                accessible or legally accessible, and does not encourage
-                trespassing or other unlawful activity.
+                A location being listed, mapped, tagged or described as
+                abandoned, disused or accessible does not mean that it
+                currently is.
+            </strong>
+            Buildings and locations can change ownership, reopen, become
+            occupied, become secured, be demolished, be redeveloped or
+            otherwise change status at any time.
+        </p>
+
+        <p>
+            <strong>
+                A location appearing on PlingifyPlug Explorer does not
+                mean that you have permission to enter it.
+            </strong>
+            You must not enter private property, restricted areas,
+            buildings, rooftops or other locations without the appropriate
+            permission and legal authority to do so.
+        </p>
+
+        <p>
+            Access conditions, security measures, hazards, ownership and
+            legal restrictions can change without notice. Information
+            shown on this website should never be relied upon as confirmation
+            that a location is safe, abandoned, accessible or legally
+            accessible.
+        </p>
+
+        <p>
+            <strong>
+                PlingifyPlug does not guarantee the accuracy, completeness,
+                safety, current status, ownership, accessibility or legal
+                accessibility of any location or information displayed.
+            </strong>
+        </p>
+
+        <p>
+            Never damage, break into, climb, force entry to, remove anything
+            from, or interfere with a location or its security measures.
+            Do not put yourself or others at risk, and respect property
+            owners, residents, businesses, security personnel, emergency
+            services and members of the public.
+        </p>
+
+        <p>
+            Do not assume that information supplied by another user is
+            accurate or current. Always independently verify the current
+            status of a location, applicable laws, ownership, permission
+            requirements, access restrictions and conditions before making
+            any decisions.
+        </p>
+
+        <p>
+            <strong>
+                PlingifyPlug does not encourage trespassing, unlawful entry,
+                climbing or any other unlawful or dangerous activity.
             </strong>
         </p>
 
         <p class="safety-final">
             By continuing, you acknowledge that you are responsible for
-            checking the current laws, access restrictions and conditions
-            yourself.
+            making your own decisions, following applicable laws and
+            obtaining any required permission. You use information provided
+            by Explorer at your own discretion and should not rely on it as
+            a guarantee of safety, access or legality.
         </p>
 
         <button id="safetyAgree" class="safety-agree">
@@ -1371,6 +1446,91 @@
             <div class="empty-state">
                 Loading ratings...
             </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     LEGAL MODAL
+========================================================= -->
+
+<div
+    id="legalModal"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="legalModalTitle"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal large legal-modal"
+    >
+
+        <!-- =========================
+             MODAL HEADER
+        ========================= -->
+
+        <div class="modal-header">
+
+            <div class="legal-modal-heading">
+
+                <span class="legal-modal-label">
+                    PLINGIFYPLUG EXPLORER
+                </span>
+
+                <h2
+                    id="legalModalTitle"
+                    class="modal-title"
+                >
+                    Privacy Policy
+                </h2>
+
+            </div>
+
+            <button
+                id="legalModalClose"
+                class="close-button"
+                type="button"
+                aria-label="Close legal information"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             LEGAL CONTENT
+        ========================= -->
+
+        <div
+            id="legalModalContent"
+            class="legal-content"
+            tabindex="0"
+        ></div>
+
+
+        <!-- =========================
+             MODAL FOOTER
+        ========================= -->
+
+        <div class="legal-modal-footer">
+
+            <span>
+               
+            </span>
+
+            <button
+                type="button"
+                class="legal-footer-close"
+                onclick="closeLegalModal()"
+            >
+
+            </button>
 
         </div>
 

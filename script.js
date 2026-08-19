@@ -2780,32 +2780,25 @@ async function removeLocationRating(
 const ratingQuery = query(
     collection(db, "explorations"),
     where(
+        "userId",
+        "==",
+        currentUser.uid
+    ),
+    where(
         "locationId",
         "==",
         locationId
     )
 );
 
-
-    const ratingSnapshot =
-        await getDocs(ratingQuery);
-
+const ratingSnapshot =
+    await getDocs(ratingQuery);
 
 for (const ratingDoc of ratingSnapshot.docs) {
 
-    const ratingData =
-        ratingDoc.data();
-
-    if (
-        ratingData.userId ===
-        currentUser.uid
-    ) {
-
-        await deleteDoc(
-            ratingDoc.ref
-        );
-
-    }
+    await deleteDoc(
+        ratingDoc.ref
+    );
 
 }
 
@@ -5658,25 +5651,7 @@ document
 
     });
 
-    // =========================================================
-// EXPLORER SAFETY NOTICE
-// =========================================================
 
-const safetyNotice = document.getElementById("safetyNotice");
-const safetyAgree = document.getElementById("safetyAgree");
-
-if (safetyNotice && safetyAgree) {
-
-    // Show the notice every time the page is opened
-    safetyNotice.classList.remove("hidden");
-
-    safetyAgree.addEventListener("click", () => {
-
-        safetyNotice.classList.add("hidden");
-
-    });
-
-}
 
 function closeAccountProfileDropdown() {
 
@@ -5704,3 +5679,867 @@ function closeAccountProfileDropdown() {
     }
 
 }
+
+// =========================================================
+// SAFETY & LEGAL INFORMATION
+// =========================================================
+
+const safetyNotice =
+    document.getElementById("safetyNotice");
+
+const safetyAgree =
+    document.getElementById("safetyAgree");
+
+const safetyInformationButton =
+    document.getElementById(
+        "safetyInformationButton"
+    );
+
+
+// =========================================================
+// INITIAL SAFETY NOTICE
+// =========================================================
+
+if (safetyNotice) {
+
+    // Show the safety notice when the site loads
+    safetyNotice.classList.remove("hidden");
+
+}
+
+
+// =========================================================
+// CLOSE SAFETY NOTICE
+// =========================================================
+
+if (safetyAgree) {
+
+    safetyAgree.addEventListener(
+        "click",
+        () => {
+
+            safetyNotice.classList.add("hidden");
+
+        }
+    );
+
+}
+
+
+// =========================================================
+// OPEN SAFETY INFORMATION FROM ACCOUNT
+// =========================================================
+
+if (safetyInformationButton) {
+
+    safetyInformationButton.addEventListener(
+        "click",
+        () => {
+
+            if (safetyNotice) {
+
+                safetyNotice.classList.remove(
+                    "hidden"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+/* =========================================================
+   PRIVACY & TERMS POPUP
+========================================================= */
+
+const privacyButton = document.getElementById("privacyButton");
+const termsButton = document.getElementById("termsButton");
+
+const legalModal = document.getElementById("legalModal");
+const legalModalTitle = document.getElementById("legalModalTitle");
+const legalModalContent = document.getElementById("legalModalContent");
+const legalModalClose = document.getElementById("legalModalClose");
+
+
+/* =========================================================
+   OPEN LEGAL MODAL
+========================================================= */
+
+function openLegalModal(type) {
+
+    if (!legalModal) return;
+
+    if (type === "privacy") {
+
+        legalModalTitle.textContent = "Privacy Policy";
+
+        legalModalContent.innerHTML = `
+            <div class="legal-introduction">
+
+                <span class="legal-label">
+                    PRIVACY
+                </span>
+
+                <h3>Privacy Policy</h3>
+
+                <p>
+                    This Privacy Policy explains how PlingifyPlug
+                    ("PlingifyPlug", "we", "us" or "our") collects,
+                    uses, stores and protects information when you use
+                    PlingifyPlug Explorer ("Explorer" or "the Service").
+                </p>
+
+                <p class="legal-updated">
+                    <strong>Last updated:</strong> 19 August 2026
+                </p>
+
+            </div>
+
+
+            <h3>1. Information We Collect</h3>
+
+            <p>
+                Depending on how you use Explorer, we may process
+                information associated with your account and use of
+                the Service.
+            </p>
+
+            <ul>
+                <li>Email address associated with your account.</li>
+                <li>Account identifier and authentication information.</li>
+                <li>Username or display information where applicable.</li>
+                <li>Account creation date.</li>
+                <li>Saved locations.</li>
+                <li>Explored locations.</li>
+                <li>Recently viewed locations.</li>
+                <li>Ratings and reviews you submit.</li>
+                <li>Other information you voluntarily submit.</li>
+                <li>Information required for account security.</li>
+                <li>Technical information required for the Service to operate.</li>
+            </ul>
+
+
+            <h3>2. Account Statistics and Progress</h3>
+
+            <p>
+                Explorer may provide account statistics and progress
+                information to you.
+            </p>
+
+            <p>
+                Depending on the features available, your account may
+                display your account creation date, explored locations,
+                saved locations, recently viewed locations, ratings
+                and other progress information.
+            </p>
+
+            <p>
+                These statistics are provided as account features and
+                may be stored in association with your account.
+            </p>
+
+
+            <h3>3. Saved, Explored and Recently Viewed Locations</h3>
+
+            <p>
+                Explorer may allow you to save locations, mark locations
+                as explored and view locations that you have recently
+                accessed.
+            </p>
+
+            <p>
+                This information may be stored against your account so
+                that Explorer can provide these features and display
+                your personal progress.
+            </p>
+
+            <p>
+                A saved, explored or recently viewed status does not
+                represent ownership, permission, verification or
+                endorsement of a location.
+            </p>
+
+
+            <h3>4. Ratings and Reviews</h3>
+
+            <p>
+                Explorer may allow users to submit ratings, reviews and
+                other contributions.
+            </p>
+
+            <p>
+                Information submitted through these features may be
+                stored and processed so that the relevant Explorer
+                features can operate.
+            </p>
+
+            <p>
+                Contributions may be associated with your account and
+                may be displayed to other users where the relevant
+                feature is designed to display them.
+            </p>
+
+
+            <h3>5. How We Use Information</h3>
+
+            <p>
+                Information may be used to:
+            </p>
+
+            <ul>
+                <li>Create and manage accounts.</li>
+                <li>Authenticate users.</li>
+                <li>Provide Explorer features.</li>
+                <li>Display account statistics and progress.</li>
+                <li>Store saved, explored and recently viewed locations.</li>
+                <li>Store and display ratings and reviews.</li>
+                <li>Maintain and improve Explorer.</li>
+                <li>Prevent spam, abuse and fraud.</li>
+                <li>Protect the security of the Service.</li>
+                <li>Investigate suspected violations of our Terms.</li>
+                <li>Enforce reasonable account restrictions.</li>
+                <li>Comply with applicable legal requirements.</li>
+            </ul>
+
+
+            <h3>6. Firebase</h3>
+
+            <p>
+                Explorer uses Firebase services provided by Google for
+                functionality such as user authentication and database
+                storage.
+            </p>
+
+            <p>
+                Information processed through Firebase may be subject
+                to Google's applicable privacy practices, security
+                measures and terms.
+            </p>
+
+
+            <h3>7. Maps and Location Information</h3>
+
+            <p>
+                Explorer uses mapping and location-related services
+                to provide its map and location discovery features.
+            </p>
+
+            <p>
+                Location information may be supplied by PlingifyPlug,
+                users, third-party providers or other sources.
+            </p>
+
+            <p>
+                We do not guarantee that map information, coordinates,
+                descriptions, photographs, tags or other location
+                information are accurate, complete or current.
+            </p>
+
+
+            <h3>8. Information Sharing</h3>
+
+            <p>
+                PlingifyPlug does not sell your personal information as
+                a general business practice.
+            </p>
+
+            <p>
+                Information may be processed by service providers where
+                reasonably necessary to operate Explorer, including
+                authentication, database, hosting, security and other
+                technical services.
+            </p>
+
+            <p>
+                Information may also be disclosed where reasonably
+                necessary to comply with law, respond to lawful requests,
+                prevent fraud, investigate abuse or protect PlingifyPlug,
+                Explorer, users or third parties.
+            </p>
+
+
+            <h3>9. Account Deletion</h3>
+
+            <p>
+                Explorer may provide account deletion controls.
+                Where available, you may use those controls to delete
+                your account.
+            </p>
+
+            <p>
+                Some information may be retained where reasonably
+                necessary for security, fraud prevention, dispute
+                resolution, legal compliance or other lawful purposes.
+            </p>
+
+
+            <h3>10. Security</h3>
+
+            <p>
+                We take reasonable measures to protect information
+                processed by Explorer.
+            </p>
+
+            <p>
+                However, no website, database, authentication system or
+                internet transmission can guarantee absolute security.
+            </p>
+
+
+            <h3>11. Your Data Protection Rights</h3>
+
+            <p>
+                Depending on the circumstances and applicable law, you
+                may have rights relating to your personal information,
+                including rights of access, correction, deletion,
+                restriction, objection and data portability.
+            </p>
+
+            <p>
+                These rights may be subject to applicable legal
+                conditions and exceptions.
+            </p>
+
+
+            <h3>12. Changes to This Privacy Policy</h3>
+
+            <p>
+                This Privacy Policy may be updated when Explorer,
+                its features, our data processing practices or applicable
+                requirements change.
+            </p>
+
+            <p>
+                Updated versions will be made available through Explorer.
+            </p>
+        `;
+
+    }
+
+
+    if (type === "terms") {
+
+        legalModalTitle.textContent = "Terms of Service";
+
+        legalModalContent.innerHTML = `
+            <div class="legal-introduction">
+
+                <span class="legal-label">
+                    TERMS
+                </span>
+
+                <h3>Terms of Service</h3>
+
+                <p>
+                    These Terms of Service govern your use of
+                    PlingifyPlug Explorer.
+                </p>
+
+                <p>
+                    By accessing or using Explorer, you agree to comply
+                    with these Terms and applicable laws.
+                </p>
+
+                <p class="legal-updated">
+                    <strong>Last updated:</strong> 19 August 2026
+                </p>
+
+            </div>
+
+
+            <h3>1. Purpose of Explorer</h3>
+
+            <p>
+                Explorer is an informational mapping and location
+                discovery service.
+            </p>
+
+            <p>
+                Explorer may display information about abandoned,
+                historical, unusual or otherwise notable locations.
+            </p>
+
+            <p>
+                Information is provided for informational purposes only.
+                We do not guarantee that information is accurate,
+                complete, current or suitable for any particular purpose.
+            </p>
+
+
+            <h3>2. No Permission to Enter Property</h3>
+
+            <p>
+                A location appearing on Explorer does not give you
+                permission to enter, access, climb, cross, occupy,
+                investigate or otherwise interact with that property.
+            </p>
+
+            <p>
+                You are responsible for determining whether you have
+                lawful permission to access any location.
+            </p>
+
+            <p>
+                You must respect property owners, occupiers, security
+                restrictions, closures, signs, barriers and applicable
+                laws.
+            </p>
+
+
+            <h3>3. Explorer Does Not Encourage Trespassing</h3>
+
+            <p>
+                PlingifyPlug does not encourage, authorise, promote or
+                endorse trespassing, unlawful entry, vandalism, theft,
+                property damage, interference with security systems or
+                other unlawful conduct.
+            </p>
+
+            <p>
+                Explorer must not be interpreted as an invitation,
+                instruction or permission to enter any location.
+            </p>
+
+
+            <h3>4. Safety Disclaimer</h3>
+
+            <p>
+                Locations shown on Explorer may contain hazards or
+                dangerous conditions that are not visible from the
+                information provided on the site.
+            </p>
+
+            <p>
+                A location may contain structural hazards, unstable
+                surfaces, hazardous materials, water hazards, traffic,
+                animals, security systems or other dangers.
+            </p>
+
+            <p>
+                PlingifyPlug does not guarantee that any location is
+                safe, accessible, abandoned, unoccupied, legal to enter
+                or free from hazards.
+            </p>
+
+            <p>
+                Users are responsible for making their own safety and
+                legal decisions and should not rely solely on Explorer's
+                information.
+            </p>
+
+
+            <h3>5. Location Accuracy</h3>
+
+            <p>
+                Location information, coordinates, descriptions,
+                photographs, tags, ratings and other information may be
+                inaccurate, incomplete, outdated or incorrect.
+            </p>
+
+            <p>
+                Ownership, access conditions, security, hazards and
+                legal restrictions may change at any time.
+            </p>
+
+
+            <h3>6. User Accounts</h3>
+
+            <p>
+                Some Explorer features require an account.
+            </p>
+
+            <p>
+                You are responsible for maintaining reasonable security
+                over your account and for activity carried out through
+                it.
+            </p>
+
+            <p>
+                Accounts must not be created or used for fraudulent,
+                abusive, unlawful or malicious purposes.
+            </p>
+
+
+            <h3>7. Account Statistics and Progress</h3>
+
+            <p>
+                Explorer may provide account statistics including your
+                account creation date, number of explored locations,
+                saved locations, recently viewed locations and other
+                progress information.
+            </p>
+
+            <p>
+                These statistics are features of the Service and may
+                depend on information successfully stored by Explorer.
+            </p>
+
+
+            <h3>8. Ratings and Reviews</h3>
+
+            <p>
+                Ratings and reviews must be truthful, relevant and
+                submitted in good faith.
+            </p>
+
+            <p>
+                You must not submit spam, fraudulent ratings,
+                deliberately misleading information, harassment,
+                threats or unlawful material.
+            </p>
+
+            <p>
+                You must not manipulate Explorer's rating systems or
+                attempt to artificially influence ratings.
+            </p>
+
+            <p>
+                PlingifyPlug may remove, restrict or moderate
+                contributions where reasonably necessary to protect
+                Explorer and its users.
+            </p>
+
+
+            <h3>9. User Contributions</h3>
+
+            <p>
+                By submitting content to Explorer, you confirm that you
+                have the necessary rights or permission to submit that
+                content.
+            </p>
+
+            <p>
+                You must not knowingly submit content that infringes
+                another person's intellectual property, privacy or
+                other legal rights.
+            </p>
+
+            <p>
+                You grant PlingifyPlug a non-exclusive, worldwide,
+                royalty-free licence to host, store, reproduce, display
+                and use submitted content as reasonably necessary to
+                operate and improve Explorer.
+            </p>
+
+
+            <h3>10. Prohibited Behaviour</h3>
+
+            <p>
+                You must not use Explorer to:
+            </p>
+
+            <ul>
+                <li>Commit or encourage unlawful activity.</li>
+                <li>Encourage trespassing or unauthorised entry.</li>
+                <li>Damage, vandalise or steal property.</li>
+                <li>Interfere with security systems.</li>
+                <li>Harass, threaten or abuse other users.</li>
+                <li>Submit fraudulent or deliberately misleading information.</li>
+                <li>Manipulate ratings or site statistics.</li>
+                <li>Send spam or malicious content.</li>
+                <li>Attempt unauthorised access to accounts or systems.</li>
+                <li>Disrupt, overload or attack the Service.</li>
+                <li>Bypass security or moderation systems.</li>
+                <li>Use another person's account without permission.</li>
+                <li>Use automated systems to abuse or overload Explorer.</li>
+            </ul>
+
+
+            <h3>11. Account Suspension, Disabling and Bans</h3>
+
+            <p>
+                PlingifyPlug reserves the right, where reasonably
+                necessary and permitted by applicable law, to remove
+                content, restrict features, disable accounts, suspend
+                accounts or permanently ban accounts.
+            </p>
+
+            <p>
+                This may be done for reasonable and legitimate reasons,
+                including but not limited to:
+            </p>
+
+            <ul>
+                <li>Violation of these Terms.</li>
+                <li>Suspected unlawful activity.</li>
+                <li>Fraud or attempted fraud.</li>
+                <li>Spam or platform abuse.</li>
+                <li>Harassment or abusive behaviour.</li>
+                <li>Malicious activity.</li>
+                <li>Attempts to compromise Explorer's security.</li>
+                <li>Attempts to bypass an existing restriction or ban.</li>
+                <li>Manipulation of ratings or site systems.</li>
+                <li>Inappropriate or prohibited content.</li>
+                <li>Conduct that creates a significant risk to users.</li>
+                <li>Other reasonable steps necessary to protect PlingifyPlug,
+                    Explorer, users or third parties.</li>
+            </ul>
+
+            <p>
+                Where appropriate and reasonably practicable,
+                PlingifyPlug may provide information about the reason
+                for an account restriction.
+            </p>
+
+            <p>
+                However, security-sensitive information may not be
+                disclosed where doing so could undermine security,
+                moderation or abuse-prevention systems.
+            </p>
+
+            <p>
+                PlingifyPlug may take action without prior notice where
+                immediate action is reasonably necessary to protect
+                Explorer, its users, third parties or legal interests.
+            </p>
+
+
+            <h3>12. Ban Evasion</h3>
+
+            <p>
+                If your account has been suspended or permanently banned,
+                you must not attempt to bypass the restriction by
+                creating or using another account where doing so would
+                violate the restriction.
+            </p>
+
+
+            <h3>13. Service Availability</h3>
+
+            <p>
+                We aim to keep Explorer available and functioning, but
+                we do not guarantee uninterrupted or error-free
+                availability.
+            </p>
+
+            <p>
+                Explorer may be unavailable due to maintenance,
+                technical problems, security incidents, third-party
+                service failures or circumstances outside our reasonable
+                control.
+            </p>
+
+
+            <h3>14. Third-Party Services</h3>
+
+            <p>
+                Explorer may depend on third-party services including
+                Firebase, mapping providers, hosting providers and
+                other technical services.
+            </p>
+
+            <p>
+                PlingifyPlug is not responsible for outages, failures,
+                changes or restrictions imposed by third-party services
+                outside our reasonable control.
+            </p>
+
+
+            <h3>15. Intellectual Property</h3>
+
+            <p>
+                Unless otherwise stated, the Explorer website,
+                interface, branding, software, original graphics,
+                written material and other original site content are
+                owned by or licensed to PlingifyPlug.
+            </p>
+
+            <p>
+                You must not copy, reproduce, redistribute, modify,
+                reverse engineer or commercially exploit protected
+                Explorer material except where permitted by law or with
+                appropriate permission.
+            </p>
+
+
+            <h3>16. No Guarantee of Information</h3>
+
+            <p>
+                Explorer is provided on an informational basis.
+            </p>
+
+            <p>
+                To the fullest extent permitted by applicable law,
+                PlingifyPlug does not guarantee the accuracy,
+                completeness, reliability, availability or suitability
+                of location information, ratings, descriptions, maps or
+                user-generated content.
+            </p>
+
+
+            <h3>17. Limitation of Responsibility</h3>
+
+            <p>
+                To the fullest extent permitted by applicable law,
+                PlingifyPlug will not be responsible for losses or
+                consequences arising from reliance on inaccurate,
+                incomplete, outdated or user-submitted information.
+            </p>
+
+            <p>
+                Nothing in these Terms excludes or limits liability where
+                such exclusion or limitation would be unlawful.
+            </p>
+
+
+            <h3>18. Changes to Explorer</h3>
+
+            <p>
+                PlingifyPlug may add, remove, modify, suspend or
+                discontinue features of Explorer where reasonably
+                necessary.
+            </p>
+
+
+            <h3>19. Changes to These Terms</h3>
+
+            <p>
+                These Terms may be updated as Explorer develops,
+                features change, security requirements change or
+                applicable laws change.
+            </p>
+
+            <p>
+                Updated Terms will be made available through Explorer.
+            </p>
+
+            <p>
+                Continued use of Explorer after updated Terms take
+                effect constitutes acceptance of the updated Terms to
+                the extent permitted by applicable law.
+            </p>
+
+
+            <h3>20. Governing Law</h3>
+
+            <p>
+                These Terms are intended to operate subject to applicable
+                law in the United Kingdom.
+            </p>
+
+            <p>
+                Nothing in these Terms removes or limits rights that
+                cannot lawfully be excluded.
+            </p>
+        `;
+
+    }
+
+
+    legalModal.classList.add("open");
+
+    document.body.classList.add("modal-open");
+
+    legalModal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE LEGAL MODAL
+========================================================= */
+
+function closeLegalModal() {
+
+    if (!legalModal) return;
+
+    legalModal.classList.remove("open");
+
+    document.body.classList.remove("modal-open");
+
+    legalModal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+}
+
+
+/* =========================================================
+   PRIVACY BUTTON
+========================================================= */
+
+if (privacyButton) {
+
+    privacyButton.addEventListener(
+        "click",
+        () => openLegalModal("privacy")
+    );
+
+}
+
+
+/* =========================================================
+   TERMS BUTTON
+========================================================= */
+
+if (termsButton) {
+
+    termsButton.addEventListener(
+        "click",
+        () => openLegalModal("terms")
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE BUTTON
+========================================================= */
+
+if (legalModalClose) {
+
+    legalModalClose.addEventListener(
+        "click",
+        closeLegalModal
+    );
+
+}
+
+
+/* =========================================================
+   BACKDROP CLOSE
+========================================================= */
+
+if (legalModal) {
+
+    legalModal.addEventListener(
+        "click",
+        (event) => {
+
+            if (event.target === legalModal) {
+
+                closeLegalModal();
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ESCAPE KEY
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (
+            event.key === "Escape" &&
+            legalModal &&
+            legalModal.classList.contains("open")
+        ) {
+
+            closeLegalModal();
+
+        }
+
+    }
+);

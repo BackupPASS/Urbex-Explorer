@@ -29,7 +29,8 @@ import {
     query,
     where,
     orderBy,
-    serverTimestamp
+    serverTimestamp,
+    writeBatch
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
@@ -110,6 +111,716 @@ let exploreSearchTerm = "";
 
     const sidebarOverlay =
         document.getElementById("sidebarOverlay");
+
+        const notificationsButton =
+    document.getElementById("notificationsButton");
+
+const notificationBadge =
+    document.getElementById("notificationBadge");
+
+const openNotificationsButton =
+    document.getElementById("openNotificationsButton");
+
+const sidebarNotificationBadge =
+    document.getElementById("sidebarNotificationBadge");
+
+const notificationSummary =
+    document.getElementById("notificationSummary");
+
+const notificationsView =
+    document.getElementById("notificationsView");
+
+const notificationsBackButton =
+    document.getElementById("notificationsBackButton");
+
+const notificationsCloseButton =
+    document.getElementById("notificationsCloseButton");
+
+const notificationsList =
+    document.getElementById("notificationsList");
+
+const markNotificationsReadButton =
+    document.getElementById("markNotificationsReadButton");
+
+    /* =========================================================
+   Notifications UI
+========================================================= */
+
+function openNotificationsView() {
+
+    if (!notificationsView) {
+        console.error("notificationsView element not found.");
+        return;
+    }
+
+    // Open the account sidebar
+    if (typeof openSidebar === "function") {
+        openSidebar();
+    } else if (accountSidebar) {
+        accountSidebar.classList.add("open");
+    }
+
+    // Hide the normal account content
+// Hide the normal account header
+const sidebarHeader =
+    accountSidebar?.querySelector(".sidebar-header");
+
+if (sidebarHeader) {
+    sidebarHeader.style.display = "none";
+}
+
+// Hide the normal account content
+const loggedOutAccount =
+    document.getElementById("loggedOutAccount");
+
+const loggedInAccount =
+    document.getElementById("loggedInAccount");
+
+if (loggedOutAccount) {
+    loggedOutAccount.style.display = "none";
+}
+
+if (loggedInAccount) {
+    loggedInAccount.style.display = "none";
+}
+
+// Hide explore locations view
+if (
+    typeof exploreLocationsView !== "undefined" &&
+    exploreLocationsView
+) {
+    exploreLocationsView.style.display = "none";
+}
+
+// Show notifications
+notificationsView.style.display = "flex";
+
+    // Load notifications
+    loadNotifications();
+}
+
+
+function closeNotificationsView() {
+
+    if (!notificationsView) return;
+
+    notificationsView.style.display = "none";
+
+    // Restore the normal sidebar header
+const sidebarHeader =
+    accountSidebar?.querySelector(".sidebar-header");
+
+if (sidebarHeader) {
+    sidebarHeader.style.display = "flex";
+}
+
+    // Show the normal account area again
+    const loggedOutAccount =
+        document.getElementById("loggedOutAccount");
+
+    const loggedInAccount =
+        document.getElementById("loggedInAccount");
+
+    if (auth.currentUser) {
+
+        if (loggedInAccount) {
+            loggedInAccount.style.display = "block";
+        }
+
+    } else {
+
+        if (loggedOutAccount) {
+            loggedOutAccount.style.display = "block";
+        }
+
+    }
+
+    // If this was opened from the sidebar, leave the sidebar open.
+    // The normal account content is now visible again.
+}
+
+
+openNotificationsButton?.addEventListener(
+    "click",
+    openNotificationsView
+);
+
+
+notificationsButton?.addEventListener(
+    "click",
+    openNotificationsView
+);
+
+
+notificationsBackButton?.addEventListener(
+    "click",
+    closeNotificationsView
+);
+
+
+notificationsCloseButton?.addEventListener(
+    "click",
+    () => {
+
+        closeNotificationsView();
+
+        if (typeof closeSidebar === "function") {
+            closeSidebar();
+        } else if (accountSidebar) {
+            accountSidebar.classList.remove("open");
+        }
+
+    }
+);
+
+/* =========================================================
+   FORMAT NOTIFICATION DATE
+========================================================= */
+
+function formatNotificationDate(timestamp) {
+
+    if (!timestamp) {
+        return "Unknown date";
+    }
+
+    let date = timestamp;
+
+    // Firestore Timestamp
+    if (
+        timestamp &&
+        typeof timestamp.toDate === "function"
+    ) {
+        date = timestamp.toDate();
+    }
+
+    // Convert numeric timestamps if necessary
+    else if (typeof timestamp === "number") {
+        date = new Date(timestamp);
+    }
+
+    // Convert date strings if necessary
+    else if (typeof timestamp === "string") {
+        date = new Date(timestamp);
+    }
+
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+        return "Unknown date";
+    }
+
+    return date.toLocaleString(
+        "en-GB",
+        {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+}
+
+
+async function loadNotifications() {
+
+    if (!auth.currentUser) {
+
+        renderNotifications([]);
+        updateNotificationBadges(0);
+
+        return;
+    }
+
+    try {
+
+const q = query(
+    collection(db, "notifications"),
+    where(
+        "userId",
+        "==",
+        auth.currentUser.uid
+    )
+);
+
+        const snapshot = await getDocs(q);
+
+const notifications =
+    snapshot.docs
+        .map(notificationDoc => ({
+            id: notificationDoc.id,
+            ...notificationDoc.data()
+        }))
+        .sort((a, b) => {
+
+            const aTime =
+                a.createdAt?.toMillis?.() || 0;
+
+            const bTime =
+                b.createdAt?.toMillis?.() || 0;
+
+            return bTime - aTime;
+        });
+
+        renderNotifications(notifications);
+
+        const unreadCount =
+            notifications.filter(
+                notification =>
+                    notification.read !== true
+            ).length;
+
+        updateNotificationBadges(unreadCount);
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load notifications:",
+            error
+        );
+
+        // Still show the notifications screen even if
+        // Firestore fails.
+        if (notificationsList) {
+
+            notificationsList.innerHTML = `
+                <div class="empty-state">
+
+                    <div class="explore-empty-title">
+                        Unable to load notifications
+                    </div>
+
+                    <div class="explore-empty-text">
+                        Please try again later.
+                    </div>
+
+                </div>
+            `;
+
+        }
+
+    }
+}
+
+/* =========================================================
+   NOTIFICATION AUTH INITIALISATION
+========================================================= */
+
+onAuthStateChanged(auth, user => {
+
+    if (user) {
+
+        // User is logged in.
+        // Load notifications immediately so
+        // the navbar badge appears on page load.
+        loadNotifications();
+
+    } else {
+
+        // User is logged out.
+        // Remove the notification badge.
+        updateNotificationBadges(0);
+
+    }
+
+});
+
+
+function renderNotifications(notifications) {
+
+    if (!notificationsList) return;
+
+    if (!notifications.length) {
+
+        notificationsList.innerHTML = `
+            <div class="empty-state">
+
+                <div class="explore-empty-title">
+                    No notifications
+                </div>
+
+                <div class="explore-empty-text">
+                    You're all caught up.
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+    notificationsList.innerHTML =
+        notifications.map(notification => {
+
+            const unread =
+                notification.read !== true;
+
+            return `
+                <div
+                    class="notification-item ${unread ? "unread" : ""}"
+                    data-notification-id="${notification.id}"
+                >
+
+                    <div class="notification-item-icon">
+                        ${
+                            notification.type === "takedown_approved"
+                                ? "✓"
+                                : notification.type === "takedown_declined"
+                                    ? "!"
+                                    : "•"
+                        }
+                    </div>
+
+                    <div class="notification-item-content">
+
+                        <div class="notification-item-top">
+
+                            <div class="notification-item-title">
+                                ${escapeHtml(
+                                    notification.title ||
+                                    "Notification"
+                                )}
+                            </div>
+
+                            ${
+                                unread
+                                    ? `<span class="notification-unread-dot"></span>`
+                                    : ""
+                            }
+
+                        </div>
+
+                        <div class="notification-item-description">
+                            ${escapeHtml(
+                                notification.description || ""
+                            )}
+                        </div>
+
+                        <div class="notification-item-footer">
+
+                            <div class="notification-item-date">
+                                ${formatNotificationDate(
+                                    notification.createdAt
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                class="button notification-clear-button"
+                                data-clear-notification="${notification.id}"
+                            >
+                                Clear
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
+
+}
+
+/* =========================================================
+   NOTIFICATION CLICK EVENTS
+========================================================= */
+
+notificationsList?.addEventListener("click", async event => {
+
+    /* ---------------------------------------------------------
+       CLEAR BUTTON
+    --------------------------------------------------------- */
+
+    const clearButton = event.target.closest(
+        ".notification-clear-button"
+    );
+
+    if (clearButton) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const notificationId =
+            clearButton.getAttribute(
+                "data-clear-notification"
+            );
+
+        console.log(
+            "Clear notification clicked:",
+            notificationId
+        );
+
+        if (!notificationId) {
+
+            console.error(
+                "Clear button has no notification ID."
+            );
+
+            return;
+        }
+
+        await clearNotification(notificationId);
+
+        return;
+    }
+
+
+    /* ---------------------------------------------------------
+       NOTIFICATION ITEM
+    --------------------------------------------------------- */
+
+    const notificationItem =
+        event.target.closest(".notification-item");
+
+    if (!notificationItem) {
+        return;
+    }
+
+    const notificationId =
+        notificationItem.getAttribute(
+            "data-notification-id"
+        );
+
+    if (!notificationId) {
+        return;
+    }
+
+    await markNotificationRead(notificationId);
+
+});
+/* =========================================================
+   CLEAR SINGLE NOTIFICATION
+========================================================= */
+
+/* =========================================================
+   CLEAR SINGLE NOTIFICATION
+========================================================= */
+
+async function clearNotification(notificationId) {
+
+    console.log(
+        "Attempting to clear notification:",
+        notificationId
+    );
+
+    if (!notificationId) {
+
+        console.error(
+            "No notification ID supplied."
+        );
+
+        return;
+    }
+
+    if (!auth.currentUser) {
+
+        console.error(
+            "Cannot clear notification: user is not logged in."
+        );
+
+        return;
+    }
+
+    try {
+
+        const notificationRef = doc(
+            db,
+            "notifications",
+            notificationId
+        );
+
+        const notificationSnapshot =
+            await getDoc(notificationRef);
+
+
+        /* ---------------------------------------------------------
+           Check document exists
+        --------------------------------------------------------- */
+
+        if (!notificationSnapshot.exists()) {
+
+            console.error(
+                "Notification document does not exist:",
+                notificationId
+            );
+
+            return;
+        }
+
+
+        const notification =
+            notificationSnapshot.data();
+
+
+        /* ---------------------------------------------------------
+           Security check
+        --------------------------------------------------------- */
+
+        if (
+            notification.userId !==
+            auth.currentUser.uid
+        ) {
+
+            console.error(
+                "Cannot clear another user's notification."
+            );
+
+            return;
+        }
+
+
+        /* ---------------------------------------------------------
+           Delete notification
+        --------------------------------------------------------- */
+
+        await deleteDoc(
+            notificationRef
+        );
+
+        console.log(
+            "Notification successfully cleared:",
+            notificationId
+        );
+
+
+        /* ---------------------------------------------------------
+           Refresh notification list
+        --------------------------------------------------------- */
+
+        await loadNotifications();
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to clear notification:",
+            error
+        );
+
+    }
+}
+
+/* =========================================================
+   CLEAR NOTIFICATION BUTTON EVENTS
+========================================================= */
+
+
+function updateNotificationBadges(count) {
+
+    const hasNotifications = count > 0;
+
+    if (notificationBadge) {
+
+        notificationBadge.textContent =
+            count > 99 ? "99+" : count;
+
+        notificationBadge.style.display =
+            hasNotifications
+                ? "flex"
+                : "none";
+    }
+
+    if (sidebarNotificationBadge) {
+
+        sidebarNotificationBadge.textContent =
+            count > 99 ? "99+" : count;
+
+        sidebarNotificationBadge.style.display =
+            hasNotifications
+                ? "inline-flex"
+                : "none";
+    }
+
+    if (notificationSummary) {
+
+        notificationSummary.textContent =
+            count === 0
+                ? "No new notifications"
+                : count === 1
+                    ? "1 new notification"
+                    : `${count} new notifications`;
+    }
+}
+
+
+async function markNotificationRead(notificationId) {
+
+    if (!notificationId) return;
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "notifications",
+                notificationId
+            ),
+            {
+                read: true
+            }
+        );
+
+        await loadNotifications();
+
+    } catch (error) {
+
+        console.error(
+            "Unable to mark notification as read:",
+            error
+        );
+
+    }
+}
+
+
+markNotificationsReadButton?.addEventListener(
+    "click",
+    async () => {
+
+        if (!auth.currentUser) return;
+
+        try {
+
+            const q = query(
+                collection(db, "notifications"),
+                where(
+                    "userId",
+                    "==",
+                    auth.currentUser.uid
+                ),
+                where(
+                    "read",
+                    "==",
+                    false
+                )
+            );
+
+            const snapshot = await getDocs(q);
+
+            await Promise.all(
+                snapshot.docs.map(notification =>
+                    updateDoc(
+                        notification.ref,
+                        {
+                            read: true
+                        }
+                    )
+                )
+            );
+
+            await loadNotifications();
+
+        } catch (error) {
+
+            console.error(
+                "Unable to mark notifications as read:",
+                error
+            );
+
+        }
+
+    }
+);
 
 
     /* =========================================================
@@ -1195,6 +1906,2621 @@ map.on("click", () => {
             .replaceAll("'", "&#039;");
 
     }
+
+    /* =========================================================
+   TAKEDOWN REQUEST SYSTEM
+========================================================= */
+
+const TAKEDOWN_MAX_LOCATIONS = 5;
+const TAKEDOWN_MAX_REASON_LENGTH = 2000;
+const TAKEDOWN_MIN_REASON_LENGTH = 10;
+
+let selectedTakedownLocationIds = [];
+let takedownSearchTerm = "";
+
+let adminTakedownStatus = "pending";
+let adminReportsSection = "takedowns";
+
+
+/* =========================================================
+   TAKEDOWN DOM
+========================================================= */
+
+const requestTakedownButton =
+    document.getElementById("requestTakedownButton");
+
+const takedownRequestsButton =
+    document.getElementById("takedownRequestsButton");
+
+const reportsButton =
+    document.getElementById("reportsButton");
+
+const takedownLocationSearch =
+    document.getElementById("takedownLocationSearch");
+
+const takedownLocationResults =
+    document.getElementById("takedownLocationResults");
+
+const takedownSelectedLocations =
+    document.getElementById("takedownSelectedLocations");
+
+const takedownSelectionCount =
+    document.getElementById("takedownSelectionCount");
+
+const takedownReason =
+    document.getElementById("takedownReason");
+
+const takedownReasonCount =
+    document.getElementById("takedownReasonCount");
+
+const takedownRequestMessage =
+    document.getElementById("takedownRequestMessage");
+
+const submitTakedownRequestButton =
+    document.getElementById("submitTakedownRequestButton");
+
+const myTakedownRequestsContent =
+    document.getElementById("myTakedownRequestsContent");
+
+const adminTakedownRequests =
+    document.getElementById("adminTakedownRequests");
+
+const reportsTakedownsTab =
+    document.getElementById("reportsTakedownsTab");
+
+const reportsAdditionsTab =
+    document.getElementById("reportsAdditionsTab");
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function setTakedownMessage(message, good = false) {
+
+    if (!takedownRequestMessage) {
+        return;
+    }
+
+    takedownRequestMessage.textContent =
+        message || "";
+
+    takedownRequestMessage.classList.toggle(
+        "good",
+        good
+    );
+
+    takedownRequestMessage.classList.toggle(
+        "bad",
+        !good && !!message
+    );
+
+    takedownRequestMessage.style.display =
+        message
+            ? "block"
+            : "none";
+}
+
+
+function formatTakedownDate(timestamp) {
+
+    if (!timestamp) {
+        return "Unknown date";
+    }
+
+    let date = timestamp;
+
+    if (
+        timestamp &&
+        typeof timestamp.toDate === "function"
+    ) {
+        date = timestamp.toDate();
+    }
+
+    if (!(date instanceof Date)) {
+        return "Unknown date";
+    }
+
+    return date.toLocaleString(
+        "en-GB",
+        {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+}
+
+
+function getTakedownStatusLabel(status) {
+
+    if (status === "approved") {
+        return "Approved";
+    }
+
+    if (status === "declined") {
+        return "Declined";
+    }
+
+    return "Under review";
+}
+
+
+function isExplorerAdmin() {
+
+    return !!(
+        currentUser &&
+        currentUser.uid === ADMIN_UID
+    );
+}
+
+
+function getLocationById(locationId) {
+
+    if (!Array.isArray(allLocations)) {
+        return null;
+    }
+
+    return allLocations.find(
+        location => location.id === locationId
+    ) || null;
+}
+
+
+function getLocationName(locationId) {
+
+    const location =
+        getLocationById(locationId);
+
+    return location?.name ||
+        "Location unavailable";
+}
+
+
+/* =========================================================
+   OPEN USER REQUEST MODAL
+========================================================= */
+
+function openTakedownRequestModal() {
+
+    if (!currentUser) {
+
+        toast(
+            "Sign in to submit a takedown request."
+        );
+
+        return;
+    }
+
+    selectedTakedownLocationIds = [];
+    takedownSearchTerm = "";
+
+    if (takedownLocationSearch) {
+        takedownLocationSearch.value = "";
+    }
+
+    if (takedownReason) {
+        takedownReason.value = "";
+    }
+
+    if (takedownReasonCount) {
+        takedownReasonCount.textContent =
+            `0 / ${TAKEDOWN_MAX_REASON_LENGTH}`;
+    }
+
+    setTakedownMessage("");
+
+    renderTakedownLocationResults();
+    renderSelectedTakedownLocations();
+
+    openModal("takedownRequestModal");
+}
+
+
+/* =========================================================
+   LOCATION SEARCH
+========================================================= */
+
+function renderTakedownLocationResults() {
+
+    if (!takedownLocationResults) {
+        return;
+    }
+
+    const search =
+        String(takedownSearchTerm || "")
+            .trim()
+            .toLowerCase();
+
+    let locations =
+        Array.isArray(allLocations)
+            ? [...allLocations]
+            : [];
+
+    if (search) {
+
+        locations =
+            locations.filter(location => {
+
+                const name =
+                    String(
+                        location.name || ""
+                    ).toLowerCase();
+
+                const description =
+                    String(
+                        location.description || ""
+                    ).toLowerCase();
+
+                const tags =
+                    Array.isArray(location.tags)
+                        ? location.tags
+                        : [];
+
+                return (
+                    name.includes(search) ||
+                    description.includes(search) ||
+                    tags.some(tag =>
+                        String(tag)
+                            .toLowerCase()
+                            .includes(search)
+                    )
+                );
+            });
+    }
+
+    /*
+        Keep the results list manageable.
+        Searching still happens across all loaded
+        locations before the 30-result limit.
+    */
+    locations = locations.slice(0, 30);
+
+    if (!locations.length) {
+
+        takedownLocationResults.innerHTML = `
+            <div class="empty-state">
+                No locations found.
+            </div>
+        `;
+
+        return;
+    }
+
+    takedownLocationResults.innerHTML =
+        locations.map(location => {
+
+            const selected =
+                selectedTakedownLocationIds.includes(
+                    location.id
+                );
+
+            return `
+                <button
+                    type="button"
+                    class="takedown-location-result ${selected ? "selected" : ""}"
+                    data-takedown-select="${escapeHtml(location.id)}"
+                >
+
+                    <div>
+
+                        <div class="takedown-location-name">
+                            ${escapeHtml(
+                                location.name ||
+                                "Unnamed location"
+                            )}
+                        </div>
+
+                        <div class="takedown-location-description">
+                            ${escapeHtml(
+                                String(
+                                    location.description ||
+                                    "No description provided."
+                                ).slice(0, 120)
+                            )}
+                        </div>
+
+                    </div>
+
+                    <span class="takedown-location-check">
+                        ${selected ? "✓" : "+"}
+                    </span>
+
+                </button>
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   SELECT / UNSELECT LOCATION
+========================================================= */
+
+function toggleTakedownLocation(locationId) {
+
+    if (!locationId) {
+        return;
+    }
+
+    const existingIndex =
+        selectedTakedownLocationIds.indexOf(
+            locationId
+        );
+
+    /*
+        Remove existing selection.
+    */
+
+    if (existingIndex !== -1) {
+
+        selectedTakedownLocationIds.splice(
+            existingIndex,
+            1
+        );
+
+    }
+
+    /*
+        Add new selection.
+    */
+
+    else {
+
+        if (
+            selectedTakedownLocationIds.length >=
+            TAKEDOWN_MAX_LOCATIONS
+        ) {
+
+            toast(
+                `You can select a maximum of ${TAKEDOWN_MAX_LOCATIONS} locations.`
+            );
+
+            return;
+        }
+
+        selectedTakedownLocationIds.push(
+            locationId
+        );
+    }
+
+    renderTakedownLocationResults();
+    renderSelectedTakedownLocations();
+}
+
+
+/* =========================================================
+   SELECTED LOCATIONS
+========================================================= */
+
+function renderSelectedTakedownLocations() {
+
+    /*
+        IMPORTANT:
+        selectedTakedownLocationIds is the ARRAY.
+        takedownSelectedLocations is the DOM element.
+    */
+
+    if (!takedownSelectedLocations) {
+        return;
+    }
+
+    const selectedIds =
+        Array.isArray(selectedTakedownLocationIds)
+            ? selectedTakedownLocationIds
+            : [];
+
+    if (takedownSelectionCount) {
+
+        takedownSelectionCount.textContent =
+            `${selectedIds.length} / ${TAKEDOWN_MAX_LOCATIONS}`;
+    }
+
+    if (!selectedIds.length) {
+
+        takedownSelectedLocations.innerHTML = `
+            <div class="empty-state">
+                No locations selected.
+            </div>
+        `;
+
+        return;
+    }
+
+    takedownSelectedLocations.innerHTML =
+        selectedIds.map(locationId => {
+
+            const location =
+                getLocationById(locationId);
+
+            if (!location) {
+                return "";
+            }
+
+            return `
+                <div class="takedown-selected-item">
+
+                    <span>
+                        ${escapeHtml(
+                            location.name ||
+                            "Unnamed location"
+                        )}
+                    </span>
+
+                    <button
+                        type="button"
+                        aria-label="Remove location"
+                        data-takedown-remove="${escapeHtml(
+                            location.id
+                        )}"
+                    >
+                        ×
+                    </button>
+
+                </div>
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   CHECK FOR EXISTING ACTIVE REQUEST
+========================================================= */
+
+async function hasActiveTakedownRequest(locationIds) {
+
+    if (!currentUser) {
+        return false;
+    }
+
+    if (
+        !Array.isArray(locationIds) ||
+        !locationIds.length
+    ) {
+        return false;
+    }
+
+    const requestsSnapshot =
+        await getDocs(
+            query(
+                collection(
+                    db,
+                    "takedownRequests"
+                ),
+                where(
+                    "userId",
+                    "==",
+                    currentUser.uid
+                ),
+                where(
+                    "status",
+                    "==",
+                    "pending"
+                )
+            )
+        );
+
+    for (
+        const requestDoc
+        of requestsSnapshot.docs
+    ) {
+
+        const data =
+            requestDoc.data();
+
+        const requested =
+            Array.isArray(data.locationIds)
+                ? data.locationIds
+                : [];
+
+        if (
+            locationIds.some(
+                id => requested.includes(id)
+            )
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/* =========================================================
+   SUBMIT TAKEDOWN REQUEST
+========================================================= */
+
+async function submitTakedownRequest() {
+
+    if (!currentUser) {
+
+        setTakedownMessage(
+            "You must be signed in to submit a request."
+        );
+
+        return;
+    }
+
+    const selectedIds =
+        Array.isArray(selectedTakedownLocationIds)
+            ? [...selectedTakedownLocationIds]
+            : [];
+
+    if (!selectedIds.length) {
+
+        setTakedownMessage(
+            "Select at least one location."
+        );
+
+        return;
+    }
+
+    if (
+        selectedIds.length >
+        TAKEDOWN_MAX_LOCATIONS
+    ) {
+
+        setTakedownMessage(
+            `You can select a maximum of ${TAKEDOWN_MAX_LOCATIONS} locations.`
+        );
+
+        return;
+    }
+
+    const reason =
+        String(
+            takedownReason?.value || ""
+        ).trim();
+
+    if (
+        reason.length <
+        TAKEDOWN_MIN_REASON_LENGTH
+    ) {
+
+        setTakedownMessage(
+            "Please provide a little more detail about why you are requesting the takedown."
+        );
+
+        return;
+    }
+
+    if (
+        reason.length >
+        TAKEDOWN_MAX_REASON_LENGTH
+    ) {
+
+        setTakedownMessage(
+            "Your reason is too long."
+        );
+
+        return;
+    }
+
+    /*
+        Make sure every selected location still
+        exists in the currently loaded locations.
+    */
+
+    const validLocationIds =
+        selectedIds.filter(locationId =>
+            Array.isArray(allLocations) &&
+            allLocations.some(
+                location => location.id === locationId
+            )
+        );
+
+    if (
+        validLocationIds.length !==
+        selectedIds.length
+    ) {
+
+        setTakedownMessage(
+            "One or more selected locations are no longer available. Please refresh and try again."
+        );
+
+        return;
+    }
+
+    try {
+
+        if (submitTakedownRequestButton) {
+            submitTakedownRequestButton.disabled =
+                true;
+        }
+
+        setTakedownMessage("");
+
+        /*
+            Prevent duplicate active requests.
+        */
+
+        const duplicate =
+            await hasActiveTakedownRequest(
+                validLocationIds
+            );
+
+        if (duplicate) {
+
+            setTakedownMessage(
+                "You already have an active takedown request involving one or more of these locations."
+            );
+
+            return;
+        }
+
+        /*
+            Refresh the user's account information.
+        */
+
+        const userSnapshot =
+            await getDoc(
+                doc(
+                    db,
+                    "users",
+                    currentUser.uid
+                )
+            );
+
+        const userData =
+            userSnapshot.exists()
+                ? userSnapshot.data()
+                : {};
+
+        const username =
+            String(
+                currentUsername ||
+                userData.username ||
+                "Unknown user"
+            );
+
+        /*
+            Create the request.
+        */
+
+        await addDoc(
+            collection(
+                db,
+                "takedownRequests"
+            ),
+            {
+                userId:
+                    currentUser.uid,
+
+                username:
+                    username,
+
+                email:
+                    currentUser.email || "",
+
+                locationIds:
+                    validLocationIds,
+
+                reason:
+                    reason,
+
+                status:
+                    "pending",
+
+                submittedAt:
+                    serverTimestamp(),
+
+                reviewedAt:
+                    null,
+
+                reviewedBy:
+                    null,
+
+                reviewReason:
+                    null
+            }
+        );
+
+        /*
+            Reset the form after successful submission.
+        */
+
+        selectedTakedownLocationIds = [];
+
+        if (takedownReason) {
+            takedownReason.value = "";
+        }
+
+        if (takedownReasonCount) {
+            takedownReasonCount.textContent =
+                `0 / ${TAKEDOWN_MAX_REASON_LENGTH}`;
+        }
+
+        renderSelectedTakedownLocations();
+        renderTakedownLocationResults();
+
+        closeModal(
+            "takedownRequestModal"
+        );
+
+        toast(
+            "Takedown request submitted for review."
+        );
+
+        /*
+            Refresh request history.
+        */
+
+        await loadMyTakedownRequests(false);
+
+    } catch (error) {
+
+        console.error(
+            "Unable to submit takedown request:",
+            error
+        );
+
+        setTakedownMessage(
+            "Unable to submit the request. Please try again."
+        );
+
+    } finally {
+
+        if (submitTakedownRequestButton) {
+
+            submitTakedownRequestButton.disabled =
+                false;
+        }
+    }
+}
+
+
+/* =========================================================
+   USER REQUEST HISTORY
+========================================================= */
+
+async function loadMyTakedownRequests(openRequestsModal = true) {
+
+    if (!currentUser) {
+
+        if (myTakedownRequestsContent) {
+
+            myTakedownRequestsContent.innerHTML = `
+                <div class="empty-state">
+                    Sign in to view your takedown requests.
+                </div>
+            `;
+        }
+
+        return;
+    }
+
+    if (myTakedownRequestsContent) {
+
+        myTakedownRequestsContent.innerHTML = `
+            <div class="empty-state">
+                Loading your requests...
+            </div>
+        `;
+    }
+
+    if (openRequestsModal) {
+
+        openModal(
+            "takedownRequestsModal"
+        );
+    }
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                query(
+                    collection(
+                        db,
+                        "takedownRequests"
+                    ),
+                    where(
+                        "userId",
+                        "==",
+                        currentUser.uid
+                    )
+                )
+            );
+
+const requests =
+    snapshot.docs
+        .map(requestDoc => ({
+            id:
+                requestDoc.id,
+
+            ...requestDoc.data()
+        }))
+        .filter(request => {
+
+            /*
+             * User-cleared requests should no longer
+             * appear in their request history.
+             */
+
+            return request.clearedByUser !== true;
+        });
+
+        requests.sort(
+            (a, b) => {
+
+                const aTime =
+                    a.submittedAt?.toMillis?.() ||
+                    0;
+
+                const bTime =
+                    b.submittedAt?.toMillis?.() ||
+                    0;
+
+                return bTime - aTime;
+            }
+        );
+
+        if (!requests.length) {
+
+            myTakedownRequestsContent.innerHTML = `
+                <div class="explore-empty">
+
+                    <div class="explore-empty-title">
+                        No takedown requests
+                    </div>
+
+                    <div class="explore-empty-text">
+                        Requests you submit will appear here.
+                    </div>
+
+                </div>
+            `;
+
+            return;
+        }
+
+        myTakedownRequestsContent.innerHTML =
+            requests.map(request => {
+
+                const status =
+                    request.status ||
+                    "pending";
+
+                const locationNames =
+                    Array.isArray(
+                        request.locationIds
+                    )
+                        ? request.locationIds.map(
+                            id =>
+                                getLocationName(id)
+                          )
+                        : [];
+
+                return `
+                    <div
+                        class="takedown-request-card"
+                    >
+
+                        <div class="takedown-request-header">
+
+                            <div>
+
+                                <div class="takedown-request-title">
+                                    Takedown request
+                                </div>
+
+                                <div class="takedown-request-date">
+                                    Submitted
+                                    ${escapeHtml(
+                                        formatTakedownDate(
+                                            request.submittedAt
+                                        )
+                                    )}
+                                </div>
+
+                            </div>
+
+                            <span
+                                class="takedown-status ${escapeHtml(
+                                    status
+                                )}"
+                            >
+                                ${escapeHtml(
+                                    getTakedownStatusLabel(
+                                        status
+                                    )
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="takedown-request-locations">
+
+                            ${
+                                locationNames
+                                    .map(
+                                        name => `
+                                            <div>
+                                                ${escapeHtml(name)}
+                                            </div>
+                                        `
+                                    )
+                                    .join("")
+                            }
+
+                        </div>
+
+
+                        <div class="takedown-request-reason">
+
+                            <strong>
+                                Reason submitted
+                            </strong>
+
+                            <p>
+                                ${escapeHtml(
+                                    request.reason || ""
+                                )}
+                            </p>
+
+                        </div>
+
+
+                        ${
+                            status === "declined" &&
+                            request.reviewReason
+                                ? `
+                                    <div class="takedown-review-note">
+
+                                        <strong>
+                                            Review note
+                                        </strong>
+
+                                        <p>
+                                            ${escapeHtml(
+                                                request.reviewReason
+                                            )}
+                                        </p>
+
+                                    </div>
+                                `
+                                : ""
+                        }
+
+
+                        ${
+                            status === "approved"
+                                ? `
+                                    <div class="takedown-review-note">
+
+                                        <strong>
+                                            Review note
+                                        </strong>
+
+                                        <p>
+                                            ${escapeHtml(
+                                                request.reviewReason ||
+                                                "Request approved by PlingifyPlug administration."
+                                            )}
+                                        </p>
+
+                                    </div>
+                                `
+                                : ""
+                        }
+
+                        ${ 
+    ["approved", "declined"].includes(status)
+        ? `
+            <div class="admin-report-actions">
+
+                <button
+                    type="button"
+                    class="button"
+                    data-clear-takedown-user="${escapeHtml(
+                        request.id
+                    )}"
+                >
+                    Clear request
+                </button>
+
+            </div>
+        `
+        : ""
+}
+
+                    </div>
+                `;
+
+            }).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load takedown requests:",
+            error
+        );
+
+        if (myTakedownRequestsContent) {
+
+            myTakedownRequestsContent.innerHTML = `
+                <div class="empty-state">
+                    Unable to load your takedown requests.
+                </div>
+            `;
+        }
+    }
+}
+
+
+/* =========================================================
+   OPEN REPORTS
+========================================================= */
+
+async function openReportsModal() {
+
+    if (!isExplorerAdmin()) {
+
+        toast(
+            "You do not have permission to access Reports."
+        );
+
+        return;
+    }
+
+    openModal(
+        "reportsModal"
+    );
+
+    adminReportsSection =
+        "takedowns";
+
+    adminTakedownStatus =
+        "pending";
+
+    document
+        .querySelectorAll(".reports-tab")
+        .forEach(tab => {
+
+            tab.classList.toggle(
+                "active",
+                tab.id ===
+                    "reportsTakedownsTab"
+            );
+        });
+
+    document
+        .querySelectorAll(".reports-status-tab")
+        .forEach(tab => {
+
+            tab.classList.toggle(
+                "active",
+                tab.dataset.reportStatus ===
+                    "pending"
+            );
+        });
+
+    const takedownsPanel =
+        document.getElementById(
+            "reportsTakedownsPanel"
+        );
+
+    const additionsPanel =
+        document.getElementById(
+            "reportsAdditionsPanel"
+        );
+
+    if (takedownsPanel) {
+        takedownsPanel.style.display =
+            "block";
+    }
+
+    if (additionsPanel) {
+        additionsPanel.style.display =
+            "none";
+    }
+
+    await loadAdminTakedownRequests();
+}
+
+
+/* =========================================================
+   ADMIN LOAD TAKEDOWNS
+========================================================= */
+
+async function loadAdminTakedownRequests() {
+
+    if (!isExplorerAdmin()) {
+        return;
+    }
+
+    if (adminTakedownRequests) {
+
+        adminTakedownRequests.innerHTML = `
+            <div class="empty-state">
+                Loading reports...
+            </div>
+        `;
+    }
+
+    try {
+
+        /*
+            Admin is allowed to read all requests.
+        */
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "takedownRequests"
+                )
+            );
+
+        let requests =
+            snapshot.docs
+                .map(requestDoc => ({
+                    id:
+                        requestDoc.id,
+
+                    ...requestDoc.data()
+                }))
+.filter(request => {
+
+    const status =
+        request.status ||
+        "pending";
+
+    /*
+     * Admin-cleared requests should no longer
+     * appear in the admin reports.
+     */
+
+    if (
+        request.adminCleared === true
+    ) {
+        return false;
+    }
+
+    return status === adminTakedownStatus;
+});
+
+        requests.sort(
+            (a, b) => {
+
+                const aTime =
+                    a.submittedAt?.toMillis?.() ||
+                    0;
+
+                const bTime =
+                    b.submittedAt?.toMillis?.() ||
+                    0;
+
+                return bTime - aTime;
+            }
+        );
+
+        if (!requests.length) {
+
+            if (adminTakedownRequests) {
+
+                adminTakedownRequests.innerHTML = `
+                    <div class="explore-empty">
+
+                        <div class="explore-empty-title">
+                            No ${
+                                adminTakedownStatus
+                            } takedown requests
+                        </div>
+
+                        <div class="explore-empty-text">
+                            Requests in this status will appear here.
+                        </div>
+
+                    </div>
+                `;
+            }
+
+            return;
+        }
+
+        adminTakedownRequests.innerHTML =
+            requests.map(request =>
+                renderAdminTakedownRequest(
+                    request
+                )
+            ).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load admin takedown requests:",
+            error
+        );
+
+        if (adminTakedownRequests) {
+
+            adminTakedownRequests.innerHTML = `
+                <div class="empty-state">
+                    Unable to load reports.
+                </div>
+            `;
+        }
+    }
+}
+
+
+/* =========================================================
+   ADMIN REQUEST CARD
+========================================================= */
+
+function renderAdminTakedownRequest(request) {
+
+    const locationNames =
+        Array.isArray(
+            request.locationIds
+        )
+            ? request.locationIds.map(
+                id =>
+                    getLocationName(id)
+              )
+            : [];
+
+    const status =
+        request.status ||
+        "pending";
+
+const actions =
+    status === "pending"
+        ? `
+            <div class="admin-report-actions">
+
+                <button
+                    type="button"
+                    class="button"
+                    data-takedown-decline="${escapeHtml(
+                        request.id
+                    )}"
+                >
+                    Decline
+                </button>
+
+                <button
+                    type="button"
+                    class="button danger"
+                    data-takedown-approve="${escapeHtml(
+                        request.id
+                    )}"
+                >
+                    Approve & remove
+                </button>
+
+            </div>
+        `
+        : ["approved", "declined"].includes(status)
+            ? `
+                <div class="admin-report-actions">
+
+                    <button
+                        type="button"
+                        class="button"
+                        data-clear-takedown-admin="${escapeHtml(
+                            request.id
+                        )}"
+                    >
+                        Clear request
+                    </button>
+
+                </div>
+            `
+            : "";
+
+    return `
+        <article
+            class="admin-report-card"
+        >
+
+            <div class="admin-report-card-header">
+
+                <div>
+
+                    <div class="admin-report-title">
+                        Takedown request
+                    </div>
+
+                    <div class="admin-report-subtitle">
+                        Submitted by
+                        <strong>
+                            ${escapeHtml(
+                                request.username ||
+                                "Unknown user"
+                            )}
+                        </strong>
+                    </div>
+
+                </div>
+
+                <span
+                    class="takedown-status ${escapeHtml(
+                        status
+                    )}"
+                >
+                    ${escapeHtml(
+                        getTakedownStatusLabel(
+                            status
+                        )
+                    )}
+                </span>
+
+            </div>
+
+
+            <div class="admin-report-meta">
+
+                <div>
+                    <strong>User ID</strong>
+
+                    <span>
+                        ${escapeHtml(
+                            request.userId ||
+                            "Unknown"
+                        )}
+                    </span>
+                </div>
+
+                <div>
+                    <strong>Email</strong>
+
+                    <span>
+                        ${escapeHtml(
+                            request.email ||
+                            "Not available"
+                        )}
+                    </span>
+                </div>
+
+                <div>
+                    <strong>Submitted</strong>
+
+                    <span>
+                        ${escapeHtml(
+                            formatTakedownDate(
+                                request.submittedAt
+                            )
+                        )}
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="admin-report-section">
+
+                <strong>
+                    Locations
+                </strong>
+
+                <div class="admin-report-locations">
+
+                    ${
+                        locationNames
+                            .map(
+                                name => `
+                                    <div>
+                                        ${escapeHtml(name)}
+                                    </div>
+                                `
+                            )
+                            .join("")
+                    }
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-report-section">
+
+                <strong>
+                    Reason
+                </strong>
+
+                <p>
+                    ${escapeHtml(
+                        request.reason ||
+                        "No reason provided."
+                    )}
+                </p>
+
+            </div>
+
+
+            ${
+                request.reviewReason
+                    ? `
+                        <div class="admin-report-section">
+
+                            <strong>
+                                Admin review note
+                            </strong>
+
+                            <p>
+                                ${escapeHtml(
+                                    request.reviewReason
+                                )}
+                            </p>
+
+                        </div>
+                    `
+                    : ""
+            }
+
+
+            ${actions}
+
+        </article>
+    `;
+}
+
+/* =========================================================
+   CREATE USER NOTIFICATION
+========================================================= */
+
+async function createTakedownNotification({
+    userId,
+    type,
+    title,
+    description
+}) {
+
+    if (!userId) {
+        throw new Error("Missing notification user ID.");
+    }
+
+    await addDoc(
+        collection(db, "notifications"),
+        {
+            userId: userId,
+
+            type: type,
+
+            title: title,
+
+            description: description,
+
+            read: false,
+
+            createdAt: serverTimestamp()
+        }
+    );
+}
+
+
+/* =========================================================
+   APPROVE TAKEDOWN
+========================================================= */
+
+async function approveTakedownRequest(requestId) {
+
+    if (!isExplorerAdmin()) {
+
+        toast(
+            "You do not have permission to do this."
+        );
+
+        return;
+    }
+
+    if (!requestId) {
+
+        toast(
+            "Invalid takedown request."
+        );
+
+        return;
+    }
+
+    const confirmed =
+        window.confirm(
+            "Approve this takedown request?\n\nThe selected locations and their public ratings will be permanently removed from Explorer."
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const requestRef =
+            doc(
+                db,
+                "takedownRequests",
+                requestId
+            );
+
+        const requestSnapshot =
+            await getDoc(
+                requestRef
+            );
+
+        if (!requestSnapshot.exists()) {
+
+            toast(
+                "This request no longer exists."
+            );
+
+            return;
+        }
+
+        const request =
+            requestSnapshot.data();
+
+        if (
+            request.status &&
+            request.status !== "pending"
+        ) {
+
+            toast(
+                "This request has already been reviewed."
+            );
+
+            return;
+        }
+
+        const locationIds =
+            Array.isArray(
+                request.locationIds
+            )
+                ? [
+                    ...new Set(
+                        request.locationIds
+                    )
+                  ]
+                : [];
+
+        if (!locationIds.length) {
+
+            toast(
+                "This request contains no locations."
+            );
+
+            return;
+        }
+
+        /*
+            Delete every requested location
+            and its related ratings.
+        */
+
+        for (
+            const locationId
+            of locationIds
+        ) {
+
+            await deleteLocationAndRatings(
+                locationId
+            );
+        }
+
+        /*
+            Mark the request as approved.
+
+            The request itself is retained as an
+            administrative record.
+        */
+
+const approvalReason =
+    "Request approved by PlingifyPlug administration.";
+
+await updateDoc(
+    requestRef,
+    {
+        status:
+            "approved",
+
+        reviewedAt:
+            serverTimestamp(),
+
+        reviewedBy:
+            currentUser.uid,
+
+        reviewReason:
+            approvalReason
+    }
+);
+
+
+/* =====================================================
+   CREATE APPROVAL NOTIFICATION
+===================================================== */
+
+const approvedLocationNames =
+    locationIds
+        .map(id => getLocationName(id))
+        .filter(Boolean);
+
+await createTakedownNotification({
+
+    userId:
+        request.userId,
+
+    type:
+        "takedown_approved",
+
+    title:
+        "Takedown request approved",
+
+    description:
+        `Your takedown request for ${
+            approvedLocationNames.join(", ")
+        } has been approved. ${
+            approvalReason
+        }`
+});
+
+
+        /* =====================================================
+           UPDATE LOCAL USER DATA
+        ===================================================== */
+
+        if (
+            Array.isArray(
+                currentUserSavedLocations
+            )
+        ) {
+
+            currentUserSavedLocations =
+                currentUserSavedLocations.filter(
+                    id =>
+                        !locationIds.includes(id)
+                );
+        }
+
+
+        if (
+            Array.isArray(
+                currentUserViewedLocations
+            )
+        ) {
+
+            currentUserViewedLocations =
+                currentUserViewedLocations.filter(
+                    item => {
+
+                        const id =
+                            typeof item === "string"
+                                ? item
+                                : item?.id;
+
+                        return !locationIds.includes(id);
+                    }
+                );
+        }
+
+
+        if (
+            Array.isArray(
+                currentUserExploredLocations
+            )
+        ) {
+
+            currentUserExploredLocations =
+                currentUserExploredLocations.filter(
+                    item => {
+
+                        const id =
+                            typeof item === "string"
+                                ? item
+                                : item?.id;
+
+                        return !locationIds.includes(id);
+                    }
+                );
+        }
+
+
+        if (
+            Array.isArray(allLocations)
+        ) {
+
+            allLocations =
+                allLocations.filter(
+                    location =>
+                        !locationIds.includes(
+                            location.id
+                        )
+                );
+        }
+
+
+        /*
+            Refresh Explorer UI.
+        */
+
+        updateUserStats();
+        renderLocations();
+
+        /*
+            Refresh admin reports.
+        */
+
+        await loadAdminTakedownRequests();
+
+        toast(
+            "Takedown approved. The selected location(s) have been removed."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to approve takedown:",
+            error
+        );
+
+        toast(
+            "Unable to approve this takedown request."
+        );
+    }
+}
+
+
+/* =========================================================
+   DELETE LOCATION + RELATED RATINGS
+========================================================= */
+
+async function deleteLocationAndRatings(locationId) {
+
+    if (!isExplorerAdmin()) {
+
+        throw new Error(
+            "Only the Explorer administrator can delete locations."
+        );
+    }
+
+    if (!locationId) {
+
+        throw new Error(
+            "Missing location ID."
+        );
+    }
+
+    /*
+        Find all rating documents belonging
+        to this location.
+    */
+
+    const ratingsQuery =
+        query(
+            collection(
+                db,
+                "explorations"
+            ),
+            where(
+                "locationId",
+                "==",
+                locationId
+            )
+        );
+
+    const snapshot =
+        await getDocs(
+            ratingsQuery
+        );
+
+
+    /*
+        Delete ratings in batches.
+
+        Firestore supports up to 500 writes in a batch.
+        We use 450 to leave some safety room.
+    */
+
+    if (!snapshot.empty) {
+
+        let batch =
+            writeBatch(db);
+
+        let operationCount = 0;
+
+        for (
+            const relatedDoc
+            of snapshot.docs
+        ) {
+
+            batch.delete(
+                relatedDoc.ref
+            );
+
+            operationCount++;
+
+            if (operationCount >= 450) {
+
+                await batch.commit();
+
+                batch =
+                    writeBatch(db);
+
+                operationCount = 0;
+            }
+        }
+
+        if (operationCount > 0) {
+
+            await batch.commit();
+        }
+    }
+
+
+    /*
+        Finally delete the location itself.
+    */
+
+    await deleteDoc(
+        doc(
+            db,
+            "locations",
+            locationId
+        )
+    );
+}
+
+
+/* =========================================================
+   DECLINE TAKEDOWN
+========================================================= */
+
+async function declineTakedownRequest(requestId) {
+
+    if (!isExplorerAdmin()) {
+
+        toast(
+            "You do not have permission to do this."
+        );
+
+        return;
+    }
+
+    if (!requestId) {
+
+        toast(
+            "Invalid takedown request."
+        );
+
+        return;
+    }
+
+    const reason =
+        window.prompt(
+            "Optional reason for declining this request:"
+        );
+
+    /*
+        Canceling the prompt should not decline
+        the request.
+    */
+
+    if (reason === null) {
+        return;
+    }
+
+    try {
+
+        const requestRef =
+            doc(
+                db,
+                "takedownRequests",
+                requestId
+            );
+
+        const requestSnapshot =
+            await getDoc(
+                requestRef
+            );
+
+        if (!requestSnapshot.exists()) {
+
+            toast(
+                "This request no longer exists."
+            );
+
+            return;
+        }
+
+        const request =
+            requestSnapshot.data();
+
+        if (
+            request.status &&
+            request.status !== "pending"
+        ) {
+
+            toast(
+                "This request has already been reviewed."
+            );
+
+            return;
+        }
+
+        const reviewReason =
+            String(
+                reason || ""
+            ).trim() ||
+            "Request declined by PlingifyPlug administration.";
+
+await updateDoc(
+    requestRef,
+    {
+        status:
+            "declined",
+
+        reviewedAt:
+            serverTimestamp(),
+
+        reviewedBy:
+            currentUser.uid,
+
+        reviewReason:
+            reviewReason
+    }
+);
+
+
+/* =====================================================
+   CREATE DECLINE NOTIFICATION
+===================================================== */
+
+const declinedLocationNames =
+    Array.isArray(request.locationIds)
+        ? request.locationIds
+            .map(id => getLocationName(id))
+            .filter(Boolean)
+        : [];
+
+await createTakedownNotification({
+
+    userId:
+        request.userId,
+
+    type:
+        "takedown_declined",
+
+    title:
+        "Takedown request declined",
+
+    description:
+        `Your takedown request for ${
+            declinedLocationNames.join(", ")
+        } has been declined. Reason: ${
+            reviewReason
+        }`
+});
+
+        await loadAdminTakedownRequests();
+
+        toast(
+            "Takedown request declined."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to decline takedown:",
+            error
+        );
+
+        toast(
+            "Unable to decline this request."
+        );
+    }
+}
+
+
+/* =========================================================
+   BUTTON EVENTS
+========================================================= */
+
+if (requestTakedownButton) {
+
+    requestTakedownButton.addEventListener(
+        "click",
+        openTakedownRequestModal
+    );
+}
+
+
+if (takedownRequestsButton) {
+
+    takedownRequestsButton.addEventListener(
+        "click",
+        () => loadMyTakedownRequests(true)
+    );
+}
+
+
+if (reportsButton) {
+
+    reportsButton.addEventListener(
+        "click",
+        openReportsModal
+    );
+}
+
+
+/* =========================================================
+   LOCATION SEARCH
+========================================================= */
+
+if (takedownLocationSearch) {
+
+    takedownLocationSearch.addEventListener(
+        "input",
+        () => {
+
+            takedownSearchTerm =
+                takedownLocationSearch.value
+                    .trim()
+                    .toLowerCase();
+
+            renderTakedownLocationResults();
+        }
+    );
+}
+
+
+/* =========================================================
+   REASON COUNTER
+========================================================= */
+
+if (takedownReason) {
+
+    takedownReason.addEventListener(
+        "input",
+        () => {
+
+            if (takedownReasonCount) {
+
+                takedownReasonCount.textContent =
+                    `${takedownReason.value.length} / ${TAKEDOWN_MAX_REASON_LENGTH}`;
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   SUBMIT BUTTON
+========================================================= */
+
+if (submitTakedownRequestButton) {
+
+    submitTakedownRequestButton.addEventListener(
+        "click",
+        submitTakedownRequest
+    );
+}
+
+
+/* =========================================================
+   LOCATION SELECTION EVENTS
+========================================================= */
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const selectButton =
+            event.target.closest(
+                "[data-takedown-select]"
+            );
+
+        if (selectButton) {
+
+            toggleTakedownLocation(
+                selectButton.dataset.takedownSelect
+            );
+
+            return;
+        }
+
+
+        const removeButton =
+            event.target.closest(
+                "[data-takedown-remove]"
+            );
+
+        if (removeButton) {
+
+            toggleTakedownLocation(
+                removeButton.dataset.takedownRemove
+            );
+        }
+    }
+);
+
+
+/* =========================================================
+   ADMIN / USER TAKEDOWN REPORT EVENTS
+========================================================= */
+
+document.addEventListener(
+    "click",
+    async event => {
+
+        /* =====================================================
+           APPROVE
+        ===================================================== */
+
+        const approveButton =
+            event.target.closest(
+                "[data-takedown-approve]"
+            );
+
+        if (approveButton) {
+
+            await approveTakedownRequest(
+                approveButton.dataset.takedownApprove
+            );
+
+            return;
+        }
+
+
+        /* =====================================================
+           DECLINE
+        ===================================================== */
+
+        const declineButton =
+            event.target.closest(
+                "[data-takedown-decline]"
+            );
+
+        if (declineButton) {
+
+            await declineTakedownRequest(
+                declineButton.dataset.takedownDecline
+            );
+
+            return;
+        }
+
+
+        /* =====================================================
+           ADMIN CLEAR
+        ===================================================== */
+
+        const adminClearButton =
+            event.target.closest(
+                "[data-clear-takedown-admin]"
+            );
+
+        if (adminClearButton) {
+
+            if (!isExplorerAdmin()) {
+
+                toast(
+                    "You do not have permission to clear this request."
+                );
+
+                return;
+            }
+
+            openClearTakedownConfirmation(
+                adminClearButton.dataset.clearTakedownAdmin,
+                "admin"
+            );
+
+            return;
+        }
+
+
+        /* =====================================================
+           USER CLEAR
+        ===================================================== */
+
+        const userClearButton =
+            event.target.closest(
+                "[data-clear-takedown-user]"
+            );
+
+        if (userClearButton) {
+
+            if (!currentUser) {
+
+                toast(
+                    "You must be signed in."
+                );
+
+                return;
+            }
+
+            openClearTakedownConfirmation(
+                userClearButton.dataset.clearTakedownUser,
+                "user"
+            );
+
+            return;
+        }
+    }
+);
+
+
+/* =========================================================
+   ADMIN REPORT STATUS TABS
+========================================================= */
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const statusButton =
+            event.target.closest(
+                "[data-report-status]"
+            );
+
+        if (!statusButton) {
+            return;
+        }
+
+        if (!isExplorerAdmin()) {
+            return;
+        }
+
+        const requestedStatus =
+            statusButton.dataset.reportStatus;
+
+        if (
+            ![
+                "pending",
+                "approved",
+                "declined"
+            ].includes(requestedStatus)
+        ) {
+            return;
+        }
+
+        adminTakedownStatus =
+            requestedStatus;
+
+        document
+            .querySelectorAll(
+                ".reports-status-tab"
+            )
+            .forEach(button => {
+
+                button.classList.toggle(
+                    "active",
+                    button === statusButton
+                );
+            });
+
+        loadAdminTakedownRequests();
+    }
+);
+
+
+/* =========================================================
+   ADMIN REPORT MAIN TABS
+========================================================= */
+
+if (reportsTakedownsTab) {
+
+    reportsTakedownsTab.addEventListener(
+        "click",
+        () => {
+
+            if (!isExplorerAdmin()) {
+                return;
+            }
+
+            adminReportsSection =
+                "takedowns";
+
+            reportsTakedownsTab.classList.add(
+                "active"
+            );
+
+            reportsAdditionsTab?.classList.remove(
+                "active"
+            );
+
+            const takedownsPanel =
+                document.getElementById(
+                    "reportsTakedownsPanel"
+                );
+
+            const additionsPanel =
+                document.getElementById(
+                    "reportsAdditionsPanel"
+                );
+
+            if (takedownsPanel) {
+                takedownsPanel.style.display =
+                    "block";
+            }
+
+            if (additionsPanel) {
+                additionsPanel.style.display =
+                    "none";
+            }
+
+            loadAdminTakedownRequests();
+        }
+    );
+}
+
+
+if (reportsAdditionsTab) {
+
+    reportsAdditionsTab.addEventListener(
+        "click",
+        () => {
+
+            if (!isExplorerAdmin()) {
+                return;
+            }
+
+            adminReportsSection =
+                "additions";
+
+            reportsAdditionsTab.classList.add(
+                "active"
+            );
+
+            reportsTakedownsTab?.classList.remove(
+                "active"
+            );
+
+            const takedownsPanel =
+                document.getElementById(
+                    "reportsTakedownsPanel"
+                );
+
+            const additionsPanel =
+                document.getElementById(
+                    "reportsAdditionsPanel"
+                );
+
+            if (takedownsPanel) {
+                takedownsPanel.style.display =
+                    "none";
+            }
+
+            if (additionsPanel) {
+                additionsPanel.style.display =
+                    "block";
+            }
+        }
+    );
+}
+
+/* =========================================================
+   CLEAR TAKEDOWN REQUEST SYSTEM
+========================================================= */
+
+const clearTakedownModal =
+    document.getElementById("clearTakedownModal");
+
+const clearTakedownMessage =
+    document.getElementById("clearTakedownMessage");
+
+const clearTakedownError =
+    document.getElementById("clearTakedownError");
+
+const confirmClearTakedownButton =
+    document.getElementById("confirmClearTakedownButton");
+
+let takedownRequestToClear = null;
+let takedownClearMode = null;
+
+
+/* =========================================================
+   OPEN CLEAR CONFIRMATION
+========================================================= */
+
+function openClearTakedownConfirmation(
+    requestId,
+    mode = "user"
+) {
+
+    if (!requestId) {
+        console.error(
+            "Cannot clear takedown request: missing request ID."
+        );
+
+        return;
+    }
+
+    takedownRequestToClear = requestId;
+    takedownClearMode = mode;
+
+    clearTakedownError.textContent = "";
+
+    if (mode === "admin") {
+
+        clearTakedownMessage.textContent =
+            "Are you sure you want to clear this completed takedown request? It will be permanently removed from the reports section.";
+
+    } else {
+
+        clearTakedownMessage.textContent =
+            "Are you sure you want to clear this completed takedown request? It will be permanently removed from your request history.";
+
+    }
+
+    clearTakedownModal.classList.add("open");
+}
+
+
+/* =========================================================
+   CONFIRM CLEAR
+========================================================= */
+
+/* =========================================================
+   CONFIRM CLEAR
+========================================================= */
+
+async function confirmClearTakedown() {
+
+    if (!takedownRequestToClear) {
+        return;
+    }
+
+    const requestId = takedownRequestToClear;
+    const mode = takedownClearMode;
+
+    clearTakedownError.textContent = "";
+
+    confirmClearTakedownButton.disabled = true;
+    confirmClearTakedownButton.textContent = "Clearing...";
+
+    try {
+
+        const requestRef = doc(
+            db,
+            "takedownRequests",
+            requestId
+        );
+
+        const requestSnapshot = await getDoc(
+            requestRef
+        );
+
+        if (!requestSnapshot.exists()) {
+
+            throw new Error(
+                "This request no longer exists."
+            );
+        }
+
+        const request = requestSnapshot.data();
+
+        /*
+         * Only completed requests can be cleared.
+         */
+
+        if (
+            !["approved", "declined"].includes(
+                request.status
+            )
+        ) {
+
+            throw new Error(
+                "Only approved or declined requests can be cleared."
+            );
+        }
+
+
+        /*
+         * USER CLEAR
+         *
+         * Only hides the request from the user.
+         * It remains visible to administrators.
+         */
+
+        if (mode === "user") {
+
+            if (
+                request.userId !== currentUser?.uid
+            ) {
+
+                throw new Error(
+                    "You do not have permission to clear this request."
+                );
+            }
+
+await updateDoc(
+    requestRef,
+    {
+        clearedByUser: true,
+        userClearedAt: serverTimestamp()
+    }
+);
+        }
+
+
+        /*
+         * ADMIN CLEAR
+         *
+         * Only hides the request from administrators.
+         * It remains visible to the user.
+         */
+
+        else if (mode === "admin") {
+
+            if (!isExplorerAdmin()) {
+
+                throw new Error(
+                    "You do not have permission to clear this request."
+                );
+            }
+
+            await updateDoc(
+                requestRef,
+                {
+                    adminCleared: true
+                }
+            );
+        }
+
+
+        /*
+         * Close confirmation modal.
+         */
+
+        clearTakedownModal.classList.remove("open");
+
+        takedownRequestToClear = null;
+        takedownClearMode = null;
+
+
+        /*
+         * Refresh the correct section.
+         */
+
+        if (mode === "admin") {
+
+            await loadAdminTakedownRequests();
+
+        } else {
+
+            await loadMyTakedownRequests(false);
+        }
+
+
+        toast(
+            "Takedown request cleared."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to clear takedown request:",
+            error
+        );
+
+        clearTakedownError.textContent =
+            error.message ||
+            "Unable to clear this request. Please try again.";
+
+    } finally {
+
+        confirmClearTakedownButton.disabled = false;
+
+        confirmClearTakedownButton.textContent =
+            "Clear request";
+    }
+}
+
+/* =========================================================
+   CONFIRMATION BUTTON
+========================================================= */
+
+if (confirmClearTakedownButton) {
+
+    confirmClearTakedownButton.addEventListener(
+        "click",
+        confirmClearTakedown
+    );
+}
 
   /* =========================================================
    USER EXPLORE DATA
@@ -3464,7 +6790,6 @@ document.addEventListener(
 
     }
 );
-
 
     /* =========================================================
        AUTH UI

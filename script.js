@@ -409,6 +409,11 @@ onAuthStateChanged(auth, user => {
     if (user) {
 
         // User is logged in.
+        // Show the navbar notification bell.
+        if (notificationsButton) {
+            notificationsButton.style.display = "flex";
+        }
+
         // Load notifications immediately so
         // the navbar badge appears on page load.
         loadNotifications();
@@ -416,6 +421,11 @@ onAuthStateChanged(auth, user => {
     } else {
 
         // User is logged out.
+        // Hide the navbar notification bell.
+        if (notificationsButton) {
+            notificationsButton.style.display = "none";
+        }
+
         // Remove the notification badge.
         updateNotificationBadges(0);
 
@@ -4522,6 +4532,81 @@ if (confirmClearTakedownButton) {
     );
 }
 
+/* =========================================================
+   PUBLIC SOCIAL PROFILE
+========================================================= */
+
+async function syncPublicProfile() {
+
+    if (!currentUser) {
+        return;
+    }
+
+    try {
+
+        const userRef = doc(
+            db,
+            "users",
+            currentUser.uid
+        );
+
+        const userSnapshot =
+            await getDoc(userRef);
+
+        const userData =
+            userSnapshot.exists()
+                ? userSnapshot.data()
+                : {};
+
+        const createdAt =
+            userData.createdAt ||
+            currentUserData.createdAt ||
+            serverTimestamp();
+
+        await setDoc(
+            doc(
+                db,
+                "publicProfiles",
+                currentUser.uid
+            ),
+            {
+                username:
+                    currentUsername ||
+                    userData.username ||
+                    "User",
+
+                createdAt,
+
+                savedLocations:
+                    Array.isArray(
+                        currentUserSavedLocations
+                    )
+                        ? currentUserSavedLocations
+                        : [],
+
+                exploredLocations:
+                    Array.isArray(
+                        currentUserExploredLocations
+                    )
+                        ? currentUserExploredLocations
+                        : []
+            },
+            {
+                merge: true
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to sync public profile:",
+            error
+        );
+
+    }
+
+}
+
   /* =========================================================
    USER EXPLORE DATA
 ========================================================= */
@@ -5051,6 +5136,8 @@ if (!ratingSnapshot.empty) {
 
         currentUserExploredLocations =
             explored;
+
+            currentUserExploredLocations =
 
 
         /*
@@ -5742,6 +5829,8 @@ async function toggleSavedLocation(locationId) {
 
         currentUserSavedLocations = saved;
 
+        await syncPublicProfile();
+
         updateUserStats();
 
         renderLocations();
@@ -5900,6 +5989,7 @@ async function toggleExploredLocation(locationId) {
             currentUserExploredLocations =
                 explored;
 
+                await syncPublicProfile();
 
             /*
                 Remove the user's rating from
@@ -6341,6 +6431,1587 @@ async function recordLocationViewed(locationId) {
     }
 
 }
+
+/* =========================================================
+   SOCIAL
+========================================================= */
+
+const socialButton =
+    document.getElementById(
+        "socialButton"
+    );
+
+const socialModal =
+    document.getElementById(
+        "socialModal"
+    );
+
+const socialDirectoryView =
+    document.getElementById(
+        "socialDirectoryView"
+    );
+
+const socialProfileView =
+    document.getElementById(
+        "socialProfileView"
+    );
+
+const socialUserSearch =
+    document.getElementById(
+        "socialUserSearch"
+    );
+
+const socialUserList =
+    document.getElementById(
+        "socialUserList"
+    );
+
+const socialUserCount =
+    document.getElementById(
+        "socialUserCount"
+    );
+
+const socialProfileContent =
+    document.getElementById(
+        "socialProfileContent"
+    );
+
+const socialProfileBackButton =
+    document.getElementById(
+        "socialProfileBackButton"
+    );
+
+
+let socialProfiles = [];
+
+let socialSearchTerm = "";
+
+let selectedSocialUserId = null;
+
+
+/* =========================================================
+   OPEN SOCIAL
+========================================================= */
+
+async function openSocial() {
+
+    if (!currentUser) {
+
+        toast(
+            "Sign in to use Social."
+        );
+
+        return;
+    }
+
+    socialSearchTerm = "";
+
+    socialUserSearch.value = "";
+
+    socialDirectoryView.style.display =
+        "block";
+
+    socialProfileView.style.display =
+        "none";
+
+    openModal(
+        "socialModal"
+    );
+
+    await loadSocialProfiles();
+
+}
+
+
+/* =========================================================
+   LOAD PUBLIC PROFILES
+========================================================= */
+
+async function loadSocialProfiles() {
+
+    socialUserList.innerHTML = `
+        <div class="empty-state">
+            Loading explorers...
+        </div>
+    `;
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "publicProfiles"
+                )
+            );
+
+        socialProfiles =
+            snapshot.docs
+                .map(profileDoc => {
+
+                    return {
+                        id:
+                            profileDoc.id,
+
+                        ...profileDoc.data()
+                    };
+
+                })
+                .sort(
+                    (a, b) =>
+                        String(
+                            a.username || ""
+                        ).localeCompare(
+                            String(
+                                b.username || ""
+                            ),
+                            undefined,
+                            {
+                                sensitivity:
+                                    "base"
+                            }
+                        )
+                );
+
+        renderSocialProfiles();
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load social profiles:",
+            error
+        );
+
+        socialUserList.innerHTML = `
+            <div class="empty-state">
+
+                <div class="explore-empty-title">
+                    Unable to load explorers
+                </div>
+
+                <div class="explore-empty-text">
+                    Please try again later.
+                </div>
+
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   PUBLIC PROFILE DATE
+========================================================= */
+
+function formatSocialDate(
+    timestamp
+) {
+
+    if (!timestamp) {
+        return "Unknown";
+    }
+
+    let date =
+        timestamp;
+
+    if (
+        timestamp &&
+        typeof timestamp.toDate ===
+            "function"
+    ) {
+
+        date =
+            timestamp.toDate();
+
+    }
+
+    if (
+        !(date instanceof Date) ||
+        isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "Unknown";
+
+    }
+
+    return date.toLocaleDateString(
+        "en-GB",
+        {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        }
+    );
+
+}
+
+
+/* =========================================================
+   PUBLIC PROFILE PROGRESS
+========================================================= */
+
+function getSocialProgress(
+    profile
+) {
+
+    const explored =
+        Array.isArray(
+            profile.exploredLocations
+        )
+            ? profile.exploredLocations
+            : [];
+
+    const total =
+        allLocations.length;
+
+    if (!total) {
+        return 0;
+    }
+
+    return Math.min(
+        100,
+        Math.max(
+            0,
+            Math.round(
+                (
+                    explored.length /
+                    total
+                ) * 100
+            )
+        )
+    );
+
+}
+
+
+/* =========================================================
+   RENDER SOCIAL DIRECTORY
+========================================================= */
+
+function renderSocialProfiles() {
+
+    const term =
+        socialSearchTerm
+            .trim()
+            .toLowerCase();
+
+    const filtered =
+        socialProfiles.filter(
+            profile => {
+
+                const username =
+                    String(
+                        profile.username ||
+                        ""
+                    ).toLowerCase();
+
+                return username.includes(
+                    term
+                );
+
+            }
+        );
+
+    socialUserCount.textContent =
+        `${filtered.length} ${
+            filtered.length === 1
+                ? "explorer"
+                : "explorers"
+        }`;
+
+    if (!filtered.length) {
+
+        socialUserList.innerHTML = `
+            <div class="empty-state">
+
+                <div class="explore-empty-title">
+                    No explorers found
+                </div>
+
+                <div class="explore-empty-text">
+                    Try another username.
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    socialUserList.innerHTML =
+        filtered.map(profile => {
+
+            const username =
+                profile.username ||
+                "User";
+
+            const progress =
+                getSocialProgress(
+                    profile
+                );
+
+            const isCurrentUser =
+                currentUser &&
+                profile.id ===
+                    currentUser.uid;
+
+            return `
+                <button
+                    type="button"
+                    class="social-user-card"
+                    data-social-user="${escapeHtml(
+                        profile.id
+                    )}"
+                >
+
+                    <div class="social-avatar">
+                        ${escapeHtml(
+                            getInitials(
+                                username
+                            )
+                        )}
+                    </div>
+
+                    <div class="social-user-info">
+
+                        <div class="social-user-name">
+                            ${escapeHtml(
+                                username
+                            )}
+                        </div>
+
+                        <div class="social-user-meta">
+
+                            ${
+                                isCurrentUser
+                                    ? "You · "
+                                    : ""
+                            }
+
+                            ${progress}% explored
+                            · Explorer since
+                            ${escapeHtml(
+                                formatSocialDate(
+                                    profile.createdAt
+                                )
+                            )}
+
+                        </div>
+
+                    </div>
+
+                    <div class="social-user-arrow">
+                        →
+                    </div>
+
+                </button>
+            `;
+
+        }).join("");
+
+}
+
+
+/* =========================================================
+   SOCIAL SEARCH
+========================================================= */
+
+socialUserSearch?.addEventListener(
+    "input",
+    () => {
+
+        socialSearchTerm =
+            socialUserSearch.value
+                .trim()
+                .toLowerCase();
+
+        renderSocialProfiles();
+
+    }
+);
+
+
+/* =========================================================
+   OPEN PROFILE
+========================================================= */
+
+async function openSocialProfile(
+    userId
+) {
+
+    if (!userId) {
+        return;
+    }
+
+    selectedSocialUserId =
+        userId;
+
+    socialDirectoryView.style.display =
+        "none";
+
+    socialProfileView.style.display =
+        "block";
+
+    socialProfileContent.innerHTML = `
+        <div class="empty-state">
+            Loading profile...
+        </div>
+    `;
+
+    try {
+
+        const profileRef =
+            doc(
+                db,
+                "publicProfiles",
+                userId
+            );
+
+        const profileSnapshot =
+            await getDoc(
+                profileRef
+            );
+
+        if (!profileSnapshot.exists()) {
+
+            socialProfileContent.innerHTML = `
+                <div class="empty-state">
+                    This profile is no longer available.
+                </div>
+            `;
+
+            return;
+        }
+
+        const profile = {
+            id: userId,
+            ...profileSnapshot.data()
+        };
+
+
+        /*
+            Load ratings.
+        */
+
+        const ratingsQuery =
+            query(
+                collection(
+                    db,
+                    "explorations"
+                ),
+                where(
+                    "userId",
+                    "==",
+                    userId
+                )
+            );
+
+        /*
+            Load follower/following
+            relationships.
+        */
+
+        const followersQuery =
+            query(
+                collection(
+                    db,
+                    "follows"
+                ),
+                where(
+                    "followingUid",
+                    "==",
+                    userId
+                )
+            );
+
+        const followingQuery =
+            query(
+                collection(
+                    db,
+                    "follows"
+                ),
+                where(
+                    "followerUid",
+                    "==",
+                    userId
+                )
+            );
+
+
+        const [
+            ratingsSnapshot,
+            followersSnapshot,
+            followingSnapshot
+        ] = await Promise.all([
+
+            getDocs(
+                ratingsQuery
+            ),
+
+            getDocs(
+                followersQuery
+            ),
+
+            getDocs(
+                followingQuery
+            )
+
+        ]);
+
+
+        const ratings =
+            ratingsSnapshot.docs
+                .map(ratingDoc => ({
+                    id:
+                        ratingDoc.id,
+
+                    ...ratingDoc.data()
+                }))
+                .sort(
+                    (a, b) => {
+
+                        const aTime =
+                            a.createdAt?.toMillis?.() ||
+                            0;
+
+                        const bTime =
+                            b.createdAt?.toMillis?.() ||
+                            0;
+
+                        return bTime - aTime;
+
+                    }
+                );
+
+
+        const followers =
+            followersSnapshot.docs;
+
+        const following =
+            followingSnapshot.docs;
+
+
+        /*
+            Determine follow state.
+        */
+
+        let isFollowing = false;
+
+        let followsYou = false;
+
+        let isFriend = false;
+
+
+        if (
+            currentUser &&
+            currentUser.uid !== userId
+        ) {
+
+            const followingRef =
+                doc(
+                    db,
+                    "follows",
+                    `${currentUser.uid}_${userId}`
+                );
+
+            const followerRef =
+                doc(
+                    db,
+                    "follows",
+                    `${userId}_${currentUser.uid}`
+                );
+
+
+            const [
+                followingState,
+                followerState
+            ] = await Promise.all([
+
+                getDoc(
+                    followingRef
+                ),
+
+                getDoc(
+                    followerRef
+                )
+
+            ]);
+
+
+            isFollowing =
+                followingState.exists();
+
+            followsYou =
+                followerState.exists();
+
+            isFriend =
+                isFollowing &&
+                followsYou;
+
+        }
+
+
+        renderSocialProfile(
+            profile,
+            ratings,
+            followers,
+            following,
+            {
+                isFollowing,
+                followsYou,
+                isFriend
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load social profile:",
+            error
+        );
+
+        socialProfileContent.innerHTML = `
+            <div class="empty-state">
+
+                <div class="explore-empty-title">
+                    Unable to load profile
+                </div>
+
+                <div class="explore-empty-text">
+                    Please try again later.
+                </div>
+
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   RENDER PROFILE
+========================================================= */
+
+function renderSocialProfile(
+    profile,
+    ratings,
+    followers,
+    following,
+    relationship
+) {
+
+    const username =
+        profile.username ||
+        "User";
+
+    const explored =
+        Array.isArray(
+            profile.exploredLocations
+        )
+            ? profile.exploredLocations
+            : [];
+
+    const saved =
+        Array.isArray(
+            profile.savedLocations
+        )
+            ? profile.savedLocations
+            : [];
+
+
+    const progress =
+        getSocialProgress(
+            profile
+        );
+
+
+    /*
+        Button state.
+    */
+
+    let followButton = "";
+
+if (
+    currentUser &&
+    currentUser.uid === profile.id
+) {
+
+    followButton = `
+        <div class="social-profile-status">
+            Your profile
+        </div>
+    `;
+
+} else if (
+        relationship.isFriend
+    ) {
+
+        followButton = `
+            <button
+                type="button"
+                class="social-follow-button friends"
+                data-social-unfollow="${escapeHtml(
+                    profile.id
+                )}"
+            >
+                ✓ Friends
+            </button>
+        `;
+
+    } else if (
+        relationship.isFollowing
+    ) {
+
+        followButton = `
+            <button
+                type="button"
+                class="social-follow-button following"
+                data-social-unfollow="${escapeHtml(
+                    profile.id
+                )}"
+            >
+                Following
+            </button>
+        `;
+
+    } else if (
+        relationship.followsYou
+    ) {
+
+        followButton = `
+            <button
+                type="button"
+                class="social-follow-button"
+                data-social-follow="${escapeHtml(
+                    profile.id
+                )}"
+            >
+                Follow back
+            </button>
+        `;
+
+    } else {
+
+        followButton = `
+            <button
+                type="button"
+                class="social-follow-button"
+                data-social-follow="${escapeHtml(
+                    profile.id
+                )}"
+            >
+                Follow
+            </button>
+        `;
+
+    }
+
+
+    /*
+        Ratings.
+    */
+
+    const ratingsHtml =
+        ratings.length
+            ? ratings
+                .map(rating => {
+
+                    const location =
+                        allLocations.find(
+                            location =>
+                                location.id ===
+                                rating.locationId
+                        );
+
+                    const locationName =
+                        location?.name ||
+                        "Unknown location";
+
+                    return `
+                        <div
+                            class="social-rating-item"
+                        >
+
+                            <div
+                                class="social-rating-location"
+                            >
+                                ${escapeHtml(
+                                    locationName
+                                )}
+                            </div>
+
+                            <div
+                                class="social-rating-score"
+                            >
+                                ★ ${
+                                    Number(
+                                        rating.rating
+                                    )
+                                }/10
+                            </div>
+
+                        </div>
+                    `;
+
+                })
+                .join("")
+            : `
+                <div class="social-empty">
+                    This explorer has not rated any locations yet.
+                </div>
+            `;
+
+
+    /*
+        Saved locations.
+    */
+
+    const savedLocationsHtml =
+        saved.length
+            ? `
+                <div class="social-location-list">
+
+                    ${
+                        saved
+                            .map(
+                                locationId => {
+
+                                    const location =
+                                        allLocations.find(
+                                            location =>
+                                                location.id ===
+                                                locationId
+                                        );
+
+                                    if (!location) {
+                                        return "";
+                                    }
+
+                                    return `
+                                        <button
+                                            type="button"
+                                            class="social-location-item"
+                                            data-social-location="${escapeHtml(
+                                                location.id
+                                            )}"
+                                        >
+
+                                            <span
+                                                class="social-location-name"
+                                            >
+                                                ${escapeHtml(
+                                                    location.name ||
+                                                    "Unnamed location"
+                                                )}
+                                            </span>
+
+                                            <span
+                                                class="social-location-arrow"
+                                            >
+                                                →
+                                            </span>
+
+                                        </button>
+                                    `;
+
+                                }
+                            )
+                            .join("")
+                    }
+
+                </div>
+            `
+            : `
+                <div class="social-empty">
+                    No saved locations.
+                </div>
+            `;
+
+
+    /*
+        Explored locations.
+    */
+
+    const exploredLocationsHtml =
+        explored.length
+            ? `
+                <div class="social-location-list">
+
+                    ${
+                        explored
+                            .map(
+                                entry => {
+
+                                    const location =
+                                        allLocations.find(
+                                            location =>
+                                                location.id ===
+                                                entry.id
+                                        );
+
+                                    if (!location) {
+                                        return "";
+                                    }
+
+                                    return `
+                                        <button
+                                            type="button"
+                                            class="social-location-item"
+                                            data-social-location="${escapeHtml(
+                                                location.id
+                                            )}"
+                                        >
+
+                                            <span
+                                                class="social-location-name"
+                                            >
+                                                ${escapeHtml(
+                                                    location.name ||
+                                                    "Unnamed location"
+                                                )}
+                                            </span>
+
+                                            <span
+                                                class="social-location-arrow"
+                                            >
+                                                →
+                                            </span>
+
+                                        </button>
+                                    `;
+
+                                }
+                            )
+                            .join("")
+                    }
+
+                </div>
+            `
+            : `
+                <div class="social-empty">
+                    No explored locations.
+                </div>
+            `;
+
+
+    socialProfileContent.innerHTML = `
+
+        <!-- PROFILE HEADER -->
+
+        <div class="social-profile-header">
+
+            <div class="social-profile-avatar">
+                ${escapeHtml(
+                    getInitials(
+                        username
+                    )
+                )}
+            </div>
+
+            <div class="social-profile-main">
+
+                <div class="social-profile-name">
+                    ${escapeHtml(
+                        username
+                    )}
+                </div>
+
+                <div class="social-profile-since">
+                    Explorer since
+                    ${escapeHtml(
+                        formatSocialDate(
+                            profile.createdAt
+                        )
+                    )}
+                </div>
+
+            </div>
+
+            ${followButton}
+
+        </div>
+
+
+        <!-- STATS -->
+
+<!-- STATS -->
+
+<div class="social-profile-stats social-profile-stats-five">
+
+    <div class="social-stat">
+
+        <div class="social-stat-value">
+            ${explored.length}
+        </div>
+
+        <div class="social-stat-label">
+            Explored
+        </div>
+
+    </div>
+
+
+    <div class="social-stat">
+
+        <div class="social-stat-value">
+            ${saved.length}
+        </div>
+
+        <div class="social-stat-label">
+            Saved
+        </div>
+
+    </div>
+
+
+    <div class="social-stat">
+
+        <div class="social-stat-value">
+            ${ratings.length}
+        </div>
+
+        <div class="social-stat-label">
+            Ratings
+        </div>
+
+    </div>
+
+
+    <div class="social-stat">
+
+        <div class="social-stat-value">
+            ${followers.length}
+        </div>
+
+        <div class="social-stat-label">
+            Followers
+        </div>
+
+    </div>
+
+
+    <div class="social-stat">
+
+        <div class="social-stat-value">
+            ${following.length}
+        </div>
+
+        <div class="social-stat-label">
+            Following
+        </div>
+
+    </div>
+
+</div>
+
+
+
+        <!-- PROGRESS -->
+
+        <div class="social-progress-card">
+
+            <div class="social-progress-header">
+
+                <div class="social-progress-title">
+                    Explore progress
+                </div>
+
+                <div class="social-progress-percent">
+                    ${progress}%
+                </div>
+
+            </div>
+
+            <div class="social-progress-track">
+
+                <div
+                    class="social-progress-fill"
+                    style="width:${progress}%"
+                ></div>
+
+            </div>
+
+            <div class="social-progress-help">
+
+                ${explored.length}
+                of
+                ${allLocations.length}
+                locations explored
+
+            </div>
+
+        </div>
+
+
+        <!-- RATINGS -->
+
+<details class="social-profile-section social-collapsible">
+
+    <summary class="social-section-heading">
+
+        <span>
+            Ratings
+        </span>
+
+        <span class="social-section-heading-right">
+
+            <span class="social-section-count">
+                ${ratings.length}
+            </span>
+
+            <span class="social-collapse-arrow">
+                ›
+            </span>
+
+        </span>
+
+    </summary>
+
+    <div class="social-collapsible-content">
+
+        ${ratingsHtml}
+
+    </div>
+
+</details>
+
+
+       <!-- SAVED -->
+
+<details class="social-profile-section social-collapsible">
+
+    <summary class="social-section-heading">
+
+        <span>
+            Saved locations
+        </span>
+
+        <span class="social-section-heading-right">
+
+            <span class="social-section-count">
+                ${saved.length}
+            </span>
+
+            <span class="social-collapse-arrow">
+                ›
+            </span>
+
+        </span>
+
+    </summary>
+
+    <div class="social-collapsible-content">
+
+        ${savedLocationsHtml}
+
+    </div>
+
+</details>
+
+
+      <!-- EXPLORED -->
+
+<details class="social-profile-section social-collapsible">
+
+    <summary class="social-section-heading">
+
+        <span>
+            Locations explored
+        </span>
+
+        <span class="social-section-heading-right">
+
+            <span class="social-section-count">
+                ${explored.length}
+            </span>
+
+            <span class="social-collapse-arrow">
+                ›
+            </span>
+
+        </span>
+
+    </summary>
+
+    <div class="social-collapsible-content">
+
+        ${exploredLocationsHtml}
+
+    </div>
+
+</details>
+
+    `;
+
+}
+
+
+/* =========================================================
+   SOCIAL DIRECTORY CLICK
+========================================================= */
+
+socialUserList?.addEventListener(
+    "click",
+    event => {
+
+        const userCard =
+            event.target.closest(
+                "[data-social-user]"
+            );
+
+        if (!userCard) {
+            return;
+        }
+
+        const userId =
+            userCard.dataset.socialUser;
+
+        openSocialProfile(
+            userId
+        );
+
+    }
+);
+
+
+/* =========================================================
+   SOCIAL BACK
+========================================================= */
+
+socialProfileBackButton?.addEventListener(
+    "click",
+    () => {
+
+        selectedSocialUserId =
+            null;
+
+        socialProfileView.style.display =
+            "none";
+
+        socialDirectoryView.style.display =
+            "block";
+
+    }
+);
+
+
+/* =========================================================
+   SOCIAL LOCATION CLICK
+========================================================= */
+
+socialProfileContent?.addEventListener(
+    "click",
+    event => {
+
+        const button =
+            event.target.closest(
+                "[data-social-location]"
+            );
+
+        if (!button) {
+            return;
+        }
+
+        const locationId =
+            button.dataset.socialLocation;
+
+        const location =
+            allLocations.find(
+                location =>
+                    location.id ===
+                    locationId
+            );
+
+        if (!location) {
+
+            toast(
+                "This location is no longer available."
+            );
+
+            return;
+        }
+
+
+        closeModal(
+            "socialModal"
+        );
+
+
+        const card =
+            document.querySelector(
+                `.location-card[data-location-id="${CSS.escape(
+                    locationId
+                )}"]`
+            );
+
+        if (card) {
+
+            card.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+            card.classList.add(
+                "location-card-highlight"
+            );
+
+            setTimeout(
+                () => {
+
+                    card.classList.remove(
+                        "location-card-highlight"
+                    );
+
+                },
+                1800
+            );
+
+        }
+
+
+        if (
+            typeof location.latitude ===
+                "number" &&
+            typeof location.longitude ===
+                "number"
+        ) {
+
+            map.setView(
+                [
+                    location.latitude,
+                    location.longitude
+                ],
+                Math.max(
+                    map.getZoom(),
+                    13
+                )
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   FOLLOW USER
+========================================================= */
+
+async function followSocialUser(
+    userId
+) {
+
+    if (!currentUser) {
+
+        toast(
+            "Sign in to follow explorers."
+        );
+
+        return;
+
+    }
+
+    if (
+        !userId ||
+        userId === currentUser.uid
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const targetProfile =
+            await getDoc(
+                doc(
+                    db,
+                    "publicProfiles",
+                    userId
+                )
+            );
+
+        if (!targetProfile.exists()) {
+
+            toast(
+                "That profile no longer exists."
+            );
+
+            return;
+
+        }
+
+
+        await setDoc(
+            doc(
+                db,
+                "follows",
+                `${currentUser.uid}_${userId}`
+            ),
+            {
+                followerUid:
+                    currentUser.uid,
+
+                followingUid:
+                    userId,
+
+                createdAt:
+                    serverTimestamp()
+            }
+        );
+
+
+        toast(
+            "You are now following " +
+            (
+                targetProfile.data()
+                    .username ||
+                "this explorer"
+            ) + "."
+        );
+
+
+        await openSocialProfile(
+            userId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to follow user:",
+            error
+        );
+
+        toast(
+            "Unable to follow this explorer."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   UNFOLLOW USER
+========================================================= */
+
+async function unfollowSocialUser(
+    userId
+) {
+
+    if (!currentUser) {
+        return;
+    }
+
+    try {
+
+        await deleteDoc(
+            doc(
+                db,
+                "follows",
+                `${currentUser.uid}_${userId}`
+            )
+        );
+
+
+        toast(
+            "Unfollowed."
+        );
+
+
+        await openSocialProfile(
+            userId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to unfollow user:",
+            error
+        );
+
+        toast(
+            "Unable to unfollow this explorer."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   FOLLOW BUTTON EVENTS
+========================================================= */
+
+socialProfileContent?.addEventListener(
+    "click",
+    event => {
+
+        const followButton =
+            event.target.closest(
+                "[data-social-follow]"
+            );
+
+        if (followButton) {
+
+            awaitFollowUser(
+                followButton.dataset.socialFollow
+            );
+
+            return;
+
+        }
+
+
+        const unfollowButton =
+            event.target.closest(
+                "[data-social-unfollow]"
+            );
+
+        if (unfollowButton) {
+
+            unfollowSocialUser(
+                unfollowButton.dataset.socialUnfollow
+            );
+
+        }
+
+    }
+);
+
+
+/*
+    Small wrapper because the delegated
+    event handler above is not async.
+*/
+
+async function awaitFollowUser(
+    userId
+) {
+
+    await followSocialUser(
+        userId
+    );
+
+}
+
+
+/* =========================================================
+   SOCIAL BUTTON
+========================================================= */
+
+socialButton?.addEventListener(
+    "click",
+    openSocial
+);
 
 /* =========================================================
    EXPLORE SIDEBAR
@@ -6988,6 +8659,24 @@ document.addEventListener(
                             }
                         );
 
+                        await setDoc(
+    doc(
+        db,
+        "publicProfiles",
+        credential.user.uid
+    ),
+    {
+        username,
+
+        createdAt:
+            serverTimestamp(),
+
+        savedLocations: [],
+
+        exploredLocations: []
+    }
+);
+
                         message.className =
                             "auth-message success";
 
@@ -7268,19 +8957,71 @@ if (userSnapshot.exists()) {
 
             }
 
+await syncPublicProfile();
 
-            const initials =
-                getInitials(currentUsername);
+const initials =
+    getInitials(currentUsername);
 
 
-            document.getElementById(
-                "accountAvatar"
-            ).textContent = initials;
+const accountButton =
+    document.getElementById(
+        "accountButton"
+    );
 
-            document.getElementById(
-                "accountButtonText"
-            ).textContent =
-                currentUsername;
+const accountButtonText =
+    document.getElementById(
+        "accountButtonText"
+    );
+
+const accountAvatar =
+    document.getElementById(
+        "accountAvatar"
+    );
+
+
+/*
+    Set the avatar.
+*/
+accountAvatar.textContent =
+    initials;
+
+
+/*
+    Set the normal username.
+*/
+accountButtonText.textContent =
+    currentUsername;
+
+
+/*
+    Start the welcome animation.
+*/
+requestAnimationFrame(() => {
+
+    accountButton.classList.add(
+        "account-welcome"
+    );
+
+    accountButtonText.textContent =
+        `Welcome back, ${currentUsername}`;
+
+});
+
+
+/*
+    Return to the normal username
+    after 7 seconds.
+*/
+setTimeout(() => {
+
+    accountButtonText.textContent =
+        currentUsername;
+
+    accountButton.classList.remove(
+        "account-welcome"
+    );
+
+}, 5000);
 
 
             document.getElementById(
@@ -7738,6 +9479,7 @@ if (accountDetailEmail) {
                 currentUsername =
                     newUsername;
 
+                    await syncPublicProfile();
 
                 const initials =
                     getInitials(
@@ -7745,16 +9487,23 @@ if (accountDetailEmail) {
                     );
 
 
-                document.getElementById(
-                    "accountAvatar"
-                ).textContent =
-                    initials;
+const accountButtonText =
+    document.getElementById(
+        "accountButtonText"
+    );
+
+const accountAvatar =
+    document.getElementById(
+        "accountAvatar"
+    );
 
 
-                document.getElementById(
-                    "accountButtonText"
-                ).textContent =
-                    currentUsername;
+accountAvatar.textContent =
+    initials;
+
+
+accountButtonText.textContent =
+    currentUsername;
 
 
                 document.getElementById(

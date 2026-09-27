@@ -4544,25 +4544,45 @@ async function syncPublicProfile() {
 
     try {
 
-        const userRef = doc(
-            db,
-            "users",
-            currentUser.uid
-        );
+        /*
+            Get the latest user data directly from Firestore.
+            This is the source of truth.
+        */
+        const userRef =
+            doc(
+                db,
+                "users",
+                currentUser.uid
+            );
 
         const userSnapshot =
             await getDoc(userRef);
 
+        if (!userSnapshot.exists()) {
+            return;
+        }
+
         const userData =
-            userSnapshot.exists()
-                ? userSnapshot.data()
-                : {};
+            userSnapshot.data();
 
-        const createdAt =
-            userData.createdAt ||
-            currentUserData.createdAt ||
-            serverTimestamp();
+        /*
+            Always restore the local arrays from
+            the actual Firestore user document.
+        */
+        currentUserSavedLocations =
+            Array.isArray(userData.savedLocations)
+                ? userData.savedLocations
+                : [];
 
+        currentUserExploredLocations =
+            Array.isArray(userData.exploredLocations)
+                ? userData.exploredLocations
+                : [];
+
+        /*
+            Keep the public profile in sync with
+            the actual user document.
+        */
         await setDoc(
             doc(
                 db,
@@ -4575,21 +4595,16 @@ async function syncPublicProfile() {
                     userData.username ||
                     "User",
 
-                createdAt,
+                createdAt:
+                    userData.createdAt ||
+                    currentUserData.createdAt ||
+                    serverTimestamp(),
 
                 savedLocations:
-                    Array.isArray(
-                        currentUserSavedLocations
-                    )
-                        ? currentUserSavedLocations
-                        : [],
+                    currentUserSavedLocations,
 
                 exploredLocations:
-                    Array.isArray(
-                        currentUserExploredLocations
-                    )
-                        ? currentUserExploredLocations
-                        : []
+                    currentUserExploredLocations
             },
             {
                 merge: true
@@ -5012,6 +5027,13 @@ async function saveLocationRating(
                 currentUser.uid
             );
 
+        /*
+            Always get the latest explored locations
+            directly from Firestore.
+
+            Firestore is the source of truth.
+        */
+
         const userSnapshot =
             await getDoc(userRef);
 
@@ -5029,17 +5051,24 @@ async function saveLocationRating(
 
 
         /*
-            Find the explored location
+            Find the location that was just explored.
         */
 
         const exploredIndex =
             explored.findIndex(
                 item =>
+                    item &&
                     item.id === locationId
             );
 
 
         if (exploredIndex === -1) {
+
+            console.error(
+                "Could not find explored location:",
+                locationId,
+                explored
+            );
 
             toast(
                 "Unable to find your explored location."
@@ -5051,26 +5080,30 @@ async function saveLocationRating(
 
 
         /*
-            Add the rating to the user's
-            explored location record.
+            Remember the old rating.
         */
-const oldRating =
-    typeof explored[exploredIndex].rating === "number"
-        ? explored[exploredIndex].rating
-        : null;
 
-
-explored[exploredIndex] = {
-
-    ...explored[exploredIndex],
-
-    rating: rating
-
-};
+        const oldRating =
+            typeof explored[exploredIndex].rating === "number"
+                ? explored[exploredIndex].rating
+                : null;
 
 
         /*
-            Save user's rating
+            Add the new rating WITHOUT removing
+            the explored status.
+        */
+
+        explored[exploredIndex] = {
+            ...explored[exploredIndex],
+            id: locationId,
+            rating: rating
+        };
+
+
+        /*
+            Save the COMPLETE explored list
+            back to the user's Firestore document.
         */
 
         await setDoc(
@@ -5084,64 +5117,93 @@ explored[exploredIndex] = {
             }
         );
 
-        // ==========================================
-// SAVE PUBLIC RATING RECORD
-// ==========================================
-
-const username =
-    currentUsername ||
-    userData.username ||
-    "Anonymous";
-
-const ratingQuery = query(
-    collection(db, "explorations"),
-    where("userId", "==", currentUser.uid),
-    where("locationId", "==", locationId)
-);
-
-const ratingSnapshot =
-    await getDocs(ratingQuery);
-
-if (!ratingSnapshot.empty) {
-
-    const ratingDoc =
-        ratingSnapshot.docs[0];
-
-    await updateDoc(
-        ratingDoc.ref,
-        {
-            username: username,
-            rating: rating
-        }
-    );
-
-} else {
-
-    await addDoc(
-        collection(db, "explorations"),
-        {
-            userId: currentUser.uid,
-            username: username,
-            locationId: locationId,
-            rating: rating,
-            createdAt: serverTimestamp()
-        }
-    );
-}
-
 
         /*
-            Update local data
+            Update the local state AFTER Firestore
+            has successfully saved it.
         */
 
         currentUserExploredLocations =
             explored;
 
-            currentUserExploredLocations =
+
+        /*
+            Save/update the public rating record.
+        */
+
+        const username =
+            currentUsername ||
+            userData.username ||
+            "Anonymous";
+
+        const ratingQuery =
+            query(
+                collection(db, "explorations"),
+                where(
+                    "userId",
+                    "==",
+                    currentUser.uid
+                ),
+                where(
+                    "locationId",
+                    "==",
+                    locationId
+                )
+            );
+
+        const ratingSnapshot =
+            await getDocs(
+                ratingQuery
+            );
+
+
+        if (!ratingSnapshot.empty) {
+
+            const ratingDoc =
+                ratingSnapshot.docs[0];
+
+            await updateDoc(
+                ratingDoc.ref,
+                {
+                    username:
+                        username,
+
+                    rating:
+                        rating
+                }
+            );
+
+        } else {
+
+            await addDoc(
+                collection(
+                    db,
+                    "explorations"
+                ),
+                {
+                    userId:
+                        currentUser.uid,
+
+                    username:
+                        username,
+
+                    locationId:
+                        locationId,
+
+                    rating:
+                        rating,
+
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
+
+        }
 
 
         /*
-            Update the public location rating
+            Update the location's public
+            average rating.
         */
 
         await updateLocationRating(
@@ -5151,12 +5213,24 @@ if (!ratingSnapshot.empty) {
         );
 
 
+        /*
+            Close the rating window.
+        */
+
         closeModal(
             "ratingModal"
         );
 
 
+        /*
+            Re-render using the preserved
+            explored state.
+        */
+
+        updateUserStats();
+
         renderLocations();
+
 
         toast(
             `Rated ${rating}/10.`
@@ -5910,12 +5984,27 @@ async function toggleExploredLocation(locationId) {
 
     try {
 
-        let explored =
-            Array.isArray(
-                currentUserExploredLocations
-            )
-                ? [...currentUserExploredLocations]
-                : [];
+const userRef =
+    doc(
+        db,
+        "users",
+        currentUser.uid
+    );
+
+const userSnapshot =
+    await getDoc(userRef);
+
+const userData =
+    userSnapshot.exists()
+        ? userSnapshot.data()
+        : {};
+
+let explored =
+    Array.isArray(
+        userData.exploredLocations
+    )
+        ? [...userData.exploredLocations]
+        : [];
 
 
         const existingIndex =
@@ -5989,7 +6078,6 @@ async function toggleExploredLocation(locationId) {
             currentUserExploredLocations =
                 explored;
 
-                await syncPublicProfile();
 
             /*
                 Remove the user's rating from
@@ -9701,30 +9789,498 @@ document
                 );
 
                 await deleteDoc(
-                    userProfileRef
+    userProfileRef
+);
+
+console.log(
+    "DELETE: User profile deleted"
+);
+
+
+// ==========================================
+// 5. DELETE PUBLIC PROFILE
+// ==========================================
+
+console.log(
+    "DELETE: Deleting public profile..."
+);
+
+const publicProfileRef =
+    doc(
+        db,
+        "publicProfiles",
+        currentUser.uid
+    );
+
+await deleteDoc(
+    publicProfileRef
+);
+
+console.log(
+    "DELETE: Public profile deleted"
+);
+
+
+// ==========================================
+// 6. DELETE SOCIAL FOLLOW RELATIONSHIPS
+// ==========================================
+
+console.log(
+    "DELETE: Removing social follow relationships..."
+);
+
+const deletedUserId =
+    currentUser.uid;
+
+
+// Follows where this user follows someone
+const followingQuery =
+    query(
+        collection(db, "follows"),
+        where(
+            "followerUid",
+            "==",
+            deletedUserId
+        )
+    );
+
+
+// Follows where someone follows this user
+const followersQuery =
+    query(
+        collection(db, "follows"),
+        where(
+            "followingUid",
+            "==",
+            deletedUserId
+        )
+    );
+
+
+const [
+    followingSnapshot,
+    followersSnapshot
+] = await Promise.all([
+    getDocs(followingQuery),
+    getDocs(followersQuery)
+]);
+
+
+const followDocuments =
+    new Map();
+
+
+followingSnapshot.docs.forEach(
+    followDoc => {
+
+        followDocuments.set(
+            followDoc.id,
+            followDoc.ref
+        );
+
+    }
+);
+
+
+followersSnapshot.docs.forEach(
+    followDoc => {
+
+        followDocuments.set(
+            followDoc.id,
+            followDoc.ref
+        );
+
+    }
+);
+
+
+if (followDocuments.size > 0) {
+
+    const followRefs =
+        Array.from(
+            followDocuments.values()
+        );
+
+
+    /*
+        Firestore batches can contain a maximum
+        of 500 operations.
+    */
+
+    for (
+        let i = 0;
+        i < followRefs.length;
+        i += 500
+    ) {
+
+        const followBatch =
+            writeBatch(db);
+
+
+        const batchRefs =
+            followRefs.slice(
+                i,
+                i + 500
+            );
+
+
+        batchRefs.forEach(
+            followRef => {
+
+                followBatch.delete(
+                    followRef
                 );
 
-                console.log(
-                    "DELETE: User profile deleted"
+            }
+        );
+
+
+        await followBatch.commit();
+
+    }
+
+}
+
+
+console.log(
+    `DELETE: Removed ${followDocuments.size} social follow relationships`
+);
+
+
+// ==========================================
+// 7. DELETE PUBLIC RATINGS
+//    AND RECALCULATE LOCATION RATINGS
+// ==========================================
+
+console.log(
+    "DELETE: Removing public ratings..."
+);
+
+
+const ratingsQuery =
+    query(
+        collection(db, "explorations"),
+        where(
+            "userId",
+            "==",
+            deletedUserId
+        )
+    );
+
+
+const ratingsSnapshot =
+    await getDocs(
+        ratingsQuery
+    );
+
+
+/*
+    Keep track of every location that
+    was affected by this user's deletion.
+
+    We need this so that after deleting
+    their ratings we can recalculate:
+
+        ratingAverage
+        ratingCount
+*/
+const affectedLocationIds =
+    new Set();
+
+
+ratingsSnapshot.docs.forEach(
+    ratingDoc => {
+
+        const ratingData =
+            ratingDoc.data();
+
+        if (
+            typeof ratingData.locationId ===
+            "string"
+            &&
+            ratingData.locationId.length > 0
+        ) {
+
+            affectedLocationIds.add(
+                ratingData.locationId
+            );
+
+        }
+
+    }
+);
+
+
+console.log(
+    `DELETE: ${affectedLocationIds.size} locations affected by deleted ratings`
+);
+
+
+/*
+    ==========================================
+    DELETE THE USER'S EXPLORATION DOCUMENTS
+    ==========================================
+*/
+
+if (
+    ratingsSnapshot.docs.length > 0
+) {
+
+    /*
+        Firestore batches have a maximum of
+        500 operations.
+
+        Delete in chunks so account deletion
+        still works if a user somehow has
+        a large number of ratings.
+    */
+
+    const ratingDocs =
+        ratingsSnapshot.docs;
+
+    for (
+        let i = 0;
+        i < ratingDocs.length;
+        i += 500
+    ) {
+
+        const ratingBatch =
+            writeBatch(db);
+
+        const batchDocs =
+            ratingDocs.slice(
+                i,
+                i + 500
+            );
+
+        batchDocs.forEach(
+            ratingDoc => {
+
+                ratingBatch.delete(
+                    ratingDoc.ref
                 );
 
+            }
+        );
 
-                // ==========================================
-                // 5. DELETE AUTH ACCOUNT
-                // ==========================================
+        await ratingBatch.commit();
 
-                console.log(
-                    "DELETE: Deleting Firebase Auth account..."
-                );
+    }
 
-                await deleteUser(
-                    currentUser
-                );
+}
 
-                console.log(
-                    "DELETE: Firebase Auth account deleted"
-                );
 
+console.log(
+    `DELETE: Removed ${ratingsSnapshot.docs.length} public ratings`
+);
+
+
+/*
+    ==========================================
+    RECALCULATE AFFECTED LOCATIONS
+    ==========================================
+
+    The user's rating has now been removed
+    from "explorations".
+
+    We now rebuild the average/count for
+    every location they rated.
+*/
+
+for (
+    const locationId of affectedLocationIds
+) {
+
+    console.log(
+        `DELETE: Recalculating rating for location ${locationId}`
+    );
+
+
+    const locationRef =
+        doc(
+            db,
+            "locations",
+            locationId
+        );
+
+
+    const remainingRatingsQuery =
+        query(
+            collection(db, "explorations"),
+            where(
+                "locationId",
+                "==",
+                locationId
+            )
+        );
+
+
+    const remainingRatingsSnapshot =
+        await getDocs(
+            remainingRatingsQuery
+        );
+
+
+    /*
+        ==========================================
+        NO RATINGS REMAIN
+        ==========================================
+    */
+
+    if (
+        remainingRatingsSnapshot.empty
+    ) {
+
+        await updateDoc(
+            locationRef,
+            {
+                ratingAverage:
+                    deleteField(),
+
+                ratingCount:
+                    deleteField()
+            }
+        );
+
+
+        console.log(
+            `DELETE: Location ${locationId} now has no ratings`
+        );
+
+
+        continue;
+
+    }
+
+
+    /*
+        ==========================================
+        CALCULATE NEW AVERAGE
+        ==========================================
+    */
+
+    let totalRating = 0;
+
+    let validRatingCount = 0;
+
+
+    remainingRatingsSnapshot.docs.forEach(
+        ratingDoc => {
+
+            const ratingData =
+                ratingDoc.data();
+
+            const rating =
+                ratingData.rating;
+
+
+            if (
+                typeof rating === "number"
+                &&
+                Number.isFinite(rating)
+            ) {
+
+                totalRating +=
+                    rating;
+
+                validRatingCount++;
+
+            }
+
+        }
+    );
+
+
+    /*
+        If there are no valid ratings left,
+        remove the aggregate fields.
+    */
+
+    if (
+        validRatingCount === 0
+    ) {
+
+        await updateDoc(
+            locationRef,
+            {
+                ratingAverage:
+                    deleteField(),
+
+                ratingCount:
+                    deleteField()
+            }
+        );
+
+
+        console.log(
+            `DELETE: Location ${locationId} has no valid ratings`
+        );
+
+
+        continue;
+
+    }
+
+
+    const newAverage =
+        Math.round(
+            (
+                totalRating /
+                validRatingCount
+            ) * 10
+        ) / 10;
+
+
+    /*
+        ==========================================
+        SAVE NEW LOCATION RATING TOTALS
+        ==========================================
+    */
+
+    await updateDoc(
+        locationRef,
+        {
+            ratingAverage:
+                newAverage,
+
+            ratingCount:
+                validRatingCount
+        }
+    );
+
+
+    console.log(
+        `DELETE: Location ${locationId} updated to ${newAverage}/10 from ${validRatingCount} ratings`
+    );
+
+}
+
+
+console.log(
+    "DELETE: Location rating recalculation complete"
+);
+
+
+// ==========================================
+// 8. DELETE AUTH ACCOUNT
+// ==========================================
+
+console.log(
+    "DELETE: Deleting Firebase Auth account..."
+);
+
+await deleteUser(
+    currentUser
+);
+
+console.log(
+    "DELETE: Firebase Auth account deleted"
+);
+
+
+// ==========================================
+// 9. FINISHED
+// ==========================================
 
                 // ==========================================
                 // 6. FINISHED

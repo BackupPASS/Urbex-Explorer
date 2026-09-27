@@ -64,12 +64,13 @@
             Search
         </button>
 
-        <button
+<button
     id="notificationsButton"
     class="nav-button notification-button"
     type="button"
     title="Notifications"
     aria-label="Notifications"
+    style="display:none;"
 >
 <span class="notification-bell">
     <svg
@@ -670,6 +671,15 @@
                 <span>›</span>
             </button>
 
+<button
+    id="socialButton"
+    class="menu-button"
+    type="button"
+>
+    Social
+    <span>›</span>
+</button>
+
         </div>
 
     </div>
@@ -740,6 +750,7 @@
         </div>
 
     </div>
+    
 
     <div class="sidebar-section">
 
@@ -1648,6 +1659,178 @@
 </div>
 
 <!-- =========================================================
+     SOCIAL MODAL
+========================================================= -->
+
+<div
+    id="socialModal"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="socialModalTitle"
+>
+
+    <div class="modal large social-modal">
+
+        <!-- =================================================
+             SOCIAL HEADER
+        ================================================= -->
+
+        <div class="modal-header social-modal-header">
+
+            <div class="social-modal-heading">
+
+                <div class="modal-eyebrow">
+                    COMMUNITY
+                </div>
+
+                <h2
+                    id="socialModalTitle"
+                    class="modal-title"
+                >
+                    Social
+                </h2>
+
+                <span class="beta-tag">BETA</span>
+
+                <p class="social-modal-subtitle">
+                    Discover other explorers and see their progress.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="close-button"
+                data-close-modal="socialModal"
+                aria-label="Close Social"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             DIRECTORY
+        ================================================= -->
+
+        <div id="socialDirectoryView">
+
+            <!-- SEARCH -->
+
+            <div class="social-search">
+
+                <div class="social-search-box">
+
+                    <span
+                        class="social-search-icon"
+                        aria-hidden="true"
+                    >
+                        ⌕
+                    </span>
+
+                    <input
+                        id="socialUserSearch"
+                        class="input social-search-input"
+                        type="search"
+                        placeholder="Search usernames..."
+                        autocomplete="off"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- DIRECTORY HEADER -->
+
+            <div class="social-directory-header">
+
+                <div>
+
+                    <div class="social-directory-kicker">
+                        EXPLORERS
+                    </div>
+
+                    <div class="social-directory-title">
+                        Explorer community
+                    </div>
+
+                </div>
+
+                <div
+                    id="socialUserCount"
+                    class="social-directory-count"
+                >
+                    0 explorers
+                </div>
+
+            </div>
+
+
+            <!-- USER LIST -->
+
+            <div
+                id="socialUserList"
+                class="social-user-list"
+            >
+
+                <div class="empty-state">
+                    Loading explorers...
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PROFILE
+        ================================================= -->
+
+        <div
+            id="socialProfileView"
+            class="social-profile-view"
+            style="display:none;"
+        >
+
+            <div class="social-profile-top">
+
+                <button
+                    id="socialProfileBackButton"
+                    class="sidebar-back-button"
+                    type="button"
+                >
+                    ←
+                    <span>Back to explorers</span>
+                </button>
+
+            </div>
+
+
+            <div
+                id="socialProfileContent"
+                class="social-profile-content"
+            >
+
+                <div class="empty-state">
+                    Loading profile...
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     LEGAL MODAL
+========================================================= -->
+
+<!-- =========================================================
      LEGAL MODAL
 ========================================================= -->
 
@@ -2151,4 +2334,4 @@
 <script type="module" src="script.js"></script>
 
 </body>
-</html>>
+</html>

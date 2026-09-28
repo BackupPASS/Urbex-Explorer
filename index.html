@@ -274,6 +274,115 @@
 
 <div id="sidebarOverlay" class="overlay"></div>
 
+<!-- =========================================================
+     PLINGIFYPLUG SAFEGUARD BAN SCREEN
+========================================================= -->
+
+<div
+    id="safeguardBanScreen"
+    class="safeguard-ban-screen"
+    style="display:none;"
+>
+
+    <div class="safeguard-ban-card">
+
+        <div class="safeguard-ban-brand">
+            PLINGIFYPLUG SAFEGUARD
+        </div>
+
+        <div class="safeguard-ban-icon">
+            !
+        </div>
+
+<div class="safeguard-ban-status">
+    SAFEGUARD • ACCOUNT ACTION
+</div>
+
+<h1 class="safeguard-ban-title">
+    Your account is suspended
+</h1>
+
+<p class="safeguard-ban-description">
+    Your access to PlingifyPlug Urbex Explorer has been restricted by PlingifyPlug SafeGuard.
+</p>
+
+        <div class="safeguard-ban-details">
+
+            <div class="safeguard-ban-detail">
+
+                <div class="safeguard-ban-detail-label">
+                    Reason
+                </div>
+
+                <div
+                    id="safeguardBanReason"
+                    class="safeguard-ban-detail-value"
+                >
+                    —
+                </div>
+
+            </div>
+
+            <div class="safeguard-ban-detail">
+
+                <div class="safeguard-ban-detail-label">
+                    Duration
+                </div>
+
+                <div
+                    id="safeguardBanDuration"
+                    class="safeguard-ban-detail-value"
+                >
+                    —
+                </div>
+
+            </div>
+
+            <div class="safeguard-ban-detail">
+
+                <div class="safeguard-ban-detail-label">
+                    Issued by
+                </div>
+
+                <div
+                    id="safeguardBanIssuer"
+                    class="safeguard-ban-detail-value"
+                >
+                    PlingifyPlug SafeGuard
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="safeguard-ban-actions">
+
+            <button
+                id="safeguardDeleteAccountButton"
+                class="button danger"
+                type="button"
+            >
+                Delete account
+            </button>
+
+            <button
+                id="safeguardSignOutButton"
+                class="button"
+                type="button"
+            >
+                Sign out
+            </button>
+
+        </div>
+
+        <div class="safeguard-ban-footer">
+            PlingifyPlug SafeGuard
+        </div>
+
+    </div>
+
+</div>
+
 
 <!-- =========================
      ACCOUNT SIDEBAR
@@ -500,12 +609,12 @@
                         Explorer since
                     </div>
 
-                    <div
-                        id="exploreSince"
-                        class="account-detail-value"
-                    >
-                        —
-                    </div>
+<div
+    id="exploreSince"
+    class="account-detail-value"
+>
+    <div class="stats-skeleton-value"></div>
+</div>
 
                 </div>
 
@@ -516,12 +625,12 @@
                         Locations explored
                     </div>
 
-                    <div
-                        id="locationsExploredCount"
-                        class="account-detail-value"
-                    >
-                        0
-                    </div>
+<div
+    id="locationsExploredCount"
+    class="account-detail-value"
+>
+    <div class="stats-skeleton-value"></div>
+</div>
 
                 </div>
 
@@ -532,12 +641,12 @@
                         Recently viewed
                     </div>
 
-                    <div
-                        id="locationsViewedCount"
-                        class="account-detail-value"
-                    >
-                        0
-                    </div>
+<div
+    id="locationsViewedCount"
+    class="account-detail-value"
+>
+    <div class="stats-skeleton-value"></div>
+</div>
 
                 </div>
 
@@ -548,9 +657,12 @@
                         Locations saved
                     </div>
 
-                    <div class="account-detail-value">
-                        0
-                    </div>
+<div
+    id="locationsSavedCount"
+    class="account-detail-value"
+>
+    <div class="stats-skeleton-value"></div>
+</div>
 
                 </div>
 
@@ -561,21 +673,22 @@
                         Explore progress
                     </div>
 
-                    <div class="explore-progress">
+<div class="explore-progress">
 
-                        <div
-                            id="exploreProgress"
-                            class="explore-progress-fill"
-                        ></div>
+    <div
+        id="exploreProgress"
+        class="explore-progress-fill"
+        style="width:0%;"
+    ></div>
 
-                    </div>
+</div>
 
-                    <div
-                        id="exploreProgressText"
-                        class="explore-progress-text"
-                    >
-                        0% explored
-                    </div>
+<div
+    id="exploreProgressText"
+    class="explore-progress-text"
+>
+    <div class="stats-skeleton-progress-text"></div>
+</div>
 
                 </div>
 
@@ -730,22 +843,13 @@
         <div class="account-menu">
 
             <button
-                id="addLocationButton"
+                id="adminDashboardButton"
                 class="menu-button"
                 type="button"
             >
-                Add to map
-                <span>+</span>
+                 Dashboard
+                <span>›</span>
             </button>
-
-              <button
-        id="reportsButton"
-        class="menu-button"
-        type="button"
-    >
-        Reports
-        <span>›</span>
-    </button>
 
         </div>
 
@@ -2121,6 +2225,8 @@
 
 </div>
 
+
+
 <!-- =========================================================
      ADMIN REPORTS MODAL
 ========================================================= -->
@@ -2317,6 +2423,870 @@
                 </button>
 
             </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     ADMIN DASHBOARD
+========================================================= -->
+
+<div
+    id="adminDashboardModal"
+    class="modal-overlay"
+>
+
+    <div
+        class="modal admin-dashboard-modal"
+    >
+
+            <!-- =====================================================
+             SAFEGUARD HEADER
+        ====================================================== -->
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="modal-title">
+                    Dashbaord
+                </div>
+
+                <div class="modal-subtitle">
+                    PlingifyPlug moderation & administration
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                data-close-modal="adminDashboardModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- =====================================================
+             SAFEGUARD DASHBOARD
+        ====================================================== -->
+
+        <div class="admin-dashboard-layout">
+
+            <!-- =================================================
+                 LEFT — USER MANAGEMENT
+            ================================================== -->
+
+            <section
+                class="admin-dashboard-column admin-dashboard-users"
+            >
+
+                <div class="admin-dashboard-column-header">
+
+                    <div class="admin-dashboard-column-title">
+                        User management
+                    </div>
+
+                    <div class="admin-dashboard-column-subtitle">
+                        Search and manage accounts
+                    </div>
+
+                </div>
+
+        <!-- =====================================================
+             USER SEARCH VIEW
+        ====================================================== -->
+
+        <div
+            id="adminUserSearchView"
+        >
+
+
+            <div class="admin-dashboard-search">
+
+                <input
+                    type="text"
+                    id="adminUserSearch"
+                    class="input"
+                    placeholder="Search users by username, email or UID..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <div
+                id="adminUserResults"
+                class="admin-user-results"
+            >
+
+                <div class="empty-state">
+
+                    <div class="explore-empty-title">
+                        Loading users...
+                    </div>
+
+                    <div class="explore-empty-text">
+                        Please wait.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             USER MODERATION VIEW
+        ====================================================== -->
+
+        <div
+            id="adminUserView"
+            style="display:none;"
+        >
+
+            <button
+                id="adminBackToUsersButton"
+                class="admin-dashboard-back"
+                type="button"
+            >
+                ← Back to users
+            </button>
+
+
+            <div class="admin-user-header">
+
+                <div
+                    id="adminUserAvatar"
+                    class="admin-user-header-avatar"
+                >
+                    ?
+                </div>
+
+                <div class="admin-user-header-main">
+
+                    <div
+                        id="adminUserUsername"
+                        class="admin-user-header-username"
+                    >
+                        User
+                    </div>
+
+                    <div
+                        id="adminUserEmail"
+                        class="admin-user-header-email"
+                    >
+                        —
+                    </div>
+
+                    <div
+    class="admin-user-header-uid"
+>
+    <span>UID</span>
+
+    <strong id="adminUserUid">
+        —
+    </strong>
+</div>
+
+                    <div
+    class="admin-user-header-created"
+>
+    <span>Account created</span>
+
+    <strong id="adminUserCreatedAt">
+        —
+    </strong>
+</div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 CURRENT BAN
+            ================================================== -->
+
+            <div class="admin-moderation-section">
+
+                <div class="admin-moderation-section-title">
+                    Current SafeGuard status
+                </div>
+
+                <div
+                    id="adminCurrentBan"
+                    class="admin-current-ban"
+                >
+
+                    <div class="admin-no-ban">
+                        This user is not currently banned.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 ISSUE WARNING
+            ================================================== -->
+
+<div class="admin-moderation-section admin-dropdown-section">
+
+    <button
+        type="button"
+        class="admin-moderation-section-toggle"
+        data-admin-dropdown="adminIssueWarningContent"
+        aria-expanded="false"
+    >
+        <span>
+            Issue warning
+        </span>
+
+        <span class="admin-moderation-section-arrow">
+            ›
+        </span>
+    </button>
+
+    <div
+        id="adminIssueWarningContent"
+        class="admin-moderation-section-content"
+        style="display:none;"
+    >
+
+        <div class="admin-form-grid">
+
+                    <div class="form-group">
+
+                        <label for="adminWarningCategory">
+                            Category
+                        </label>
+
+                        <select
+                            id="adminWarningCategory"
+                            class="input"
+                        >
+
+                            <option value="spam">
+                                Spam
+                            </option>
+
+                            <option value="abuse">
+                                Abuse
+                            </option>
+
+                            <option value="harassment">
+                                Harassment
+                            </option>
+
+                            <option value="inappropriate_content">
+                                Inappropriate content
+                            </option>
+
+                            <option value="impersonation">
+                                Impersonation
+                            </option>
+
+                            <option value="location_misuse">
+                                Location misuse
+                            </option>
+
+                            <option value="takedown_abuse">
+                                Takedown abuse
+                            </option>
+
+                            <option value="other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group admin-form-full">
+
+                        <label for="adminWarningReason">
+                            Reason
+                        </label>
+
+                        <textarea
+                            id="adminWarningReason"
+                            class="input"
+                            rows="4"
+                            maxlength="2000"
+                            placeholder="Explain why this warning is being issued..."
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="issueWarningButton"
+                    class="button"
+                    type="button"
+                >
+                    Issue warning
+                </button>
+
+            </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 BAN USER
+            ================================================== -->
+
+<div class="admin-moderation-section admin-dropdown-section">
+
+    <button
+        type="button"
+        class="admin-moderation-section-toggle"
+        data-admin-dropdown="adminBanUserContent"
+        aria-expanded="false"
+    >
+        <span>
+            Suspend user
+        </span>
+
+        <span class="admin-moderation-section-arrow">
+            ›
+        </span>
+    </button>
+
+    <div
+        id="adminBanUserContent"
+        class="admin-moderation-section-content"
+        style="display:none;"
+    >
+
+        <div class="admin-form-grid">
+
+                    <div class="form-group">
+
+                        <label for="adminBanType">
+                            Ban type
+                        </label>
+
+                        <select
+                            id="adminBanType"
+                            class="input"
+                        >
+
+                            <option value="temporary">
+                                Temporary
+                            </option>
+
+                            <option value="permanent">
+                                Permanent
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="adminBanDuration">
+                            Duration
+                        </label>
+
+                        <select
+                            id="adminBanDuration"
+                            class="input"
+                        >
+
+                            <option value="1h">
+                                1 hour
+                            </option>
+
+                            <option value="6h">
+                                6 hours
+                            </option>
+
+                            <option value="12h">
+                                12 hours
+                            </option>
+
+                            <option value="1d">
+                                1 day
+                            </option>
+
+                            <option value="3d">
+                                3 days
+                            </option>
+
+                            <option value="7d">
+                                7 days
+                            </option>
+
+                            <option value="14d">
+                                14 days
+                            </option>
+
+                            <option value="30d">
+                                30 days
+                            </option>
+
+                            <option value="custom">
+                                Custom
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+<div
+    id="adminBanCustomDurationWrapper"
+    class="form-group"
+    style="display:none;"
+>
+
+    <label for="adminBanCustomDurationValue">
+        Custom duration
+    </label>
+
+    <div class="custom-duration-input">
+
+        <input
+            type="number"
+            id="adminBanCustomDurationValue"
+            class="input"
+            min="1"
+            step="1"
+            placeholder="Enter amount"
+        >
+
+        <select
+            id="adminBanCustomDurationUnit"
+            class="input"
+        >
+            <option value="minutes">Minutes</option>
+            <option value="hours">Hours</option>
+            <option value="days">Days</option>
+        </select>
+
+    </div>
+
+</div>
+
+                    <div class="form-group">
+
+                        <label for="adminBanCategory">
+                            Category
+                        </label>
+
+                        <select
+                            id="adminBanCategory"
+                            class="input"
+                        >
+
+                            <option value="spam">
+                                Spam
+                            </option>
+
+                            <option value="abuse">
+                                Abuse
+                            </option>
+
+                            <option value="harassment">
+                                Harassment
+                            </option>
+
+                            <option value="inappropriate_content">
+                                Inappropriate content
+                            </option>
+
+                            <option value="impersonation">
+                                Impersonation
+                            </option>
+
+                            <option value="location_misuse">
+                                Location misuse
+                            </option>
+
+                            <option value="takedown_abuse">
+                                Takedown abuse
+                            </option>
+
+                            <option value="other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group admin-form-full">
+
+                        <label for="adminBanReason">
+                            Reason
+                        </label>
+
+                        <textarea
+                            id="adminBanReason"
+                            class="input"
+                            rows="4"
+                            maxlength="2000"
+                            placeholder="Explain why this user is being suspended..."
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="banUserButton"
+                    class="button danger"
+                    type="button"
+                >
+                    Suspend user
+                </button>
+
+            </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 WARNING HISTORY
+            ================================================== -->
+
+          <div class="admin-moderation-section admin-dropdown-section">
+
+    <button
+        type="button"
+        class="admin-moderation-section-toggle"
+        data-admin-dropdown="adminWarningHistoryContent"
+        aria-expanded="false"
+    >
+        <span>
+            Warning history
+        </span>
+
+        <span class="admin-moderation-section-arrow">
+            ›
+        </span>
+    </button>
+
+    <div
+        id="adminWarningHistoryContent"
+        class="admin-moderation-section-content"
+        style="display:none;"
+    >
+
+        <div
+            id="adminWarningHistory"
+            class="admin-history-list"
+        ></div>
+
+    </div>
+
+</div>
+
+
+            <!-- =================================================
+                 BAN HISTORY
+            ================================================== -->
+
+<div class="admin-moderation-section admin-dropdown-section">
+
+    <button
+        type="button"
+        class="admin-moderation-section-toggle"
+        data-admin-dropdown="adminBanHistoryContent"
+        aria-expanded="false"
+    >
+        <span>
+            Ban history
+        </span>
+
+        <span class="admin-moderation-section-arrow">
+            ›
+        </span>
+    </button>
+
+    <div
+        id="adminBanHistoryContent"
+        class="admin-moderation-section-content"
+        style="display:none;"
+    >
+
+        <div
+            id="adminBanHistory"
+            class="admin-history-list"
+        ></div>
+
+    </div>
+
+</div>
+
+        </div>
+
+    </section>
+
+                    <!-- =================================================
+                 MIDDLE — ADMINISTRATION
+            ================================================== -->
+
+            <section
+                class="admin-dashboard-column admin-dashboard-administration"
+            >
+
+                <div class="admin-dashboard-column-header">
+
+                    <div class="admin-dashboard-column-title">
+                        Administration
+                    </div>
+
+                    <div class="admin-dashboard-column-subtitle">
+                        Reports and map management
+                    </div>
+
+                </div>
+
+
+                <div class="admin-dashboard-tool-list">
+
+                    <button
+                        id="adminOpenReportsButton"
+                        class="admin-dashboard-tool-button"
+                        type="button"
+                    >
+
+                        <span>
+
+                            <strong>
+                                Reports
+                            </strong>
+
+                            <small>
+                                Manage takedown and addition requests
+                            </small>
+
+                        </span>
+
+                        <span class="admin-dashboard-tool-arrow">
+                            ›
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        id="adminAddLocationDashboardButton"
+                        class="admin-dashboard-tool-button"
+                        type="button"
+                    >
+
+                        <span>
+
+                            <strong>
+                                Add to map
+                            </strong>
+
+                            <small>
+                                Create and publish a new location
+                            </small>
+
+                        </span>
+
+                        <span class="admin-dashboard-tool-arrow">
+                            +
+                        </span>
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 RIGHT — NOTIFICATIONS
+            ================================================== -->
+
+            <section
+                class="admin-dashboard-column admin-dashboard-notifications"
+            >
+
+                <div class="admin-dashboard-column-header">
+
+                    <div class="admin-dashboard-column-title">
+                        Notifications
+                    </div>
+
+                    <div class="admin-dashboard-column-subtitle">
+                        Send a notification to users
+                    </div>
+
+                </div>
+
+
+                <div class="admin-notification-form">
+
+                    <div class="form-group">
+
+                        <label
+                            for="adminNotificationRecipientMode"
+                        >
+                            Recipient
+                        </label>
+
+                        <select
+                            id="adminNotificationRecipientMode"
+                            class="input"
+                        >
+
+                            <option value="all">
+                                All users
+                            </option>
+
+                            <option value="individual">
+                                Individual user
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div
+                        id="adminNotificationUserWrapper"
+                        class="form-group"
+                        style="display:none;"
+                    >
+
+                        <label
+                            for="adminNotificationUserSearch"
+                        >
+                            Search user
+                        </label>
+
+                        <input
+                            type="text"
+                            id="adminNotificationUserSearch"
+                            class="input"
+                            placeholder="Search username, email or UID..."
+                            autocomplete="off"
+                        >
+
+                        <div
+                            id="adminNotificationUserResults"
+                            class="admin-notification-user-results"
+                        ></div>
+
+                    </div>
+
+
+                    <div
+                        id="adminNotificationSelectedUser"
+                        class="admin-notification-selected-user"
+                        style="display:none;"
+                    ></div>
+
+
+                    <div class="form-group">
+
+                        <label
+                            for="adminNotificationTitle"
+                        >
+                            Title
+                        </label>
+
+                        <input
+                            type="text"
+                            id="adminNotificationTitle"
+                            class="input"
+                            maxlength="100"
+                            placeholder="Notification title..."
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label
+                            for="adminNotificationDescription"
+                        >
+                            About
+                        </label>
+
+                        <textarea
+                            id="adminNotificationDescription"
+                            class="input"
+                            rows="5"
+                            maxlength="1000"
+                            placeholder="Write what the notification is about..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label
+                            for="adminNotificationIcon"
+                        >
+                            Icon
+                        </label>
+
+                        <select
+                            id="adminNotificationIcon"
+                            class="input"
+                        >
+
+                            <option value="info">
+                                Information — i
+                            </option>
+
+                            <option value="success">
+                                Success — ✓
+                            </option>
+
+                            <option value="warning">
+                                Warning — !
+                            </option>
+
+                            <option value="announcement">
+                                Announcement — •
+                            </option>
+
+                            <option value="security">
+                                Security — !
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        id="adminSendNotificationButton"
+                        class="button"
+                        type="button"
+                    >
+                        Send notification
+                    </button>
+
+                </div>
+
+            </section>
 
         </div>
 

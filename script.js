@@ -30,7 +30,8 @@ import {
     where,
     orderBy,
     serverTimestamp,
-    writeBatch
+    writeBatch,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
@@ -74,6 +75,9 @@ import {
     let currentUser = null;
     let currentUsername = "";
     let currentUserData = {};
+
+    let safeguardUserUnsubscribe = null;
+let safeguardBanUnsubscribe = null;
 
     let locationModalMode = "add";
     let editingLocationId = null;
@@ -469,15 +473,29 @@ function renderNotifications(notifications) {
                     data-notification-id="${notification.id}"
                 >
 
-                    <div class="notification-item-icon">
-                        ${
-                            notification.type === "takedown_approved"
+<div class="notification-item-icon">
+    ${
+        notification.icon === "info"
+            ? "i"
+            : notification.icon === "success"
+                ? "✓"
+                : notification.icon === "warning"
+                    ? "!"
+                    : notification.icon === "announcement"
+                        ? "•"
+                        : notification.icon === "security"
+                            ? "!"
+                            : notification.type === "takedown_approved"
                                 ? "✓"
                                 : notification.type === "takedown_declined"
                                     ? "!"
-                                    : "•"
-                        }
-                    </div>
+                                    : notification.type === "moderation_ban"
+                                        ? "!"
+                                        : notification.type === "moderation_warning"
+                                            ? "!"
+                                            : "•"
+    }
+</div>
 
                     <div class="notification-item-content">
 
@@ -1126,11 +1144,11 @@ if (accountProfileToggle) {
 
     async function loadLocations() {
 
-        locationsElement.innerHTML = `
-            <div class="empty-state">
-                Loading locations...
-            </div>
-        `;
+locationsElement.innerHTML = `
+    <div class="empty-state">
+        <span class="shimmer">Loading locations...</span>
+    </div>
+`;
 
         try {
 
@@ -1931,6 +1949,15 @@ let takedownSearchTerm = "";
 let adminTakedownStatus = "pending";
 let adminReportsSection = "takedowns";
 
+/* =========================================================
+   ADMIN MODERATION STATE
+========================================================= */
+
+let adminSelectedUserId = null;
+let adminUsersCache = [];
+let adminSelectedUserData = null;
+let adminSelectedCurrentBan = null;
+
 
 /* =========================================================
    TAKEDOWN DOM
@@ -1980,6 +2007,192 @@ const reportsTakedownsTab =
 
 const reportsAdditionsTab =
     document.getElementById("reportsAdditionsTab");
+
+    /* =========================================================
+   ADMIN DASHBOARD DOM
+========================================================= */
+
+const adminDashboardButton =
+    document.getElementById("adminDashboardButton");
+
+const adminDashboardModal =
+    document.getElementById("adminDashboardModal");
+
+const adminUserSearchView =
+    document.getElementById("adminUserSearchView");
+
+const adminUserView =
+    document.getElementById("adminUserView");
+
+const adminUserSearch =
+    document.getElementById("adminUserSearch");
+
+const adminUserResults =
+    document.getElementById("adminUserResults");
+
+const adminBackToUsersButton =
+    document.getElementById("adminBackToUsersButton");
+
+const adminUserAvatar =
+    document.getElementById("adminUserAvatar");
+
+const adminUserUsername =
+    document.getElementById("adminUserUsername");
+
+const adminUserEmail =
+    document.getElementById("adminUserEmail");
+
+const adminUserUid =
+    document.getElementById("adminUserUid");
+
+    const adminUserCreatedAt =
+    document.getElementById(
+        "adminUserCreatedAt"
+    );
+
+
+const adminOpenReportsButton =
+    document.getElementById(
+        "adminOpenReportsButton"
+    );
+
+
+const adminAddLocationDashboardButton =
+    document.getElementById(
+        "adminAddLocationDashboardButton"
+    );
+
+
+const adminNotificationRecipientMode =
+    document.getElementById(
+        "adminNotificationRecipientMode"
+    );
+
+
+const adminNotificationUserWrapper =
+    document.getElementById(
+        "adminNotificationUserWrapper"
+    );
+
+
+const adminNotificationUserSearch =
+    document.getElementById(
+        "adminNotificationUserSearch"
+    );
+
+
+const adminNotificationUserResults =
+    document.getElementById(
+        "adminNotificationUserResults"
+    );
+
+
+const adminNotificationSelectedUser =
+    document.getElementById(
+        "adminNotificationSelectedUser"
+    );
+
+
+const adminNotificationTitle =
+    document.getElementById(
+        "adminNotificationTitle"
+    );
+
+
+const adminNotificationDescription =
+    document.getElementById(
+        "adminNotificationDescription"
+    );
+
+
+const adminNotificationIcon =
+    document.getElementById(
+        "adminNotificationIcon"
+    );
+
+
+const adminSendNotificationButton =
+    document.getElementById(
+        "adminSendNotificationButton"
+    );
+
+
+let adminNotificationSelectedUserIds = [];
+
+const adminCurrentBan =
+    document.getElementById("adminCurrentBan");
+
+const adminWarningHistory =
+    document.getElementById("adminWarningHistory");
+
+const adminBanHistory =
+    document.getElementById("adminBanHistory");
+
+const adminWarningCategory =
+    document.getElementById("adminWarningCategory");
+
+const adminWarningReason =
+    document.getElementById("adminWarningReason");
+
+const issueWarningButton =
+    document.getElementById("issueWarningButton");
+
+const adminBanType =
+    document.getElementById("adminBanType");
+
+const adminBanDuration =
+    document.getElementById("adminBanDuration");
+
+    const adminBanCustomDurationWrapper =
+    document.getElementById(
+        "adminBanCustomDurationWrapper"
+    );
+
+const adminBanCustomDurationValue =
+    document.getElementById(
+        "adminBanCustomDurationValue"
+    );
+
+const adminBanCustomDurationUnit =
+    document.getElementById(
+        "adminBanCustomDurationUnit"
+    );
+
+const adminBanCategory =
+    document.getElementById("adminBanCategory");
+
+const adminBanReason =
+    document.getElementById("adminBanReason");
+
+const banUserButton =
+    document.getElementById("banUserButton");
+
+
+/* =========================================================
+   SAFEGUARD BAN SCREEN DOM
+========================================================= */
+
+const safeguardBanScreen =
+    document.getElementById("safeguardBanScreen");
+
+const safeguardBanReason =
+    document.getElementById("safeguardBanReason");
+
+const safeguardBanDuration =
+    document.getElementById("safeguardBanDuration");
+
+const safeguardBanIssuer =
+    document.getElementById("safeguardBanIssuer");
+
+const safeguardDeleteAccountButton =
+    document.getElementById(
+        "safeguardDeleteAccountButton"
+    );
+
+const safeguardSignOutButton =
+    document.getElementById(
+        "safeguardSignOutButton"
+    );
 
 
 /* =========================================================
@@ -2063,6 +2276,2327 @@ function isExplorerAdmin() {
     return !!(
         currentUser &&
         currentUser.uid === ADMIN_UID
+    );
+}
+
+/* =========================================================
+   PLINGIFYPLUG SAFEGUARD / ADMIN MODERATION
+========================================================= */
+
+const MODERATION_ISSUER =
+    "PlingifyPlug SafeGuard";
+
+
+function formatModerationDate(timestamp) {
+
+    if (!timestamp) {
+        return "Unknown date";
+    }
+
+    let date = timestamp;
+
+    if (
+        timestamp &&
+        typeof timestamp.toDate === "function"
+    ) {
+        date = timestamp.toDate();
+    }
+
+    if (
+        typeof date === "string" ||
+        typeof date === "number"
+    ) {
+        date = new Date(date);
+    }
+
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+        return "Unknown date";
+    }
+
+    return date.toLocaleString(
+        "en-GB",
+        {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+}
+
+
+function formatModerationCategory(category) {
+
+    if (!category) {
+        return "Other";
+    }
+
+    return String(category)
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, letter =>
+            letter.toUpperCase()
+        );
+}
+
+
+function getBanDurationLabel(ban) {
+
+    if (!ban) {
+        return "—";
+    }
+
+    if (ban.type === "permanent") {
+        return "Permanent";
+    }
+
+    if (!ban.expiresAt) {
+        return "Temporary";
+    }
+
+    let expiresAt =
+        ban.expiresAt;
+
+    if (
+        expiresAt &&
+        typeof expiresAt.toDate === "function"
+    ) {
+        expiresAt =
+            expiresAt.toDate();
+    }
+
+    if (!(expiresAt instanceof Date)) {
+        return "Temporary";
+    }
+
+    return `Until ${expiresAt.toLocaleString(
+        "en-GB",
+        {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    )}`;
+}
+
+
+function isBanCurrentlyActive(ban) {
+
+    if (!ban || ban.active !== true) {
+        return false;
+    }
+
+    if (ban.type === "permanent") {
+        return true;
+    }
+
+    if (!ban.expiresAt) {
+        return true;
+    }
+
+    let expiresAt =
+        ban.expiresAt;
+
+    if (
+        expiresAt &&
+        typeof expiresAt.toDate === "function"
+    ) {
+        expiresAt =
+            expiresAt.toDate();
+    }
+
+    if (!(expiresAt instanceof Date)) {
+        return true;
+    }
+
+    return expiresAt.getTime() > Date.now();
+}
+
+
+function getInitialsSafe(username) {
+
+    return String(username || "?")
+        .trim()
+        .slice(0, 2)
+        .toUpperCase() || "?";
+}
+
+
+/* =========================================================
+   OPEN ADMIN DASHBOARD
+========================================================= */
+
+async function openAdminDashboard() {
+
+    if (!isExplorerAdmin()) {
+
+        toast(
+            "You do not have permission to access the Admin Dashboard."
+        );
+
+        return;
+    }
+
+    adminSelectedUserId = null;
+    adminSelectedUserData = null;
+    adminSelectedCurrentBan = null;
+
+    if (adminUserSearch) {
+        adminUserSearch.value = "";
+    }
+
+    if (adminUserSearchView) {
+        adminUserSearchView.style.display = "block";
+    }
+
+    if (adminUserView) {
+        adminUserView.style.display = "none";
+    }
+
+if (adminUserResults) {
+    adminUserResults.innerHTML = `
+        <div class="admin-user-result admin-user-loading">
+            
+            <div class="shimmer admin-shimmer-avatar"></div>
+
+            <div class="admin-user-result-main">
+
+                <div class="shimmer admin-shimmer-name"></div>
+
+                <div class="shimmer admin-shimmer-email"></div>
+
+            </div>
+
+        </div>
+
+        <div class="admin-user-result admin-user-loading">
+
+            <div class="shimmer admin-shimmer-avatar"></div>
+
+            <div class="admin-user-result-main">
+
+                <div class="shimmer admin-shimmer-name"></div>
+
+                <div class="shimmer admin-shimmer-email"></div>
+
+            </div>
+
+        </div>
+
+        <div class="admin-user-result admin-user-loading">
+
+            <div class="shimmer admin-shimmer-avatar"></div>
+
+            <div class="admin-user-result-main">
+
+                <div class="shimmer admin-shimmer-name"></div>
+
+                <div class="shimmer admin-shimmer-email"></div>
+
+            </div>
+
+        </div>
+
+        <div class="admin-user-result admin-user-loading">
+
+            <div class="shimmer admin-shimmer-avatar"></div>
+
+            <div class="admin-user-result-main">
+
+                <div class="shimmer admin-shimmer-name"></div>
+
+                <div class="shimmer admin-shimmer-email"></div>
+
+            </div>
+
+        </div>
+
+        <div class="admin-user-result admin-user-loading">
+
+            <div class="shimmer admin-shimmer-avatar"></div>
+
+            <div class="admin-user-result-main">
+
+                <div class="shimmer admin-shimmer-name"></div>
+
+                <div class="shimmer admin-shimmer-email"></div>
+
+            </div>
+
+        </div>
+    `;
+}
+
+    openModal("adminDashboardModal");
+
+    await loadAdminUsers();
+}
+
+
+/* =========================================================
+   LOAD USERS
+========================================================= */
+
+async function loadAdminUsers() {
+
+    if (!isExplorerAdmin()) {
+        return;
+    }
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users"
+                )
+            );
+
+        adminUsersCache =
+            snapshot.docs.map(userDoc => ({
+                id: userDoc.id,
+                ...userDoc.data()
+            }));
+
+        adminUsersCache.sort(
+            (a, b) =>
+                String(
+                    a.username ||
+                    a.email ||
+                    ""
+                ).localeCompare(
+                    String(
+                        b.username ||
+                        b.email ||
+                        ""
+                    )
+                )
+        );
+
+        renderAdminUserResults(
+            adminUsersCache
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load users:",
+            error
+        );
+
+        if (adminUserResults) {
+
+            adminUserResults.innerHTML = `
+                <div class="empty-state">
+
+                    <div class="explore-empty-title">
+                        Unable to load users
+                    </div>
+
+                    <div class="explore-empty-text">
+                        Check your Firestore permissions.
+                    </div>
+
+                </div>
+            `;
+
+        }
+
+    }
+}
+
+
+/* =========================================================
+   RENDER USER SEARCH RESULTS
+========================================================= */
+
+function renderAdminUserResults(users) {
+
+    if (!adminUserResults) {
+        return;
+    }
+
+    if (!users.length) {
+
+        adminUserResults.innerHTML = `
+            <div class="empty-state">
+
+                <div class="explore-empty-title">
+                    No users found
+                </div>
+
+                <div class="explore-empty-text">
+                    Try another search.
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+    adminUserResults.innerHTML =
+        users.slice(0, 5).map(user => {
+
+            const username =
+                user.username ||
+                "Unknown user";
+
+            const email =
+                user.email ||
+                "No email";
+
+            const isBanned =
+                user.moderationStatus === "banned";
+
+            return `
+                <button
+                    type="button"
+                    class="admin-user-result"
+                    data-admin-user-id="${escapeHtml(user.id)}"
+                >
+
+                    <div class="admin-user-result-avatar">
+                        ${escapeHtml(
+                            getInitialsSafe(username)
+                        )}
+                    </div>
+
+                    <div class="admin-user-result-main">
+
+                        <div class="admin-user-result-name">
+                            ${escapeHtml(username)}
+                        </div>
+
+                        <div class="admin-user-result-email">
+                            ${escapeHtml(email)}
+                        </div>
+
+                    </div>
+
+                    ${
+                        isBanned
+                            ? `
+                                <span class="admin-user-ban-badge">
+                                    Banned
+                                </span>
+                            `
+                            : ""
+                    }
+
+                    <span class="admin-user-result-arrow">
+                        ›
+                    </span>
+
+                </button>
+            `;
+
+        }).join("");
+}
+
+
+/* =========================================================
+   OPEN USER
+========================================================= */
+
+async function openAdminUser(userId) {
+
+    if (!isExplorerAdmin()) {
+        return;
+    }
+
+    if (!userId) {
+        return;
+    }
+
+    const user =
+        adminUsersCache.find(
+            item =>
+                item.id === userId
+        );
+
+    if (!user) {
+        return;
+    }
+
+    adminSelectedUserId =
+        userId;
+
+    adminSelectedUserData =
+        user;
+
+if (adminUserSearchView) {
+    adminUserSearchView.style.display =
+        "none";
+}
+
+if (adminUserView) {
+    adminUserView.style.display =
+        "block";
+}
+
+    if (adminUserUsername) {
+        adminUserUsername.textContent =
+            user.username ||
+            "Unknown user";
+    }
+
+ if (adminUserEmail) {
+    adminUserEmail.textContent =
+        user.email ||
+        "No email";
+}
+
+if (adminUserUid) {
+
+    adminUserUid.textContent =
+        userId;
+
+}
+
+if (adminUserCreatedAt) {
+
+    adminUserCreatedAt.textContent =
+        formatModerationDate(
+            user.createdAt
+        );
+
+}
+
+    if (adminUserAvatar) {
+        adminUserAvatar.textContent =
+            getInitialsSafe(
+                user.username
+            );
+    }
+
+if (adminCurrentBan) {
+    adminCurrentBan.innerHTML = `
+        <div class="shimmer admin-shimmer-card"></div>
+    `;
+}
+
+if (adminWarningHistory) {
+    adminWarningHistory.innerHTML = `
+        <div class="shimmer admin-shimmer-history"></div>
+        <div class="shimmer admin-shimmer-history"></div>
+        <div class="shimmer admin-shimmer-history"></div>
+    `;
+}
+
+if (adminBanHistory) {
+    adminBanHistory.innerHTML = `
+        <div class="shimmer admin-shimmer-history"></div>
+        <div class="shimmer admin-shimmer-history"></div>
+        <div class="shimmer admin-shimmer-history"></div>
+    `;
+}
+
+    await loadAdminModerationHistory(
+        userId
+    );
+}
+
+
+/* =========================================================
+   LOAD MODERATION HISTORY
+========================================================= */
+
+async function loadAdminModerationHistory(userId) {
+
+    if (!isExplorerAdmin()) {
+        return;
+    }
+
+    try {
+
+        const warningsSnapshot =
+            await getDocs(
+                query(
+                    collection(
+                        db,
+                        "warnings"
+                    ),
+                    where(
+                        "userId",
+                        "==",
+                        userId
+                    )
+                )
+            );
+
+        const bansSnapshot =
+            await getDocs(
+                query(
+                    collection(
+                        db,
+                        "bans"
+                    ),
+                    where(
+                        "userId",
+                        "==",
+                        userId
+                    )
+                )
+            );
+
+
+        const warnings =
+            warningsSnapshot.docs
+                .map(item => ({
+                    id: item.id,
+                    ...item.data()
+                }))
+                .sort(
+                    (a, b) =>
+                        (
+                            b.createdAt?.toMillis?.() ||
+                            0
+                        ) -
+                        (
+                            a.createdAt?.toMillis?.() ||
+                            0
+                        )
+                );
+
+
+        const bans =
+            bansSnapshot.docs
+                .map(item => ({
+                    id: item.id,
+                    ...item.data()
+                }))
+                .sort(
+                    (a, b) =>
+                        (
+                            b.createdAt?.toMillis?.() ||
+                            0
+                        ) -
+                        (
+                            a.createdAt?.toMillis?.() ||
+                            0
+                        )
+                );
+
+
+        /*
+            Find current active ban.
+        */
+
+        let currentBan =
+            bans.find(
+                ban =>
+                    isBanCurrentlyActive(ban)
+            ) || null;
+
+
+        /*
+            Automatically clear an expired
+            temporary ban.
+        */
+
+        if (
+            !currentBan &&
+            adminSelectedUserData?.moderationStatus ===
+                "banned"
+        ) {
+
+            await updateDoc(
+                doc(
+                    db,
+                    "users",
+                    userId
+                ),
+                {
+                    moderationStatus:
+                        "clear",
+
+                    currentBanId:
+                        deleteField()
+                }
+            );
+
+            adminSelectedUserData.moderationStatus =
+                "clear";
+
+        }
+
+
+        adminSelectedCurrentBan =
+            currentBan;
+
+
+        renderAdminCurrentBan(
+            currentBan
+        );
+
+        renderAdminWarningHistory(
+            warnings
+        );
+
+        renderAdminBanHistory(
+            bans
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load moderation history:",
+            error
+        );
+
+        if (adminWarningHistory) {
+            adminWarningHistory.innerHTML =
+                "Unable to load warnings.";
+        }
+
+        if (adminBanHistory) {
+            adminBanHistory.innerHTML =
+                "Unable to load bans.";
+        }
+
+    }
+}
+
+
+/* =========================================================
+   CURRENT BAN
+========================================================= */
+
+function renderAdminCurrentBan(ban) {
+
+    if (!adminCurrentBan) {
+        return;
+    }
+
+    if (!ban) {
+
+        adminCurrentBan.innerHTML = `
+            <div class="admin-no-ban">
+                This user is not currently banned.
+            </div>
+        `;
+
+        return;
+    }
+
+    adminCurrentBan.innerHTML = `
+
+        <div class="admin-current-ban-card">
+
+            <div>
+
+                <div class="admin-ban-status">
+                    ACTIVE BAN
+                </div>
+
+                <div class="admin-ban-reason">
+                    ${escapeHtml(
+                        ban.reason ||
+                        "No reason provided."
+                    )}
+                </div>
+
+                <div class="admin-ban-meta">
+
+                    <span>
+                        Category:
+                        ${escapeHtml(
+                            formatModerationCategory(
+                                ban.category
+                            )
+                        )}
+                    </span>
+
+                    <span>
+                        ${escapeHtml(
+                            getBanDurationLabel(ban)
+                        )}
+                    </span>
+
+                    <span>
+                        Issued:
+                        ${escapeHtml(
+                            formatModerationDate(
+                                ban.createdAt
+                            )
+                        )}
+                    </span>
+
+                </div>
+
+            </div>
+
+            <button
+                id="adminUnbanButton"
+                class="button"
+                type="button"
+            >
+                Unban
+            </button>
+
+        </div>
+    `;
+
+    document
+        .getElementById("adminUnbanButton")
+        ?.addEventListener(
+            "click",
+            unbanAdminSelectedUser
+        );
+}
+
+
+/* =========================================================
+   WARNING HISTORY
+========================================================= */
+
+function renderAdminWarningHistory(warnings) {
+
+    if (!adminWarningHistory) {
+        return;
+    }
+
+    const visibleWarnings =
+        warnings.filter(
+            warning =>
+                warning.cleared !== true
+        );
+
+    if (!visibleWarnings.length) {
+
+        adminWarningHistory.innerHTML = `
+            <div class="admin-history-empty">
+                No warnings have been issued.
+            </div>
+        `;
+
+        return;
+    }
+
+    adminWarningHistory.innerHTML =
+        visibleWarnings.map(warning => `
+
+            <div class="admin-history-card">
+
+                <div class="admin-history-card-top">
+
+                    <span class="admin-history-category">
+                        ${escapeHtml(
+                            formatModerationCategory(
+                                warning.category
+                            )
+                        )}
+                    </span>
+
+                    <span class="admin-history-date">
+                        ${escapeHtml(
+                            formatModerationDate(
+                                warning.createdAt
+                            )
+                        )}
+                    </span>
+
+                </div>
+
+                <div class="admin-history-reason">
+                    ${escapeHtml(
+                        warning.reason ||
+                        "No reason provided."
+                    )}
+                </div>
+
+                <div class="admin-history-issuer">
+                    Issued by ${escapeHtml(
+                        warning.issuerLabel ||
+                        MODERATION_ISSUER
+                    )}
+                </div>
+
+                <div class="admin-history-actions">
+
+                    <button
+                        type="button"
+                        class="button admin-history-clear-button"
+                        data-clear-warning="${warning.id}"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+            </div>
+
+        `).join("");
+}
+
+
+/* =========================================================
+   BAN HISTORY
+========================================================= */
+
+function renderAdminBanHistory(bans) {
+
+    if (!adminBanHistory) {
+        return;
+    }
+
+    const visibleBans =
+        bans.filter(
+            ban =>
+                ban.cleared !== true
+        );
+
+    if (!visibleBans.length) {
+
+        adminBanHistory.innerHTML = `
+            <div class="admin-history-empty">
+                No historical bans.
+            </div>
+        `;
+
+        return;
+    }
+
+    adminBanHistory.innerHTML =
+        visibleBans.map(ban => {
+
+            const active =
+                isBanCurrentlyActive(ban);
+
+            return `
+
+                <div class="admin-history-card">
+
+                    <div class="admin-history-card-top">
+
+                        <span
+                            class="admin-history-category ${
+                                active
+                                    ? "active"
+                                    : ""
+                            }"
+                        >
+                            ${
+                                ban.type === "permanent"
+                                    ? "Permanent"
+                                    : "Temporary"
+                            }
+                        </span>
+
+                        <span class="admin-history-date">
+                            ${escapeHtml(
+                                formatModerationDate(
+                                    ban.createdAt
+                                )
+                            )}
+                        </span>
+
+                    </div>
+
+                    <div class="admin-history-reason">
+                        ${escapeHtml(
+                            ban.reason ||
+                            "No reason provided."
+                        )}
+                    </div>
+
+                    <div class="admin-history-issuer">
+                        Category:
+                        ${escapeHtml(
+                            formatModerationCategory(
+                                ban.category
+                            )
+                        )}
+                        <br>
+                        Duration:
+                        ${escapeHtml(
+                            getBanDurationLabel(ban)
+                        )}
+                    </div>
+
+                    ${
+                        !active
+                            ? `
+                                <div class="admin-history-actions">
+
+                                    <button
+                                        type="button"
+                                        class="button admin-history-clear-button"
+                                        data-clear-ban="${ban.id}"
+                                    >
+                                        Clear
+                                    </button>
+
+                                </div>
+                            `
+                            : ""
+                    }
+
+                </div>
+
+            `;
+        }).join("");
+}
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const warningButton =
+            event.target.closest(
+                "[data-clear-warning]"
+            );
+
+        if (warningButton) {
+
+            const warningId =
+                warningButton.getAttribute(
+                    "data-clear-warning"
+                );
+
+            clearAdminWarning(
+                warningId
+            );
+
+            return;
+        }
+
+        const banButton =
+            event.target.closest(
+                "[data-clear-ban]"
+            );
+
+        if (banButton) {
+
+            const banId =
+                banButton.getAttribute(
+                    "data-clear-ban"
+                );
+
+            clearAdminBan(
+                banId
+            );
+        }
+
+    }
+);
+
+/* =========================================================
+   CLEAR MODERATION HISTORY
+========================================================= */
+
+async function clearAdminWarning(warningId) {
+
+    if (!warningId || !isExplorerAdmin()) {
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Clear this warning from the SafeGuard dashboard?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "warnings",
+                warningId
+            ),
+            {
+                cleared: true,
+                clearedAt: serverTimestamp(),
+                clearedBy: auth.currentUser.uid
+            }
+        );
+
+        toast(
+            "Warning cleared from the dashboard."
+        );
+
+        await loadAdminModerationHistory(
+            adminSelectedUserId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to clear warning:",
+            error
+        );
+
+        toast(
+            "Unable to clear the warning."
+        );
+    }
+}
+
+
+async function clearAdminBan(banId) {
+
+    if (!banId || !isExplorerAdmin()) {
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Clear this historical ban from the SafeGuard dashboard?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "bans",
+                banId
+            ),
+            {
+                cleared: true,
+                clearedAt: serverTimestamp(),
+                clearedBy: auth.currentUser.uid
+            }
+        );
+
+        toast(
+            "Ban cleared from the dashboard."
+        );
+
+        await loadAdminModerationHistory(
+            adminSelectedUserId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to clear ban:",
+            error
+        );
+
+        toast(
+            "Unable to clear the ban."
+        );
+    }
+}
+
+/* =========================================================
+   ADMIN MODERATION DROPDOWNS
+========================================================= */
+
+document
+    .querySelectorAll(
+        ".admin-moderation-section-toggle"
+    )
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const contentId =
+                    button.getAttribute(
+                        "data-admin-dropdown"
+                    );
+
+                const content =
+                    document.getElementById(
+                        contentId
+                    );
+
+                if (!content) {
+                    return;
+                }
+
+                const isOpen =
+                    button.getAttribute(
+                        "aria-expanded"
+                    ) === "true";
+
+                button.setAttribute(
+                    "aria-expanded",
+                    String(!isOpen)
+                );
+
+                button.classList.toggle(
+                    "open",
+                    !isOpen
+                );
+
+                content.style.display =
+                    isOpen
+                        ? "none"
+                        : "block";
+            }
+        );
+
+    });
+
+/* =========================================================
+   ISSUE WARNING
+========================================================= */
+
+async function issueAdminWarning() {
+
+    if (!isExplorerAdmin()) {
+        return;
+    }
+
+    if (!adminSelectedUserId) {
+        return;
+    }
+
+    const category =
+        adminWarningCategory?.value;
+
+    const reason =
+        adminWarningReason?.value.trim();
+
+    if (!category) {
+
+        toast(
+            "Select a warning category."
+        );
+
+        return;
+    }
+
+    if (!reason) {
+
+        toast(
+            "Enter a reason for the warning."
+        );
+
+        return;
+    }
+
+    if (reason.length < 5) {
+
+        toast(
+            "The warning reason is too short."
+        );
+
+        return;
+    }
+
+    try {
+
+        await addDoc(
+            collection(
+                db,
+                "warnings"
+            ),
+            {
+                userId:
+                    adminSelectedUserId,
+
+                issuedBy:
+                    currentUser.uid,
+
+                issuerLabel:
+                    MODERATION_ISSUER,
+
+                category:
+                    category,
+
+                reason:
+                    reason,
+
+                createdAt:
+                    serverTimestamp()
+            }
+        );
+
+
+        await addDoc(
+            collection(
+                db,
+                "notifications"
+            ),
+            {
+                userId:
+                    adminSelectedUserId,
+
+                type:
+                    "moderation_warning",
+
+                title:
+                    "Account warning issued",
+
+                description:
+                    `A warning has been issued to your account for ${formatModerationCategory(category)}. Reason: ${reason}`,
+
+                read:
+                    false,
+
+                createdAt:
+                    serverTimestamp()
+            }
+        );
+
+
+        adminWarningCategory.value =
+            "";
+
+        adminWarningReason.value =
+            "";
+
+        toast(
+            "Warning issued."
+        );
+
+        await loadAdminModerationHistory(
+            adminSelectedUserId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to issue warning:",
+            error
+        );
+
+        toast(
+            "Unable to issue warning."
+        );
+
+    }
+}
+
+
+/* =========================================================
+   BAN USER
+========================================================= */
+
+async function banAdminSelectedUser() {
+
+    if (!isExplorerAdmin()) {
+        return;
+    }
+
+    if (!adminSelectedUserId) {
+        return;
+    }
+
+    if (
+        adminSelectedUserId ===
+        currentUser?.uid
+    ) {
+
+        toast(
+            "You cannot ban your own account."
+        );
+
+        return;
+    }
+
+    const type =
+        adminBanType?.value;
+
+    const category =
+        adminBanCategory?.value;
+
+    const reason =
+        adminBanReason?.value.trim();
+
+    if (!category) {
+
+        toast(
+            "Select a ban category."
+        );
+
+        return;
+    }
+
+    if (!reason) {
+
+        toast(
+            "Enter a reason for the ban."
+        );
+
+        return;
+    }
+
+
+    let expiresAt = null;
+
+
+   if (type === "temporary") {
+
+    let hours = 0;
+
+    const duration =
+        adminBanDuration?.value;
+
+    const durationHours = {
+        "1h": 1,
+        "6h": 6,
+        "12h": 12,
+        "1d": 24,
+        "3d": 72,
+        "7d": 168,
+        "14d": 336,
+        "30d": 720
+    };
+
+    if (duration === "custom") {
+
+        const amount =
+            Number(
+                adminBanCustomDurationValue?.value
+            );
+
+        const unit =
+            adminBanCustomDurationUnit?.value;
+
+        if (
+            !Number.isFinite(amount) ||
+            amount < 1
+        ) {
+
+            toast(
+                "Enter a valid custom duration."
+            );
+
+            return;
+        }
+
+        if (unit === "minutes") {
+
+            hours =
+                amount / 60;
+
+        } else if (unit === "hours") {
+
+            hours =
+                amount;
+
+        } else if (unit === "days") {
+
+            hours =
+                amount * 24;
+
+        }
+
+    } else {
+
+        hours =
+            durationHours[
+                duration
+            ] || 0;
+
+    }
+
+    if (!hours) {
+
+        toast(
+            "Select a valid ban duration."
+        );
+
+        return;
+    }
+
+    expiresAt =
+        new Date(
+            Date.now() +
+            hours * 60 * 60 * 1000
+        );
+
+}
+
+
+    try {
+
+        /*
+            If there is already an active ban,
+            deactivate it first.
+        */
+
+        const existingBansSnapshot =
+            await getDocs(
+                query(
+                    collection(
+                        db,
+                        "bans"
+                    ),
+                    where(
+                        "userId",
+                        "==",
+                        adminSelectedUserId
+                    )
+                )
+            );
+
+
+        for (
+            const existingBan
+            of existingBansSnapshot.docs
+        ) {
+
+            const existingData =
+                existingBan.data();
+
+            if (
+                isBanCurrentlyActive(
+                    existingData
+                )
+            ) {
+
+                await updateDoc(
+                    existingBan.ref,
+                    {
+                        active:
+                            false,
+
+                        unbannedAt:
+                            serverTimestamp(),
+
+                        unbannedBy:
+                            currentUser.uid
+                    }
+                );
+
+            }
+
+        }
+
+
+        const banRef =
+            await addDoc(
+                collection(
+                    db,
+                    "bans"
+                ),
+                {
+                    userId:
+                        adminSelectedUserId,
+
+                    issuedBy:
+                        currentUser.uid,
+
+                    issuerLabel:
+                        MODERATION_ISSUER,
+
+                    type:
+                        type,
+
+                    category:
+                        category,
+
+                    reason:
+                        reason,
+
+                    createdAt:
+                        serverTimestamp(),
+
+                    expiresAt:
+                        expiresAt,
+
+                    active:
+                        true
+                }
+            );
+
+
+        await updateDoc(
+            doc(
+                db,
+                "users",
+                adminSelectedUserId
+            ),
+            {
+                moderationStatus:
+                    "banned",
+
+                currentBanId:
+                    banRef.id
+            }
+        );
+
+
+        await addDoc(
+            collection(
+                db,
+                "notifications"
+            ),
+            {
+                userId:
+                    adminSelectedUserId,
+
+                type:
+                    "moderation_ban",
+
+                title:
+                    "Account suspended",
+
+                description:
+                    `Your account has been suspended. Reason: ${reason}`,
+
+                read:
+                    false,
+
+                createdAt:
+                    serverTimestamp()
+            }
+        );
+
+
+        adminBanCategory.value =
+            "";
+
+        adminBanReason.value =
+            "";
+
+        adminBanDuration.value =
+            "1h";
+
+if (adminBanCustomDurationValue) {
+
+    adminBanCustomDurationValue.value =
+        "";
+
+}
+
+if (adminBanCustomDurationUnit) {
+
+    adminBanCustomDurationUnit.value =
+        "minutes";
+
+}
+
+
+        toast(
+            "User banned."
+        );
+
+
+        /*
+            Refresh user cache.
+        */
+
+        const updatedUser =
+            adminUsersCache.find(
+                user =>
+                    user.id ===
+                    adminSelectedUserId
+            );
+
+        if (updatedUser) {
+
+            updatedUser.moderationStatus =
+                "banned";
+
+            updatedUser.currentBanId =
+                banRef.id;
+
+        }
+
+
+        await loadAdminModerationHistory(
+            adminSelectedUserId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to ban user:",
+            error
+        );
+
+        toast(
+            "Unable to ban this user."
+        );
+
+    }
+}
+
+
+/* =========================================================
+   UNBAN USER
+========================================================= */
+
+async function unbanAdminSelectedUser() {
+
+    if (!isExplorerAdmin()) {
+        return;
+    }
+
+    if (!adminSelectedUserId) {
+        return;
+    }
+
+    try {
+
+        const bansSnapshot =
+            await getDocs(
+                query(
+                    collection(
+                        db,
+                        "bans"
+                    ),
+                    where(
+                        "userId",
+                        "==",
+                        adminSelectedUserId
+                    )
+                )
+            );
+
+
+        for (
+            const banDoc
+            of bansSnapshot.docs
+        ) {
+
+            const ban =
+                banDoc.data();
+
+            if (
+                isBanCurrentlyActive(
+                    ban
+                )
+            ) {
+
+                await updateDoc(
+                    banDoc.ref,
+                    {
+                        active:
+                            false,
+
+                        unbannedAt:
+                            serverTimestamp(),
+
+                        unbannedBy:
+                            currentUser.uid
+                    }
+                );
+
+            }
+
+        }
+
+
+        await updateDoc(
+            doc(
+                db,
+                "users",
+                adminSelectedUserId
+            ),
+            {
+                moderationStatus:
+                    "clear",
+
+                currentBanId:
+                    deleteField()
+            }
+        );
+
+
+        toast(
+            "User unbanned."
+        );
+
+
+        const updatedUser =
+            adminUsersCache.find(
+                user =>
+                    user.id ===
+                    adminSelectedUserId
+            );
+
+        if (updatedUser) {
+
+            updatedUser.moderationStatus =
+                "clear";
+
+            delete updatedUser.currentBanId;
+
+        }
+
+
+        adminSelectedCurrentBan =
+            null;
+
+
+        await loadAdminModerationHistory(
+            adminSelectedUserId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to unban user:",
+            error
+        );
+
+        toast(
+            "Unable to unban this user."
+        );
+
+    }
+}
+
+
+/* =========================================================
+   SAFEGUARD BAN ENFORCEMENT
+========================================================= */
+
+async function checkCurrentUserSafeguardBan() {
+
+    if (!currentUser) {
+
+        hideSafeguardBanScreen();
+
+        return false;
+    }
+
+
+    /*
+        Never lock the configured administrator
+        out through the normal moderation flow.
+    */
+
+    if (
+        currentUser.uid ===
+        ADMIN_UID
+    ) {
+
+        hideSafeguardBanScreen();
+
+        return false;
+    }
+
+
+    try {
+
+        const userSnapshot =
+            await getDoc(
+                doc(
+                    db,
+                    "users",
+                    currentUser.uid
+                )
+            );
+
+
+        if (!userSnapshot.exists()) {
+
+            hideSafeguardBanScreen();
+
+            return false;
+        }
+
+
+        const userData =
+            userSnapshot.data();
+
+
+        if (
+            userData.moderationStatus !==
+            "banned"
+        ) {
+
+            hideSafeguardBanScreen();
+
+            return false;
+        }
+
+
+        /*
+            A banned user should have a currentBanId.
+        */
+
+        if (!userData.currentBanId) {
+
+            showSafeguardBanScreen({
+                reason:
+                    "Your account is currently suspended.",
+
+                type:
+                    "permanent",
+
+                active:
+                    true,
+
+                issuerLabel:
+                    MODERATION_ISSUER
+            });
+
+            return true;
+        }
+
+
+        const banSnapshot =
+            await getDoc(
+                doc(
+                    db,
+                    "bans",
+                    userData.currentBanId
+                )
+            );
+
+
+        if (!banSnapshot.exists()) {
+
+            showSafeguardBanScreen({
+                reason:
+                    "Your account is currently suspended.",
+
+                type:
+                    "permanent",
+
+                active:
+                    true,
+
+                issuerLabel:
+                    MODERATION_ISSUER
+            });
+
+            return true;
+        }
+
+
+        const ban = {
+
+            id:
+                banSnapshot.id,
+
+            ...banSnapshot.data()
+
+        };
+
+
+        /*
+            Check whether the temporary ban
+            has expired.
+        */
+
+        if (
+            !isBanCurrentlyActive(ban)
+        ) {
+
+            await updateDoc(
+                doc(
+                    db,
+                    "users",
+                    currentUser.uid
+                ),
+                {
+                    moderationStatus:
+                        "clear",
+
+                    currentBanId:
+                        deleteField()
+                }
+            );
+
+            hideSafeguardBanScreen();
+
+            return false;
+        }
+
+
+        showSafeguardBanScreen(ban);
+
+        return true;
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to check SafeGuard status:",
+            error
+        );
+
+        hideSafeguardBanScreen();
+
+        return false;
+    }
+}
+
+
+/* =========================================================
+   REALTIME SAFEGUARD LISTENER
+========================================================= */
+
+function startSafeguardListener() {
+
+    stopSafeguardListener(false);
+
+
+    if (!currentUser) {
+
+        return;
+    }
+
+
+    /*
+        Admin account is exempt.
+    */
+
+    if (
+        currentUser.uid ===
+        ADMIN_UID
+    ) {
+
+        return;
+    }
+
+
+    const userRef =
+        doc(
+            db,
+            "users",
+            currentUser.uid
+        );
+
+
+    safeguardUserUnsubscribe =
+        onSnapshot(
+            userRef,
+
+            async snapshot => {
+
+                if (!snapshot.exists()) {
+
+                    hideSafeguardBanScreen();
+
+                    return;
+                }
+
+
+                const userData =
+                    snapshot.data();
+
+
+                /*
+                    User is no longer banned.
+                */
+
+                if (
+                    userData.moderationStatus !==
+                    "banned"
+                ) {
+
+                    if (
+                        safeguardBanUnsubscribe
+                    ) {
+
+                        safeguardBanUnsubscribe();
+
+                        safeguardBanUnsubscribe =
+                            null;
+                    }
+
+
+                    hideSafeguardBanScreen();
+
+                    return;
+                }
+
+
+                /*
+                    No ban ID.
+                */
+
+                if (
+                    !userData.currentBanId
+                ) {
+
+                    showSafeguardBanScreen({
+
+                        reason:
+                            "Your account is currently suspended.",
+
+                        type:
+                            "permanent",
+
+                        active:
+                            true,
+
+                        issuerLabel:
+                            MODERATION_ISSUER
+
+                    });
+
+                    return;
+                }
+
+
+                /*
+                    If the current ban listener
+                    is already watching this ban,
+                    leave it running.
+                */
+
+                if (
+                    safeguardBanUnsubscribe &&
+                    safeguardBanUnsubscribe.__banId ===
+                        userData.currentBanId
+                ) {
+
+                    return;
+                }
+
+
+                /*
+                    Stop the previous ban listener.
+                */
+
+                if (
+                    safeguardBanUnsubscribe
+                ) {
+
+                    safeguardBanUnsubscribe();
+
+                    safeguardBanUnsubscribe =
+                        null;
+                }
+
+
+                const banRef =
+                    doc(
+                        db,
+                        "bans",
+                        userData.currentBanId
+                    );
+
+
+                const unsubscribeBan =
+                    onSnapshot(
+
+                        banRef,
+
+                        async banSnapshot => {
+
+                            if (
+                                !banSnapshot.exists()
+                            ) {
+
+                                showSafeguardBanScreen({
+
+                                    reason:
+                                        "Your account is currently suspended.",
+
+                                    type:
+                                        "permanent",
+
+                                    active:
+                                        true,
+
+                                    issuerLabel:
+                                        MODERATION_ISSUER
+
+                                });
+
+                                return;
+                            }
+
+
+                            const ban = {
+
+                                id:
+                                    banSnapshot.id,
+
+                                ...banSnapshot.data()
+
+                            };
+
+
+                            /*
+                                Ban expired or was
+                                manually deactivated.
+                            */
+
+                            if (
+                                !isBanCurrentlyActive(
+                                    ban
+                                )
+                            ) {
+
+                                try {
+
+                                    await updateDoc(
+                                        userRef,
+                                        {
+                                            moderationStatus:
+                                                "clear",
+
+                                            currentBanId:
+                                                deleteField()
+                                        }
+                                    );
+
+                                } catch (error) {
+
+                                    console.error(
+                                        "Unable to clear expired SafeGuard ban:",
+                                        error
+                                    );
+
+                                }
+
+                                hideSafeguardBanScreen();
+
+                                return;
+                            }
+
+
+                            /*
+                                Active ban.
+                            */
+
+                            showSafeguardBanScreen(
+                                ban
+                            );
+
+                        },
+
+                        error => {
+
+                            console.error(
+                                "SafeGuard ban listener error:",
+                                error
+                            );
+
+                        }
+                    );
+
+
+                unsubscribeBan.__banId =
+                    userData.currentBanId;
+
+
+                safeguardBanUnsubscribe =
+                    unsubscribeBan;
+
+            },
+
+            error => {
+
+                console.error(
+                    "SafeGuard user listener error:",
+                    error
+                );
+
+            }
+        );
+}
+
+
+/* =========================================================
+   STOP SAFEGUARD LISTENERS
+========================================================= */
+
+function stopSafeguardListener(
+    hideScreen = true
+) {
+
+    if (
+        safeguardUserUnsubscribe
+    ) {
+
+        safeguardUserUnsubscribe();
+
+        safeguardUserUnsubscribe =
+            null;
+    }
+
+
+    if (
+        safeguardBanUnsubscribe
+    ) {
+
+        safeguardBanUnsubscribe();
+
+        safeguardBanUnsubscribe =
+            null;
+    }
+
+
+    if (hideScreen) {
+
+        hideSafeguardBanScreen();
+
+    }
+}
+
+
+/* =========================================================
+   SHOW SAFEGUARD BAN SCREEN
+========================================================= */
+
+function showSafeguardBanScreen(ban) {
+
+    if (!safeguardBanScreen) {
+
+        return;
+    }
+
+
+    if (safeguardBanReason) {
+
+        safeguardBanReason.textContent =
+            ban.reason ||
+            "Your account has been suspended.";
+
+    }
+
+
+    if (safeguardBanDuration) {
+
+        safeguardBanDuration.textContent =
+            getBanDurationLabel(ban);
+
+    }
+
+
+    if (safeguardBanIssuer) {
+
+        safeguardBanIssuer.textContent =
+            ban.issuerLabel ||
+            MODERATION_ISSUER;
+
+    }
+
+
+    safeguardBanScreen.style.display =
+        "flex";
+
+
+    document.body.classList.add(
+        "safeguard-banned"
+    );
+}
+
+
+/* =========================================================
+   HIDE SAFEGUARD BAN SCREEN
+========================================================= */
+
+function hideSafeguardBanScreen() {
+
+    if (safeguardBanScreen) {
+
+        safeguardBanScreen.style.display =
+            "none";
+    }
+
+
+    document.body.classList.remove(
+        "safeguard-banned"
     );
 }
 
@@ -3946,12 +6480,333 @@ if (takedownRequestsButton) {
 }
 
 
-if (reportsButton) {
+if (adminOpenReportsButton) {
 
-    reportsButton.addEventListener(
+    adminOpenReportsButton.addEventListener(
         "click",
-        openReportsModal
+        async () => {
+
+            closeModal(
+                "adminDashboardModal"
+            );
+
+            await openReportsModal();
+
+        }
     );
+
+}
+
+if (adminDashboardButton) {
+
+    adminDashboardButton.addEventListener(
+        "click",
+        openAdminDashboard
+    );
+}
+
+
+if (adminUserSearch) {
+
+    adminUserSearch.addEventListener(
+        "input",
+        () => {
+
+            const search =
+                adminUserSearch.value
+                    .trim()
+                    .toLowerCase();
+
+            if (!search) {
+
+                renderAdminUserResults(
+                    adminUsersCache
+                );
+
+                return;
+            }
+
+            const scoredUsers =
+                adminUsersCache
+                    .map(user => {
+
+                        const username =
+                            String(
+                                user.username || ""
+                            ).toLowerCase();
+
+                        const email =
+                            String(
+                                user.email || ""
+                            ).toLowerCase();
+
+                        const uid =
+                            String(
+                                user.id || ""
+                            ).toLowerCase();
+
+                        let score = 0;
+
+                        if (username === search) {
+                            score = 100;
+                        } else if (
+                            username.startsWith(search)
+                        ) {
+                            score = 90;
+                        } else if (
+                            username.includes(search)
+                        ) {
+                            score = 80;
+                        } else if (
+                            email.startsWith(search)
+                        ) {
+                            score = 70;
+                        } else if (
+                            email.includes(search)
+                        ) {
+                            score = 60;
+                        } else if (
+                            uid.includes(search)
+                        ) {
+                            score = 50;
+                        }
+
+                        return {
+                            user,
+                            score
+                        };
+
+                    })
+                    .filter(
+                        item =>
+                            item.score > 0
+                    )
+                    .sort(
+                        (a, b) =>
+                            b.score - a.score ||
+                            String(
+                                a.user.username ||
+                                a.user.email ||
+                                ""
+                            ).localeCompare(
+                                String(
+                                    b.user.username ||
+                                    b.user.email ||
+                                    ""
+                                )
+                            )
+                    );
+
+            renderAdminUserResults(
+                scoredUsers.map(
+                    item => item.user
+                )
+            );
+
+        }
+    );
+}
+
+
+if (adminBackToUsersButton) {
+
+    adminBackToUsersButton.addEventListener(
+        "click",
+        () => {
+
+            adminSelectedUserId =
+                null;
+
+            adminSelectedUserData =
+                null;
+
+            adminSelectedCurrentBan =
+                null;
+
+adminUserView.style.display =
+    "none";
+
+adminUserSearchView.style.display =
+    "block";
+
+            if (adminUserSearch) {
+                adminUserSearch.focus();
+            }
+
+        }
+    );
+}
+
+
+if (issueWarningButton) {
+
+    issueWarningButton.addEventListener(
+        "click",
+        issueAdminWarning
+    );
+}
+
+
+if (banUserButton) {
+
+    banUserButton.addEventListener(
+        "click",
+        banAdminSelectedUser
+    );
+}
+
+
+if (adminBanType) {
+
+    adminBanType.addEventListener(
+        "change",
+        () => {
+
+            const permanent =
+                adminBanType.value ===
+                "permanent";
+
+            const durationGroup =
+                adminBanDuration?.closest(
+                    ".form-group"
+                );
+
+            if (durationGroup) {
+
+                durationGroup.style.display =
+                    permanent
+                        ? "none"
+                        : "";
+
+            }
+
+            if (
+                adminBanCustomDurationWrapper
+            ) {
+
+                adminBanCustomDurationWrapper.style.display =
+                    !permanent &&
+                    adminBanDuration?.value ===
+                        "custom"
+                        ? "block"
+                        : "none";
+
+            }
+
+        }
+    );
+
+}
+
+
+if (adminBanDuration) {
+
+    adminBanDuration.addEventListener(
+        "change",
+        () => {
+
+            if (!adminBanCustomDurationWrapper) {
+                return;
+            }
+
+            const permanent =
+                adminBanType?.value ===
+                "permanent";
+
+            adminBanCustomDurationWrapper.style.display =
+                !permanent &&
+                adminBanDuration.value ===
+                    "custom"
+                    ? "block"
+                    : "none";
+
+        }
+    );
+}
+
+/*
+    User search result click.
+*/
+
+if (adminUserResults) {
+
+    adminUserResults.addEventListener(
+        "click",
+        event => {
+
+            const result =
+                event.target.closest(
+                    "[data-admin-user-id]"
+                );
+
+            if (!result) {
+                return;
+            }
+
+            openAdminUser(
+                result.dataset.adminUserId
+            );
+
+        }
+    );
+
+}
+
+
+/*
+    SafeGuard buttons.
+*/
+
+if (safeguardSignOutButton) {
+
+    safeguardSignOutButton.addEventListener(
+        "click",
+        async () => {
+
+            await signOut(auth);
+
+            hideSafeguardBanScreen();
+
+        }
+    );
+}
+
+
+if (safeguardDeleteAccountButton) {
+
+    safeguardDeleteAccountButton.addEventListener(
+        "click",
+        () => {
+
+            if (!currentUser) {
+                return;
+            }
+
+            const password =
+                document.getElementById(
+                    "deletePassword"
+                );
+
+            const message =
+                document.getElementById(
+                    "deleteMessage"
+                );
+
+            if (password) {
+                password.value = "";
+            }
+
+            if (message) {
+                message.textContent = "";
+            }
+
+            openModal(
+                "deleteAccountModal"
+            );
+
+        }
+    );
+
 }
 
 
@@ -6945,11 +9800,80 @@ async function openSocialProfile(
     socialProfileView.style.display =
         "block";
 
-    socialProfileContent.innerHTML = `
-        <div class="empty-state">
-            Loading profile...
+socialProfileContent.innerHTML = `
+    <div class="profile-skeleton">
+
+        <!-- PROFILE HEADER -->
+
+        <div class="profile-skeleton-header">
+
+            <div class="skeleton-block profile-skeleton-avatar"></div>
+
+            <div class="profile-skeleton-main">
+
+                <div class="skeleton-block profile-skeleton-name"></div>
+
+                <div class="skeleton-block profile-skeleton-since"></div>
+
+            </div>
+
+            <div class="skeleton-block profile-skeleton-button"></div>
+
         </div>
-    `;
+
+
+        <!-- STATS -->
+
+        <div class="profile-skeleton-stats">
+
+            <div class="skeleton-block profile-skeleton-stat"></div>
+
+            <div class="skeleton-block profile-skeleton-stat"></div>
+
+            <div class="skeleton-block profile-skeleton-stat"></div>
+
+            <div class="skeleton-block profile-skeleton-stat"></div>
+
+            <div class="skeleton-block profile-skeleton-stat"></div>
+
+        </div>
+
+
+        <!-- PROGRESS -->
+
+        <div class="profile-skeleton-progress">
+
+            <div class="profile-skeleton-progress-header">
+
+                <div class="skeleton-block profile-skeleton-progress-title"></div>
+
+                <div class="skeleton-block profile-skeleton-progress-percent"></div>
+
+            </div>
+
+            <div class="skeleton-block profile-skeleton-progress-bar"></div>
+
+            <div class="skeleton-block profile-skeleton-progress-help"></div>
+
+        </div>
+
+
+        <!-- RATINGS -->
+
+        <div class="profile-skeleton-section skeleton-block"></div>
+
+
+        <!-- SAVED -->
+
+        <div class="profile-skeleton-section skeleton-block"></div>
+
+
+        <!-- EXPLORED -->
+
+        <div class="profile-skeleton-section skeleton-block"></div>
+
+    </div>
+`;
 
     try {
 
@@ -8943,9 +11867,11 @@ function updateAccountUI() {
         }
 
 
-            if (!user) {
+if (!user) {
 
-                currentUsername = "";
+    stopSafeguardListener();
+
+    currentUsername = "";
 
                 currentUserData = {};
 
@@ -9044,6 +11970,33 @@ if (userSnapshot.exists()) {
                     "User";
 
             }
+
+const isSafeguardBanned =
+    await checkCurrentUserSafeguardBan();
+
+/*
+    Start realtime SafeGuard monitoring.
+
+    This means:
+    - bans made while the user is online appear immediately
+    - bans still apply after a page reload
+    - unbans are detected immediately
+    - temporary ban expiry is detected
+*/
+
+startSafeguardListener();
+
+
+if (isSafeguardBanned) {
+
+    /*
+        Do not initialise the normal Explorer
+        interface for a suspended account.
+    */
+
+    return;
+}
+
 
 await syncPublicProfile();
 
@@ -10341,50 +13294,48 @@ console.log(
        ADMIN: ADD LOCATION
     ========================================================= */
 
-    document
-        .getElementById("addLocationButton")
-        .addEventListener(
-            "click",
-            () => {
+   function openAdminAddLocation() {
 
-                if (
-                    !currentUser ||
-                    currentUser.uid !== ADMIN_UID
-                ) {
-                    toast(
-                        "You do not have permission to add locations."
-                    );
+    if (
+        !currentUser ||
+        currentUser.uid !== ADMIN_UID
+    ) {
 
-                    return;
-                }
-
-                closeSidebar();
-
-                locationModalMode = "add";
-                editingLocationId = null;
-
-                resetLocationForm();
-
-                document.getElementById(
-                    "locationModalTitle"
-                ).textContent =
-                    "Add location";
-
-                document.getElementById(
-                    "publishLocationButton"
-                ).textContent =
-                    "Publish";
-
-                openModal(
-                    "locationModal"
-                );
-setTimeout(() => {
-
-    locationPickerMap.invalidateSize();
-
-}, 200);
-            }
+        toast(
+            "You do not have permission to add locations."
         );
+
+        return;
+    }
+
+    closeSidebar();
+
+    locationModalMode = "add";
+    editingLocationId = null;
+
+    resetLocationForm();
+
+    document.getElementById(
+        "locationModalTitle"
+    ).textContent =
+        "Add location";
+
+    document.getElementById(
+        "publishLocationButton"
+    ).textContent =
+        "Publish";
+
+    openModal(
+        "locationModal"
+    );
+
+    setTimeout(() => {
+
+        locationPickerMap.invalidateSize();
+
+    }, 200);
+
+}
 
 
     function resetLocationForm() {
@@ -10425,6 +13376,754 @@ if (adminMarker) {
 
     }
 
+
+if (adminAddLocationDashboardButton) {
+
+    adminAddLocationDashboardButton.addEventListener(
+        "click",
+        () => {
+
+            closeModal(
+                "adminDashboardModal"
+            );
+
+            openAdminAddLocation();
+
+        }
+    );
+
+}
+
+/* =========================================================
+   ADMIN NOTIFICATION SYSTEM
+========================================================= */
+
+function renderAdminNotificationUserResults(
+    users
+) {
+
+    if (!adminNotificationUserResults) {
+        return;
+    }
+
+    if (!users.length) {
+
+        adminNotificationUserResults.innerHTML = `
+            <div class="admin-notification-user-empty">
+                No users found.
+            </div>
+        `;
+
+        return;
+    }
+
+    const availableUsers =
+        users.filter(
+            user =>
+                !adminNotificationSelectedUserIds.includes(
+                    user.id
+                )
+        );
+
+    if (!availableUsers.length) {
+
+        adminNotificationUserResults.innerHTML = `
+            <div class="admin-notification-user-empty">
+                All matching users are already selected.
+            </div>
+        `;
+
+        return;
+    }
+
+    adminNotificationUserResults.innerHTML =
+        availableUsers
+            .slice(0, 5)
+            .map(user => {
+
+                const username =
+                    user.username ||
+                    "Unknown user";
+
+                const email =
+                    user.email ||
+                    "No email";
+
+                return `
+                    <button
+                        type="button"
+                        class="admin-notification-user-result"
+                        data-admin-notification-user-id="${escapeHtml(
+                            user.id
+                        )}"
+                    >
+
+                        <span
+                            class="admin-notification-user-avatar"
+                        >
+                            ${escapeHtml(
+                                getInitialsSafe(username)
+                            )}
+                        </span>
+
+                        <span
+                            class="admin-notification-user-main"
+                        >
+
+                            <strong>
+                                ${escapeHtml(username)}
+                            </strong>
+
+                            <small>
+                                ${escapeHtml(email)}
+                            </small>
+
+                        </span>
+
+                        <span>
+                            ›
+                        </span>
+
+                    </button>
+                `;
+
+            })
+            .join("");
+}
+
+
+function filterAdminNotificationUsers() {
+
+    if (!adminNotificationUserSearch) {
+        return;
+    }
+
+    const search =
+        adminNotificationUserSearch.value
+            .trim()
+            .toLowerCase();
+
+    if (!search) {
+
+        if (adminNotificationUserResults) {
+            adminNotificationUserResults.innerHTML =
+                "";
+        }
+
+        return;
+    }
+
+    const scoredUsers =
+        adminUsersCache
+            .map(user => {
+
+                const username =
+                    String(
+                        user.username || ""
+                    ).toLowerCase();
+
+                const email =
+                    String(
+                        user.email || ""
+                    ).toLowerCase();
+
+                const uid =
+                    String(
+                        user.id || ""
+                    ).toLowerCase();
+
+                let score = 0;
+
+                if (username === search) {
+                    score = 100;
+                } else if (
+                    username.startsWith(search)
+                ) {
+                    score = 90;
+                } else if (
+                    username.includes(search)
+                ) {
+                    score = 80;
+                } else if (
+                    email.startsWith(search)
+                ) {
+                    score = 70;
+                } else if (
+                    email.includes(search)
+                ) {
+                    score = 60;
+                } else if (
+                    uid.includes(search)
+                ) {
+                    score = 50;
+                }
+
+                return {
+                    user,
+                    score
+                };
+
+            })
+            .filter(
+                item =>
+                    item.score > 0
+            )
+            .sort(
+                (a, b) =>
+                    b.score - a.score ||
+                    String(
+                        a.user.username ||
+                        a.user.email ||
+                        ""
+                    ).localeCompare(
+                        String(
+                            b.user.username ||
+                            b.user.email ||
+                            ""
+                        )
+                    )
+            );
+
+    renderAdminNotificationUserResults(
+        scoredUsers.map(
+            item => item.user
+        )
+    );
+}
+
+
+function selectAdminNotificationUser(
+    userId
+) {
+
+    const user =
+        adminUsersCache.find(
+            item =>
+                item.id === userId
+        );
+
+    if (!user) {
+        return;
+    }
+
+    if (
+        adminNotificationSelectedUserIds.includes(
+            user.id
+        )
+    ) {
+        return;
+    }
+
+    if (
+        adminNotificationSelectedUserIds.length >= 10
+    ) {
+
+        toast(
+            "You can select up to 10 users."
+        );
+
+        return;
+    }
+
+    adminNotificationSelectedUserIds.push(
+        user.id
+    );
+
+    renderAdminNotificationSelectedUsers();
+
+    if (adminNotificationUserSearch) {
+        adminNotificationUserSearch.value = "";
+    }
+
+    if (adminNotificationUserResults) {
+        adminNotificationUserResults.innerHTML = "";
+    }
+}
+
+function renderAdminNotificationSelectedUsers() {
+
+    if (!adminNotificationSelectedUser) {
+        return;
+    }
+
+    if (
+        !adminNotificationSelectedUserIds.length
+    ) {
+
+        adminNotificationSelectedUser.style.display =
+            "none";
+
+        adminNotificationSelectedUser.innerHTML =
+            "";
+
+        return;
+    }
+
+    const selectedUsers =
+        adminNotificationSelectedUserIds
+            .map(userId =>
+                adminUsersCache.find(
+                    user =>
+                        user.id === userId
+                )
+            )
+            .filter(Boolean);
+
+    adminNotificationSelectedUser.style.display =
+        "flex";
+
+    adminNotificationSelectedUser.innerHTML = `
+
+        <div class="admin-notification-selected-users-list">
+
+            ${selectedUsers.map(user => `
+
+                <div
+                    class="admin-notification-selected-user-item"
+                >
+
+                    <div>
+
+                        <strong>
+                            ${escapeHtml(
+                                user.username ||
+                                "Unknown user"
+                            )}
+                        </strong>
+
+                        <span>
+                            ${escapeHtml(
+                                user.email ||
+                                "No email"
+                            )}
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="admin-notification-selected-user-remove"
+                        data-remove-admin-notification-user="${escapeHtml(
+                            user.id
+                        )}"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+        <div class="admin-notification-selected-user-count">
+            ${selectedUsers.length}/10 users selected
+        </div>
+
+    `;
+}
+
+if (adminNotificationRecipientMode) {
+
+    adminNotificationRecipientMode.addEventListener(
+        "change",
+        () => {
+
+            const individual =
+                adminNotificationRecipientMode.value === "individual";
+
+            if (adminNotificationUserWrapper) {
+
+                adminNotificationUserWrapper.style.display =
+                    individual
+                        ? "flex"
+                        : "none";
+
+            }
+
+if (!individual) {
+
+    adminNotificationSelectedUserIds = [];
+
+    if (adminNotificationSelectedUser) {
+
+        adminNotificationSelectedUser.style.display =
+            "none";
+
+        adminNotificationSelectedUser.innerHTML =
+            "";
+
+    }
+
+                if (adminNotificationUserSearch) {
+                    adminNotificationUserSearch.value = "";
+                }
+
+                if (adminNotificationUserResults) {
+                    adminNotificationUserResults.innerHTML = "";
+                }
+
+            }
+
+        }
+    );
+
+}
+
+if (adminNotificationUserSearch) {
+
+    adminNotificationUserSearch.addEventListener(
+        "input",
+        filterAdminNotificationUsers
+    );
+
+}
+
+if (adminNotificationUserResults) {
+
+    adminNotificationUserResults.addEventListener(
+        "click",
+        event => {
+
+            const button =
+                event.target.closest(
+                    "[data-admin-notification-user-id]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            selectAdminNotificationUser(
+                button.dataset
+                    .adminNotificationUserId
+            );
+
+        }
+    );
+
+}
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const removeButton =
+            event.target.closest(
+                "[data-remove-admin-notification-user]"
+            );
+
+        if (!removeButton) {
+            return;
+        }
+
+        const userId =
+            removeButton.getAttribute(
+                "data-remove-admin-notification-user"
+            );
+
+        adminNotificationSelectedUserIds =
+            adminNotificationSelectedUserIds.filter(
+                id => id !== userId
+            );
+
+        renderAdminNotificationSelectedUsers();
+
+    }
+);
+
+/* =========================================================
+   SEND ADMIN NOTIFICATION
+========================================================= */
+
+async function sendAdminNotification() {
+
+    if (!isExplorerAdmin()) {
+
+        toast(
+            "You do not have permission to send notifications."
+        );
+
+        return;
+    }
+
+    const title =
+        adminNotificationTitle?.value
+            .trim() || "";
+
+    const description =
+        adminNotificationDescription?.value
+            .trim() || "";
+
+    const icon =
+        adminNotificationIcon?.value ||
+        "info";
+
+    const recipientMode =
+        adminNotificationRecipientMode?.value ||
+        "all";
+
+
+    if (!title) {
+
+        toast(
+            "Enter a notification title."
+        );
+
+        adminNotificationTitle?.focus();
+
+        return;
+    }
+
+
+    if (!description) {
+
+        toast(
+            "Enter what the notification is about."
+        );
+
+        adminNotificationDescription?.focus();
+
+        return;
+    }
+
+
+if (
+    recipientMode === "individual" &&
+    !adminNotificationSelectedUserIds.length
+) {
+
+    toast(
+        "Select at least one user to notify."
+    );
+
+    return;
+}
+
+
+    const confirmed =
+        window.confirm(
+            recipientMode === "all"
+                ? "Send this notification to all users?"
+                : "Send this notification to the selected user?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const notificationData = {
+
+            type:
+                "admin_notification",
+
+            title:
+                title,
+
+            description:
+                description,
+
+            icon:
+                icon,
+
+            read:
+                false,
+
+            createdAt:
+                serverTimestamp(),
+
+            issuedBy:
+                MODERATION_ISSUER,
+
+            issuedByUid:
+                auth.currentUser.uid
+
+        };
+
+
+if (
+    recipientMode ===
+    "individual"
+) {
+
+    const selectedUsers =
+        adminUsersCache.filter(
+            user =>
+                adminNotificationSelectedUserIds.includes(
+                    user.id
+                )
+        );
+
+    for (
+        let i = 0;
+        i < selectedUsers.length;
+        i += 450
+    ) {
+
+        const batch =
+            writeBatch(db);
+
+        const batchUsers =
+            selectedUsers.slice(
+                i,
+                i + 450
+            );
+
+        batchUsers.forEach(
+            user => {
+
+                const notificationRef =
+                    doc(
+                        collection(
+                            db,
+                            "notifications"
+                        )
+                    );
+
+                batch.set(
+                    notificationRef,
+                    {
+                        ...notificationData,
+
+                        userId:
+                            user.id
+                    }
+                );
+
+            }
+        );
+
+        await batch.commit();
+    }
+
+    toast(
+        `Notification sent to ${selectedUsers.length} users.`
+    );
+
+} else {
+
+            const users =
+                adminUsersCache;
+
+            if (!users.length) {
+
+                toast(
+                    "There are no users to notify."
+                );
+
+                return;
+            }
+
+
+            for (
+                let i = 0;
+                i < users.length;
+                i += 450
+            ) {
+
+                const batch =
+                    writeBatch(db);
+
+                const batchUsers =
+                    users.slice(
+                        i,
+                        i + 450
+                    );
+
+
+                batchUsers.forEach(
+                    user => {
+
+                        const notificationRef =
+                            doc(
+                                collection(
+                                    db,
+                                    "notifications"
+                                )
+                            );
+
+                        batch.set(
+                            notificationRef,
+                            {
+                                ...notificationData,
+
+                                userId:
+                                    user.id
+                            }
+                        );
+
+                    }
+                );
+
+
+                await batch.commit();
+
+            }
+
+
+            toast(
+                `Notification sent to ${users.length} users.`
+            );
+
+        }
+
+
+        if (adminNotificationTitle) {
+            adminNotificationTitle.value =
+                "";
+        }
+
+        if (adminNotificationDescription) {
+            adminNotificationDescription.value =
+                "";
+        }
+
+        if (adminNotificationIcon) {
+            adminNotificationIcon.value =
+                "info";
+        }
+
+adminNotificationSelectedUserIds =
+    [];
+
+        if (adminNotificationSelectedUser) {
+
+            adminNotificationSelectedUser.style.display =
+                "none";
+
+            adminNotificationSelectedUser.innerHTML =
+                "";
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to send admin notification:",
+            error
+        );
+
+        toast(
+            "Unable to send notification."
+        );
+
+    }
+
+}
+
+if (adminSendNotificationButton) {
+
+    adminSendNotificationButton.addEventListener(
+        "click",
+        sendAdminNotification
+    );
+
+}
 
     /* =========================================================
        ADMIN MAP PICKER
@@ -11110,6 +14809,81 @@ setTimeout(() => {
             }
         );
 
+        // =========================================================
+// SAFETY & LEGAL INFORMATION
+// =========================================================
+
+const safetyNotice =
+    document.getElementById("safetyNotice");
+
+const safetyAgree =
+    document.getElementById("safetyAgree");
+
+const safetyInformationButton =
+    document.getElementById(
+        "safetyInformationButton"
+    );
+
+
+// =========================================================
+// INITIAL SAFETY NOTICE
+// =========================================================
+
+if (safetyNotice) {
+
+    // Show the safety notice when the site loads
+    safetyNotice.classList.remove("hidden");
+
+}
+
+
+// =========================================================
+// CLOSE SAFETY NOTICE
+// =========================================================
+
+if (safetyAgree) {
+
+    safetyAgree.addEventListener(
+        "click",
+        () => {
+
+            safetyNotice.classList.add("hidden");
+
+        }
+    );
+
+}
+
+
+// =========================================================
+// OPEN SAFETY INFORMATION FROM ACCOUNT
+// =========================================================
+
+if (safetyInformationButton) {
+
+    safetyInformationButton.addEventListener(
+        "click",
+        () => {
+
+            if (safetyNotice) {
+
+                safetyNotice.classList.remove(
+                    "hidden"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   INITIAL LOAD
+========================================================= */
+
+await loadLocations();
 
     /* =========================================================
        INITIAL LOAD
@@ -11307,75 +15081,6 @@ function closeAccountProfileDropdown() {
             "›";
 
     }
-
-}
-
-// =========================================================
-// SAFETY & LEGAL INFORMATION
-// =========================================================
-
-const safetyNotice =
-    document.getElementById("safetyNotice");
-
-const safetyAgree =
-    document.getElementById("safetyAgree");
-
-const safetyInformationButton =
-    document.getElementById(
-        "safetyInformationButton"
-    );
-
-
-// =========================================================
-// INITIAL SAFETY NOTICE
-// =========================================================
-
-if (safetyNotice) {
-
-    // Show the safety notice when the site loads
-    safetyNotice.classList.remove("hidden");
-
-}
-
-
-// =========================================================
-// CLOSE SAFETY NOTICE
-// =========================================================
-
-if (safetyAgree) {
-
-    safetyAgree.addEventListener(
-        "click",
-        () => {
-
-            safetyNotice.classList.add("hidden");
-
-        }
-    );
-
-}
-
-
-// =========================================================
-// OPEN SAFETY INFORMATION FROM ACCOUNT
-// =========================================================
-
-if (safetyInformationButton) {
-
-    safetyInformationButton.addEventListener(
-        "click",
-        () => {
-
-            if (safetyNotice) {
-
-                safetyNotice.classList.remove(
-                    "hidden"
-                );
-
-            }
-
-        }
-    );
 
 }
 

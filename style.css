@@ -933,6 +933,1501 @@ main {
     transform: translateY(-1px);
 }
 
+/* =========================================================
+   ADMIN DASHBOARD
+   Match the normal PlingifyPlug site menus
+========================================================= */
+
+.modal.admin-dashboard-modal {
+    width: min(1100px, calc(100vw - 32px));
+    max-width: 1100px;
+    max-height: 90vh;
+
+    padding: 22px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.45);
+
+    container-type: inline-size;
+}
+
+/* ---------------------------------------------------------
+   SAFEGUARD THREE-COLUMN DASHBOARD
+--------------------------------------------------------- */
+
+
+.admin-dashboard-layout {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.15fr)
+        minmax(0, 0.8fr)
+        minmax(0, 1fr);
+
+    gap: 12px;
+
+    align-items: start;
+
+    width: 100%;
+    min-width: 0;
+}
+
+.admin-dashboard-column {
+    min-width: 0;
+
+    padding: 13px;
+
+    background: #0d0f11;
+
+    border: 1px solid var(--border);
+    border-radius: 11px;
+}
+
+
+.admin-dashboard-column-header {
+    margin-bottom: 12px;
+}
+
+
+.admin-dashboard-column-title {
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+
+.admin-dashboard-column-subtitle {
+    margin-top: 4px;
+
+    color: var(--muted-2);
+
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+
+/* ---------------------------------------------------------
+   LEFT USER COLUMN
+--------------------------------------------------------- */
+
+.admin-dashboard-users {
+    max-height: calc(90vh - 125px);
+
+    overflow-y: auto;
+}
+
+
+.admin-dashboard-users #adminUserView {
+    max-height: none;
+
+    overflow: visible;
+}
+
+
+.admin-dashboard-users
+.admin-dashboard-search {
+    margin-bottom: 10px;
+}
+
+
+/* ---------------------------------------------------------
+   ADMINISTRATION
+--------------------------------------------------------- */
+
+.admin-dashboard-tool-list {
+    display: grid;
+
+    gap: 8px;
+}
+
+
+.admin-dashboard-tool-button {
+    width: 100%;
+
+    min-height: 62px;
+
+    padding: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    color: var(--text);
+
+    background: #0b0d0f;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    text-align: left;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition);
+}
+
+
+.admin-dashboard-tool-button:hover {
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+
+    transform: translateY(-1px);
+}
+
+
+.admin-dashboard-tool-button > span:first-child {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+
+.admin-dashboard-tool-button strong {
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+}
+
+
+.admin-dashboard-tool-button small {
+    color: var(--muted);
+
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+
+.admin-dashboard-tool-arrow {
+    width: 24px;
+    height: 24px;
+
+    flex: 0 0 24px;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--muted);
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    font-size: 15px;
+}
+
+
+.admin-dashboard-tool-button:hover
+.admin-dashboard-tool-arrow {
+    color: var(--accent);
+
+    border-color: var(--border-hover);
+}
+
+
+/* ---------------------------------------------------------
+   NOTIFICATIONS
+--------------------------------------------------------- */
+
+.admin-notification-form {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+
+.admin-notification-form .form-group {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+.admin-notification-form label {
+    color: var(--muted);
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+
+.admin-notification-form .input {
+    width: 100%;
+}
+
+
+.admin-notification-user-results {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    max-height: 180px;
+
+    overflow-y: auto;
+}
+
+
+.admin-notification-user-result {
+    width: 100%;
+
+    padding: 8px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    color: var(--text);
+
+    background: #0b0d0f;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    text-align: left;
+}
+
+
+.admin-notification-user-result:hover {
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+}
+
+
+.admin-notification-user-avatar {
+    width: 30px;
+    height: 30px;
+
+    flex: 0 0 30px;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--accent-text);
+
+    background: var(--accent);
+
+    border-radius: 50%;
+
+    font-size: 8px;
+    font-weight: 900;
+}
+
+
+.admin-notification-user-main {
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.admin-notification-user-main strong {
+    overflow: hidden;
+
+    color: var(--text);
+
+    font-size: 9px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.admin-notification-user-main small {
+    overflow: hidden;
+
+    color: var(--muted);
+
+    font-size: 8px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.admin-notification-user-empty {
+    padding: 9px;
+
+    color: var(--muted-2);
+
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+
+    font-size: 9px;
+}
+
+
+.admin-notification-selected-user {
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    padding: 9px;
+
+    background: rgba(215, 255, 63, 0.04);
+
+    border: 1px solid rgba(215, 255, 63, 0.14);
+    border-radius: 8px;
+}
+
+.admin-notification-selected-users-list {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    max-height: 180px;
+
+    overflow-y: auto;
+}
+
+
+.admin-notification-selected-user-item {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    padding: 7px 8px;
+
+    background: rgba(215, 255, 63, 0.04);
+
+    border: 1px solid rgba(215, 255, 63, 0.14);
+
+    border-radius: 7px;
+}
+
+
+.admin-notification-selected-user-item > div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.admin-notification-selected-user-item strong {
+    overflow: hidden;
+
+    color: var(--text);
+
+    font-size: 9px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.admin-notification-selected-user-item span {
+    overflow: hidden;
+
+    color: var(--muted);
+
+    font-size: 8px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.admin-notification-selected-user-count {
+    width: 100%;
+
+    margin-top: 5px;
+
+    color: var(--muted);
+
+    font-size: 8px;
+}
+
+.admin-notification-selected-user > div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.admin-notification-selected-user strong {
+    color: var(--text);
+
+    font-size: 9px;
+}
+
+
+.admin-notification-selected-user span {
+    color: var(--muted);
+
+    font-size: 8px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.admin-notification-selected-user-remove {
+    width: 24px;
+    height: 24px;
+
+    flex: 0 0 24px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    color: var(--muted);
+
+    background: transparent;
+
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+
+.admin-notification-selected-user-remove:hover {
+    color: var(--text);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+}
+
+/* ---------------------------------------------------------
+   HEADER
+--------------------------------------------------------- */
+
+#adminDashboardModal .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 19px;
+}
+
+#adminDashboardModal .modal-title {
+    margin: 0;
+
+    color: var(--text);
+
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+#adminDashboardModal .modal-subtitle {
+    margin-top: 4px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+
+/* ---------------------------------------------------------
+   CLOSE BUTTON
+--------------------------------------------------------- */
+
+#adminDashboardModal .modal-close {
+    width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    color: var(--muted);
+
+    background: transparent;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition);
+}
+
+#adminDashboardModal .modal-close:hover {
+    color: var(--text);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+}
+
+
+/* ---------------------------------------------------------
+   USER SEARCH
+--------------------------------------------------------- */
+
+.admin-dashboard-search {
+    margin-bottom: 14px;
+}
+
+.admin-dashboard-search .input {
+    width: 100%;
+
+    min-height: 40px;
+
+    color: var(--text);
+
+    background: #0d0f11;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    outline: none;
+
+    transition:
+        border-color var(--transition),
+        background var(--transition);
+}
+
+.admin-dashboard-search .input:focus {
+    border-color: var(--border-hover);
+    background: #101214;
+}
+
+
+/* ---------------------------------------------------------
+   USER RESULTS
+--------------------------------------------------------- */
+
+.admin-user-results {
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+
+    width: 100%;
+}
+
+.admin-user-result {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 11px;
+
+    color: var(--text);
+
+    background: #0d0f11;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition);
+}
+
+.admin-user-result:hover {
+    background: var(--panel-hover);
+    border-color: var(--border-hover);
+}
+
+
+/* Avatar */
+
+.admin-user-result-avatar {
+    width: 38px;
+    height: 38px;
+
+    flex: 0 0 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--accent-text);
+
+    background: var(--accent);
+
+    border-radius: 50%;
+
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.admin-user-result-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.admin-user-result-name {
+    overflow: hidden;
+
+    color: var(--text);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-result-email {
+    margin-top: 3px;
+
+    overflow: hidden;
+
+    color: var(--muted);
+
+    font-size: 10px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-result-arrow {
+    color: var(--muted);
+
+    font-size: 18px;
+}
+
+.admin-user-result:hover .admin-user-result-arrow {
+    color: var(--text);
+}
+
+
+/* Ban badge */
+
+.admin-user-ban-badge {
+    padding: 4px 7px;
+
+    color: #fff;
+
+    background: rgba(255, 89, 104, 0.08);
+
+    border: 1px solid rgba(255, 89, 104, 0.22);
+    border-radius: 6px;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+}
+
+
+/* ---------------------------------------------------------
+   USER VIEW
+--------------------------------------------------------- */
+
+#adminUserView {
+    width: 100%;
+    max-height: calc(90vh - 30px);
+    overflow-y: auto;
+}
+
+
+/* Back button */
+
+.admin-dashboard-back {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 6px;
+
+    margin-bottom: 14px;
+    padding: 6px 8px;
+
+    color: var(--muted);
+
+    background: transparent;
+
+    border: 1px solid transparent;
+    border-radius: 7px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition);
+}
+
+.admin-dashboard-back:hover {
+    color: var(--text);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border);
+}
+
+
+/* ---------------------------------------------------------
+   USER HEADER
+--------------------------------------------------------- */
+
+.admin-user-header {
+    display: flex;
+    align-items: center;
+
+    gap: 18px;
+
+    width: 100%;
+
+    padding: 20px;
+
+    margin-bottom: 14px;
+
+    background: #0d0f11;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.admin-user-header-avatar {
+    width: 64px;
+    height: 64px;
+
+    flex: 0 0 64px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--accent-text);
+    background: var(--accent);
+
+    border-radius: 50%;
+
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.admin-user-header-main {
+    min-width: 0;
+}
+
+.admin-user-header-username {
+    color: var(--text);
+
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+}
+
+.admin-user-header-email {
+    margin-top: 5px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+.admin-user-header-uid {
+    margin-top: 6px;
+
+    color: var(--muted-2);
+
+    font-family: monospace;
+    font-size: 10px;
+
+    overflow-wrap: anywhere;
+}
+
+.admin-user-header-created {
+    margin-top: 7px;
+
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 5px;
+
+    color: var(--muted-2);
+
+    font-size: 9px;
+}
+
+
+.admin-user-header-created span {
+    color: var(--muted-2);
+}
+
+
+.admin-user-header-created strong {
+    color: var(--muted);
+
+    font-weight: 700;
+}
+
+.custom-duration-input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px;
+    gap: 8px;
+}
+
+.custom-duration-input .input {
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+
+    .custom-duration-input {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   MODERATION SECTIONS
+--------------------------------------------------------- */
+
+.admin-moderation-section {
+    padding: 14px;
+
+    margin-top: 10px;
+
+    background: #0d0f11;
+
+    border: 1px solid var(--border);
+    border-radius: 11px;
+}
+
+.admin-moderation-section-title {
+    margin-bottom: 11px;
+
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ---------------------------------------------------------
+   MODERATION DROPDOWNS
+--------------------------------------------------------- */
+
+.admin-dropdown-section {
+    overflow: hidden;
+}
+
+.admin-moderation-section-toggle {
+    width: 100%;
+
+    min-height: 28px;
+
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    color: var(--text);
+
+    background: transparent;
+
+    border: 0;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    cursor: pointer;
+}
+
+.admin-moderation-section-toggle:hover {
+    color: var(--accent);
+}
+
+.admin-moderation-section-arrow {
+    width: 24px;
+    height: 24px;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--muted);
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    font-size: 16px;
+    font-weight: 400;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition);
+}
+
+.admin-moderation-section-toggle:hover
+.admin-moderation-section-arrow {
+    color: var(--text);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+}
+
+.admin-moderation-section-toggle.open
+.admin-moderation-section-arrow {
+    color: var(--accent);
+
+    border-color: var(--border-hover);
+
+    transform: rotate(90deg);
+}
+
+.admin-moderation-section-content {
+    padding-top: 11px;
+}
+
+
+/* ---------------------------------------------------------
+   CURRENT BAN
+--------------------------------------------------------- */
+
+.admin-current-ban {
+    width: 100%;
+}
+
+.admin-no-ban {
+    padding: 11px;
+
+    color: #48d597;
+
+    background: rgba(72, 213, 151, 0.04);
+
+    border: 1px solid rgba(72, 213, 151, 0.13);
+    border-radius: 8px;
+
+    font-size: 10px;
+}
+
+.admin-current-ban-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 12px;
+
+    background: rgba(255, 89, 104, 0.05);
+
+    border: 1px solid rgba(255, 89, 104, 0.22);
+    border-radius: 9px;
+}
+
+.admin-ban-status {
+    display: inline-block;
+
+    margin-bottom: 6px;
+    padding: 4px 6px;
+
+    color: #ff5968;
+
+    background: rgba(255, 89, 104, 0.08);
+
+    border: 1px solid rgba(255, 89, 104, 0.16);
+    border-radius: 5px;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+}
+
+.admin-ban-reason {
+    color: var(--text);
+
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.admin-ban-meta {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    margin-top: 8px;
+}
+
+.admin-ban-meta span {
+    padding: 4px 6px;
+
+    color: var(--muted);
+
+    background: rgba(255,255,255,0.025);
+
+    border: 1px solid var(--border);
+    border-radius: 5px;
+
+    font-size: 8px;
+}
+
+
+/* ---------------------------------------------------------
+   FORMS
+--------------------------------------------------------- */
+
+.admin-form-grid {
+    display: grid;
+
+    gap: 10px;
+}
+
+.admin-form-grid .form-group {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+.admin-form-grid label {
+    color: var(--muted);
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.admin-form-grid .input {
+    width: 100%;
+}
+
+
+/* ---------------------------------------------------------
+   HISTORY
+--------------------------------------------------------- */
+
+.admin-history-card {
+    padding: 11px;
+
+    margin-top: 7px;
+
+    background: #0b0d0f;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+}
+
+.admin-history-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+}
+
+.admin-history-category {
+    display: inline-block;
+
+    padding: 4px 6px;
+
+    color: var(--text);
+
+    background: rgba(255,255,255,0.025);
+
+    border: 1px solid var(--border);
+    border-radius: 5px;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+}
+
+.admin-history-category.active {
+    color: #ff5968;
+
+    background: rgba(255,89,104,0.06);
+
+    border-color: rgba(255,89,104,0.18);
+}
+
+.admin-history-date {
+    color: var(--muted-2);
+
+    font-size: 9px;
+}
+
+.admin-history-reason {
+    margin-top: 7px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.admin-history-issuer {
+    margin-top: 7px;
+
+    color: var(--muted-2);
+
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.admin-history-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    margin-top: 10px;
+}
+
+.admin-history-clear-button {
+    min-height: 28px;
+
+    padding: 5px 9px;
+
+    color: var(--muted);
+
+    background: transparent;
+
+    border: 1px solid var(--border);
+
+    border-radius: 7px;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    transition:
+        color var(--transition),
+        background var(--transition),
+        border-color var(--transition),
+        transform var(--transition);
+}
+
+.admin-history-clear-button:hover {
+    color: var(--text);
+
+    background: var(--panel-hover);
+
+    border-color: var(--border-hover);
+
+    transform: translateY(-1px);
+}
+
+.admin-history-clear-button:active {
+    transform: scale(0.96);
+}
+
+.admin-history-empty {
+    padding: 12px;
+
+    color: var(--muted);
+
+    background: transparent;
+
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+
+    font-size: 10px;
+}
+
+
+/* ---------------------------------------------------------
+   MOBILE
+--------------------------------------------------------- */
+
+@media (max-width: 640px) {
+
+    .admin-dashboard-modal {
+        width: calc(100vw - 24px);
+        max-width: none;
+
+        max-height: 92vh;
+
+        padding: 18px;
+    }
+
+    .admin-current-ban-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-current-ban-card .button {
+        width: 100%;
+    }
+
+}
+
+/* =========================================================
+   SAFEGUARD BAN SCREEN
+   Matches the main PlingifyPlug Urbex Explorer UI
+========================================================= */
+
+.safeguard-ban-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: var(--bg);
+    overflow-y: auto;
+}
+
+.safeguard-ban-card {
+    width: min(560px, 100%);
+
+    padding: 26px;
+
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45);
+
+    text-align: center;
+}
+
+/* Small site-style heading */
+
+.safeguard-ban-brand {
+    margin-bottom: 18px;
+
+    color: var(--muted-2);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* Original circular warning icon */
+
+.safeguard-ban-icon {
+    width: 52px;
+    height: 52px;
+
+    margin: 0 auto 16px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    color: #ffffff;
+    background: rgba(255, 89, 104, 0.10);
+    border: 1px solid rgba(255, 89, 104, 0.28);
+
+    font-size: 22px;
+    font-weight: 900;
+}
+
+/* Status label */
+
+.safeguard-ban-status {
+    margin-bottom: 8px;
+
+    color: var(--muted-2);
+
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Main heading */
+
+.safeguard-ban-title {
+    margin: 0;
+
+    color: var(--text);
+
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+}
+
+/* Description */
+
+.safeguard-ban-description {
+    max-width: 440px;
+
+    margin: 10px auto 20px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+/* Information cards */
+
+.safeguard-ban-details {
+    display: grid;
+    gap: 8px;
+
+    text-align: left;
+}
+
+.safeguard-ban-detail {
+    padding: 12px 13px;
+
+    background: #0d0f11;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    transition:
+        background var(--transition),
+        border-color var(--transition);
+}
+
+.safeguard-ban-detail:hover {
+    background: var(--panel-hover);
+    border-color: var(--border-hover);
+}
+
+.safeguard-ban-detail-label {
+    margin-bottom: 5px;
+
+    color: var(--muted-2);
+
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.safeguard-ban-detail-value {
+    color: var(--text);
+
+    font-size: 11px;
+    line-height: 1.55;
+
+    overflow-wrap: anywhere;
+}
+
+/* Buttons */
+
+.safeguard-ban-actions {
+    display: flex;
+    gap: 8px;
+
+    margin-top: 18px;
+}
+
+.safeguard-ban-actions .button {
+    flex: 1;
+}
+
+.safeguard-ban-actions .button.danger {
+    color: #ffffff;
+
+    background: rgba(255, 89, 104, 0.07);
+    border-color: rgba(255, 89, 104, 0.25);
+}
+
+.safeguard-ban-actions .button.danger:hover {
+    background: rgba(255, 89, 104, 0.12);
+    border-color: rgba(255, 89, 104, 0.38);
+}
+
+/* Footer */
+
+.safeguard-ban-footer {
+    margin-top: 17px;
+
+    color: var(--muted-2);
+
+    font-size: 8px;
+}
+
+/* Keep delete confirmation above the ban screen */
+
+body.safeguard-banned #deleteAccountModal {
+    z-index: 100000;
+}
+
+@media (max-width: 560px) {
+
+    .safeguard-ban-screen {
+        padding: 16px;
+    }
+
+    .safeguard-ban-card {
+        padding: 22px;
+        border-radius: 13px;
+    }
+
+    .safeguard-ban-actions {
+        flex-direction: column;
+    }
+
+    .safeguard-ban-actions .button {
+        width: 100%;
+    }
+
+}
 
 /* =========================================================
    ADMIN ACTIONS
@@ -946,6 +2441,107 @@ main {
     margin-top: 14px;
 }
 
+
+/* =========================================================
+   SHIMMER LOADING
+========================================================= */
+
+.shimmer {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    display: inline-block;
+
+    padding: 2px 6px;
+
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+
+    color: rgba(232, 240, 255, 0.55);
+}
+
+.shimmer::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    transform: translateX(-120%);
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.22),
+        transparent
+    );
+
+    animation: shimmerMove 1.15s ease-in-out infinite;
+
+    pointer-events: none;
+}
+
+@keyframes shimmerMove {
+    to {
+        transform: translateX(120%);
+    }
+}
+/* =========================================================
+   ADMIN SHIMMER SIZES
+========================================================= */
+
+.admin-shimmer-line {
+    display: block;
+    width: 100%;
+    height: 10px;
+    padding: 0;
+    border-radius: 6px;
+}
+
+.admin-shimmer-name {
+    width: 140px;
+    height: 14px;
+}
+
+.admin-shimmer-email {
+    width: 190px;
+    height: 10px;
+}
+
+.admin-shimmer-uid {
+    width: 230px;
+    height: 10px;
+}
+
+.admin-shimmer-date {
+    width: 130px;
+    height: 10px;
+}
+
+.admin-shimmer-avatar {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.admin-shimmer-card {
+    width: 100%;
+    height: 42px;
+    padding: 0;
+    border-radius: 8px;
+}
+
+.admin-shimmer-history {
+    width: 100%;
+    height: 34px;
+    padding: 0;
+    border-radius: 7px;
+}
+
+.admin-user-loading {
+    pointer-events: none;
+    cursor: default;
+}
 
 /* =========================================================
    EMPTY STATE
@@ -963,6 +2559,271 @@ main {
     border: 1px solid var(--border);
 
     border-radius: var(--radius);
+}
+
+/* =========================================================
+   SOCIAL PROFILE SKELETON
+========================================================= */
+
+.profile-skeleton {
+    width: 100%;
+}
+
+.skeleton-block {
+    position: relative;
+    overflow: hidden;
+
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+}
+
+.skeleton-block::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    transform: translateX(-120%);
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.22),
+        transparent
+    );
+
+    animation: shimmerMove 1.15s ease-in-out infinite;
+
+    pointer-events: none;
+}
+
+
+/* PROFILE HEADER */
+
+.profile-skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin-bottom: 10px;
+}
+
+.profile-skeleton-avatar {
+    width: 58px;
+    height: 58px;
+
+    flex: 0 0 58px;
+
+    border-radius: 50%;
+}
+
+.profile-skeleton-main {
+    flex: 1;
+}
+
+.profile-skeleton-name {
+    width: 130px;
+    height: 19px;
+
+    margin-bottom: 7px;
+}
+
+.profile-skeleton-since {
+    width: 105px;
+    height: 10px;
+}
+
+.profile-skeleton-button {
+    width: 96px;
+    height: 34px;
+
+    border-radius: 8px;
+}
+
+
+/* STATS */
+
+.profile-skeleton-stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
+    gap: 7px;
+
+    margin-bottom: 10px;
+}
+
+.profile-skeleton-stat {
+    height: 60px;
+
+    border-radius: 9px;
+}
+
+
+/* PROGRESS */
+
+.profile-skeleton-progress {
+    padding: 15px;
+
+    margin-bottom: 10px;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+}
+
+.profile-skeleton-progress-header {
+    display: flex;
+    justify-content: space-between;
+
+    margin-bottom: 9px;
+}
+
+.profile-skeleton-progress-title {
+    width: 105px;
+    height: 11px;
+}
+
+.profile-skeleton-progress-percent {
+    width: 30px;
+    height: 11px;
+}
+
+.profile-skeleton-progress-bar {
+    width: 100%;
+    height: 7px;
+
+    border-radius: 999px;
+
+    margin-bottom: 8px;
+}
+
+.profile-skeleton-progress-help {
+    width: 145px;
+    height: 9px;
+}
+
+
+/* PROFILE SECTIONS */
+
+.profile-skeleton-section {
+    height: 47px;
+
+    margin-top: 10px;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+}
+
+/* =========================================================
+   STATS SKELETON
+========================================================= */
+
+.stats-skeleton {
+    width: 100%;
+}
+
+.stats-skeleton-value {
+    position: relative;
+    overflow: hidden;
+
+    width: 70px;
+    height: 16px;
+
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 5px;
+}
+
+.stats-skeleton-value::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    transform: translateX(-120%);
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.22),
+        transparent
+    );
+
+    animation: shimmerMove 1.15s ease-in-out infinite;
+
+    pointer-events: none;
+}
+
+.stats-skeleton-progress {
+    position: relative;
+    overflow: hidden;
+
+    width: 100%;
+    height: 7px;
+
+    margin-top: 3px;
+
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+}
+
+.stats-skeleton-progress::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    transform: translateX(-120%);
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.22),
+        transparent
+    );
+
+    animation: shimmerMove 1.15s ease-in-out infinite;
+
+    pointer-events: none;
+}
+
+.stats-skeleton-progress-text {
+    position: relative;
+    overflow: hidden;
+
+    width: 85px;
+    height: 10px;
+
+    margin-top: 6px;
+
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+}
+
+.stats-skeleton-progress-text::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    transform: translateX(-120%);
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.22),
+        transparent
+    );
+
+    animation: shimmerMove 1.15s ease-in-out infinite;
+
+    pointer-events: none;
 }
 
 
@@ -6129,6 +7990,50 @@ body.modal-open {
 
     font-size: 14px;
     font-weight: 800;
+}
+
+/* =========================================================
+   SAFEGUARD NOTIFICATION ICON
+========================================================= */
+
+.notification-item-icon.moderation-notification-icon {
+    width: 34px;
+    height: 31px;
+
+    flex: 0 0 34px;
+
+    display: grid;
+    place-items: center;
+
+    padding-top: 2px;
+
+    color: #080900;
+
+    background: var(--accent);
+
+    clip-path: polygon(
+        50% 0%,
+        100% 88%,
+        94% 100%,
+        6% 100%,
+        0% 88%
+    );
+
+    border-radius: 0;
+
+    font-size: 14px;
+    font-weight: 900;
+
+    transition:
+        transform var(--transition),
+        background var(--transition);
+}
+
+.notification-item:hover
+.notification-item-icon.moderation-notification-icon {
+    background: var(--accent-hover);
+
+    transform: translateY(-1px);
 }
 
 

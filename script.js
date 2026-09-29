@@ -77,7 +77,9 @@ import {
     let currentUserData = {};
 
     let safeguardUserUnsubscribe = null;
-let safeguardBanUnsubscribe = null;
+    let safeguardBanUnsubscribe = null;
+
+    let notificationUnsubscribe = null;
 
     let locationModalMode = "add";
     let editingLocationId = null;
@@ -200,7 +202,7 @@ if (
 notificationsView.style.display = "flex";
 
     // Load notifications
-    loadNotifications();
+    //loadNotifications();
 }
 
 
@@ -324,84 +326,117 @@ function formatNotificationDate(timestamp) {
 }
 
 
-async function loadNotifications() {
+/* =========================================================
+   REALTIME NOTIFICATIONS
+========================================================= */
+
+function startNotificationListener() {
+
+    // Stop any previous listener first.
+    if (notificationUnsubscribe) {
+        notificationUnsubscribe();
+        notificationUnsubscribe = null;
+    }
 
     if (!auth.currentUser) {
-
         renderNotifications([]);
         updateNotificationBadges(0);
-
         return;
     }
 
-    try {
+    const q = query(
+        collection(db, "notifications"),
+        where(
+            "userId",
+            "==",
+            auth.currentUser.uid
+        )
+    );
 
-const q = query(
-    collection(db, "notifications"),
-    where(
-        "userId",
-        "==",
-        auth.currentUser.uid
-    )
-);
+    notificationUnsubscribe = onSnapshot(
+        q,
+        snapshot => {
 
-        const snapshot = await getDocs(q);
+            const notifications =
+                snapshot.docs
+                    .map(notificationDoc => ({
+                        id: notificationDoc.id,
+                        ...notificationDoc.data()
+                    }))
+                    .sort((a, b) => {
 
-const notifications =
-    snapshot.docs
-        .map(notificationDoc => ({
-            id: notificationDoc.id,
-            ...notificationDoc.data()
-        }))
-        .sort((a, b) => {
+                        const aTime =
+                            a.createdAt?.toMillis?.() || 0;
 
-            const aTime =
-                a.createdAt?.toMillis?.() || 0;
+                        const bTime =
+                            b.createdAt?.toMillis?.() || 0;
 
-            const bTime =
-                b.createdAt?.toMillis?.() || 0;
+                        return bTime - aTime;
+                    });
 
-            return bTime - aTime;
-        });
+            // Update the notification list.
+            renderNotifications(notifications);
 
-        renderNotifications(notifications);
+            // Count unread notifications.
+            const unreadCount =
+                notifications.filter(
+                    notification =>
+                        notification.read !== true
+                ).length;
 
-        const unreadCount =
-            notifications.filter(
-                notification =>
-                    notification.read !== true
-            ).length;
+            // Update BOTH badges and the sidebar text.
+            updateNotificationBadges(
+                unreadCount
+            );
 
-        updateNotificationBadges(unreadCount);
+        },
 
-    } catch (error) {
+        error => {
 
-        console.error(
-            "Unable to load notifications:",
-            error
-        );
+            console.error(
+                "Unable to listen for notifications:",
+                error
+            );
 
-        // Still show the notifications screen even if
-        // Firestore fails.
-        if (notificationsList) {
+            if (notificationsList) {
 
-            notificationsList.innerHTML = `
-                <div class="empty-state">
+                notificationsList.innerHTML = `
+                    <div class="empty-state">
 
-                    <div class="explore-empty-title">
-                        Unable to load notifications
+                        <div class="explore-empty-title">
+                            Unable to load notifications
+                        </div>
+
+                        <div class="explore-empty-text">
+                            Please try again later.
+                        </div>
+
                     </div>
+                `;
 
-                    <div class="explore-empty-text">
-                        Please try again later.
-                    </div>
-
-                </div>
-            `;
+            }
 
         }
+    );
+}
 
+
+/* =========================================================
+   STOP NOTIFICATION LISTENER
+========================================================= */
+
+function stopNotificationListener() {
+
+    if (notificationUnsubscribe) {
+
+        notificationUnsubscribe();
+
+        notificationUnsubscribe = null;
     }
+
+    renderNotifications([]);
+
+    updateNotificationBadges(0);
 }
 
 /* =========================================================
@@ -418,25 +453,23 @@ onAuthStateChanged(auth, user => {
             notificationsButton.style.display = "flex";
         }
 
-        // Load notifications immediately so
-        // the navbar badge appears on page load.
-        loadNotifications();
+        // Start realtime notification updates.
+        startNotificationListener();
 
     } else {
 
         // User is logged out.
+        // Stop listening for notifications.
+        stopNotificationListener();
+
         // Hide the navbar notification bell.
         if (notificationsButton) {
             notificationsButton.style.display = "none";
         }
 
-        // Remove the notification badge.
-        updateNotificationBadges(0);
-
     }
 
 });
-
 
 function renderNotifications(notifications) {
 
@@ -715,7 +748,7 @@ async function clearNotification(notificationId) {
            Refresh notification list
         --------------------------------------------------------- */
 
-        await loadNotifications();
+        //await loadNotifications();
 
 
     } catch (error) {
@@ -788,7 +821,7 @@ async function markNotificationRead(notificationId) {
             }
         );
 
-        await loadNotifications();
+        //await loadNotifications();
 
     } catch (error) {
 
@@ -836,7 +869,7 @@ markNotificationsReadButton?.addEventListener(
                 )
             );
 
-            await loadNotifications();
+           //await loadNotifications();
 
         } catch (error) {
 
@@ -11474,6 +11507,404 @@ document.addEventListener(
     }
 );
 
+/* =========================================================
+   USERNAME MODERATION
+========================================================= */
+
+/*
+    Username rules:
+
+    - 2–30 characters
+    - Letters, numbers, dots, underscores and hyphens
+    - No spaces
+    - No offensive/inappropriate terms
+    - No attempts to bypass the filter with symbols/numbers
+    - No reserved system/admin names
+*/
+
+const USERNAME_MIN_LENGTH = 2;
+const USERNAME_MAX_LENGTH = 15;
+
+
+/*
+    IMPORTANT:
+
+    Keep this list lowercase.
+
+    This is deliberately a keyword list rather than
+    allowing only a few exact banned usernames.
+
+    Add/remove words according to the moderation rules
+    you want for PlingifyPlug.
+*/
+
+const BLOCKED_USERNAME_KEYWORDS = [
+
+    /* Sexual / explicit */
+    "porn",
+    "porno",
+    "pornhub",
+    "xxx",
+    "nsfw",
+    "hentai",
+    "sex",
+    "sexual",
+    "nude",
+    "nudes",
+
+    /* swears */
+    "shit",
+    "fuck",
+    "cunt",
+    "paki",
+    "nigger",
+    "coon",
+    "wog",
+
+    /* Abuse / harassment */
+    "nazi",
+    "hitler",
+
+    /* Extremist / dangerous impersonation */
+    "isis",
+    "terrorist",
+    "terrorism",
+
+    /* Self-harm related usernames */
+    "suicide",
+    "selfharm",
+
+    /* Drugs */
+    "cocaine",
+    "heroin",
+    "meth",
+    "fentanyl",
+
+    /* Scams / impersonation */
+    "admin",
+    "administrator",
+    "moderator",
+    "mod",
+    "staff",
+    "support",
+    "official",
+    "plingifyplug",
+    "safeguard",
+    "epstine",
+    "trump",
+    "savil",
+    "annefrank",
+
+];
+
+
+/*
+    Characters which can sometimes be used to disguise
+    inappropriate words.
+
+    Example:
+
+        h3nt41
+        s3x
+        p0rn
+
+    We normalise these before checking.
+*/
+
+const USERNAME_LEET_MAP = {
+    "0": "o",
+    "1": "i",
+    "3": "e",
+    "4": "a",
+    "5": "s",
+    "7": "t",
+    "@": "a",
+    "$": "s"
+};
+
+
+/*
+    Convert a username into a simplified form
+    for moderation checks.
+*/
+
+function normaliseUsernameForModeration(username) {
+
+    return String(username || "")
+        .toLowerCase()
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .split("")
+        .map(character =>
+            USERNAME_LEET_MAP[character] || character
+        )
+        .join("")
+        .replace(/[\s._-]+/g, "");
+}
+
+
+/*
+    Returns the first blocked keyword found.
+
+    null = no blocked keyword.
+*/
+
+function getBlockedUsernameKeyword(username) {
+
+    const normalised =
+        normaliseUsernameForModeration(username);
+
+    for (const keyword of BLOCKED_USERNAME_KEYWORDS) {
+
+        const normalisedKeyword =
+            normaliseUsernameForModeration(keyword);
+
+        if (
+            normalised.includes(
+                normalisedKeyword
+            )
+        ) {
+            return keyword;
+        }
+    }
+
+    return null;
+}
+
+
+/*
+    Reserved names which should never be claimable
+    by ordinary users.
+*/
+
+const RESERVED_USERNAMES = new Set([
+
+    "admin",
+    "administrator",
+    "moderator",
+    "moderators",
+    "mod",
+    "staff",
+    "support",
+    "help",
+    "security",
+    "safeguard",
+    "system",
+    "official",
+    "plingifyplug",
+    "urbexexplorer",
+    "urbex",
+    "root"
+
+]);
+
+
+/*
+    Complete username validation.
+
+    Returns:
+
+        {
+            valid: true
+        }
+
+    OR:
+
+        {
+            valid: false,
+            message: "..."
+        }
+*/
+
+function validateUsername(username) {
+
+    const value =
+        String(username || "").trim();
+
+
+    /*
+        Length
+    */
+
+    if (
+        value.length <
+        USERNAME_MIN_LENGTH
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Username must be at least 2 characters."
+        };
+
+    }
+
+
+    if (
+        value.length >
+        USERNAME_MAX_LENGTH
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Username must be 15 characters or fewer."
+        };
+
+    }
+
+
+    /*
+        Allowed characters
+    */
+
+    if (
+        !/^[a-zA-Z0-9_.-]+$/.test(value)
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Username can only contain letters, numbers, dots, underscores and hyphens."
+        };
+
+    }
+
+
+    /*
+        Don't allow a username to begin/end
+        with punctuation.
+    */
+
+    if (
+        /^[_.-]|[_.-]$/.test(value)
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Username cannot start or end with punctuation."
+        };
+
+    }
+
+
+    /*
+        Prevent repeated punctuation tricks.
+    */
+
+    if (
+        /[._-]{2,}/.test(value)
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "Username cannot contain repeated punctuation."
+        };
+
+    }
+
+
+    /*
+        Reserved system names
+    */
+
+    const lower =
+        value.toLowerCase();
+
+    if (
+        RESERVED_USERNAMES.has(lower)
+    ) {
+
+        return {
+            valid: false,
+            message:
+                "That username is reserved and cannot be used."
+        };
+
+    }
+
+
+    /*
+        Offensive / inappropriate keyword check
+    */
+
+    const blockedKeyword =
+        getBlockedUsernameKeyword(value);
+
+    if (blockedKeyword) {
+
+        return {
+            valid: false,
+            message:
+                "That username contains a word that cannot be used."
+        };
+
+    }
+
+
+    return {
+        valid: true
+    };
+
+}
+
+
+/* =========================================================
+   LIVE USERNAME VALIDATION
+========================================================= */
+
+function showUsernameValidation(
+    input,
+    output
+) {
+
+    if (!input || !output) {
+        return;
+    }
+
+
+    const value =
+        input.value.trim();
+
+
+    if (!value) {
+
+        output.textContent = "";
+        output.className =
+            "username-validation";
+
+        return;
+
+    }
+
+
+    const validation =
+        validateUsername(value);
+
+
+    if (!validation.valid) {
+
+        output.textContent =
+            validation.message;
+
+        output.className =
+            "username-validation error";
+
+        return;
+
+    }
+
+
+    output.textContent =
+        "Username format looks good.";
+
+    output.className =
+        "username-validation success";
+
+}
+
     /* =========================================================
        AUTH UI
     ========================================================= */
@@ -11561,6 +11992,33 @@ document.addEventListener(
             }
         );
 
+        /* =========================================================
+   LIVE REGISTRATION USERNAME CHECK
+========================================================= */
+
+const authUsername =
+    document.getElementById(
+        "authUsername"
+    );
+
+const authUsernameValidation =
+    document.getElementById(
+        "authUsernameValidation"
+    );
+
+
+authUsername?.addEventListener(
+    "input",
+    () => {
+
+        showUsernameValidation(
+            authUsername,
+            authUsernameValidation
+        );
+
+    }
+);
+
 
     /* =========================================================
        REGISTER / LOGIN
@@ -11604,42 +12062,49 @@ document.addEventListener(
 
                     if (authMode === "register") {
 
-                        if (
-                            username.length < 2
-                        ) {
-                            throw new Error(
-                                "Username must be at least 2 characters."
-                            );
-                        }
+    /*
+        Validate username before doing
+        anything with Firebase.
+    */
 
-                        if (
-                            !/^[a-zA-Z0-9_.-]+$/.test(username)
-                        ) {
-                            throw new Error(
-                                "Username can only contain letters, numbers, dots, underscores and hyphens."
-                            );
-                        }
+    const usernameValidation =
+        validateUsername(username);
 
-                        const usernameKey =
-                            username.toLowerCase();
+    if (!usernameValidation.valid) {
 
-                        const usernameRef =
-                            doc(
-                                db,
-                                "usernames",
-                                usernameKey
-                            );
+        throw new Error(
+            usernameValidation.message
+        );
 
-                        const existingUsername =
-                            await getDoc(usernameRef);
+    }
 
-                        if (
-                            existingUsername.exists()
-                        ) {
-                            throw new Error(
-                                "That username is already taken."
-                            );
-                        }
+
+    const usernameKey =
+        username.toLowerCase();
+
+
+    const usernameRef =
+        doc(
+            db,
+            "usernames",
+            usernameKey
+        );
+
+
+    const existingUsername =
+        await getDoc(usernameRef);
+
+
+    if (
+        existingUsername.exists()
+    ) {
+
+        throw new Error(
+            "That username is already taken."
+        );
+
+    }
+
 
                         const credential =
                             await createUserWithEmailAndPassword(
@@ -12360,41 +12825,36 @@ if (accountDetailEmail) {
                     "newUsername"
                 ).value.trim();
 
-            const message =
-                document.getElementById(
-                    "usernameMessage"
-                );
+const message =
+    document.getElementById(
+        "usernameMessage"
+    );
 
-            message.className =
-                "auth-message";
+const newUsernameValidation =
+    document.getElementById(
+        "newUsernameValidation"
+    );
 
             // ==========================================
             // VALIDATION
             // ==========================================
 
-            if (newUsername.length < 2) {
 
-                message.classList.add("error");
+const usernameValidation =
+    validateUsername(newUsername);
 
-                message.textContent =
-                    "Username must be at least 2 characters.";
+if (!usernameValidation.valid) {
 
-                return;
-            }
+    if (newUsernameValidation) {
+        newUsernameValidation.textContent =
+            usernameValidation.message;
 
-            if (
-                !/^[a-zA-Z0-9_.-]+$/.test(
-                    newUsername
-                )
-            ) {
+        newUsernameValidation.className =
+            "username-validation error";
+    }
 
-                message.classList.add("error");
-
-                message.textContent =
-                    "Username contains invalid characters.";
-
-                return;
-            }
+    return;
+}
 
 
             const newKey =
@@ -12585,6 +13045,33 @@ accountButtonText.textContent =
 
         }
     );
+
+    /* =========================================================
+   LIVE CHANGE USERNAME CHECK
+========================================================= */
+
+const newUsernameInput =
+    document.getElementById(
+        "newUsername"
+    );
+
+const newUsernameValidation =
+    document.getElementById(
+        "newUsernameValidation"
+    );
+
+
+newUsernameInput?.addEventListener(
+    "input",
+    () => {
+
+        showUsernameValidation(
+            newUsernameInput,
+            newUsernameValidation
+        );
+
+    }
+);
 
 
     /* =========================================================

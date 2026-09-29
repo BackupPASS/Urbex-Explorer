@@ -9397,3 +9397,43 @@ body.modal-open {
     }
 
 }
+
+/* =========================================================
+   USERNAME VALIDATION
+========================================================= */
+
+.username-requirements {
+    margin-top: 6px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.username-validation {
+    min-height: 18px;
+
+    margin-top: 5px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    line-height: 1.4;
+
+    transition:
+        color var(--transition),
+        opacity var(--transition);
+}
+
+.username-validation.success {
+    color: var(--success);
+}
+
+.username-validation.error {
+    color: var(--danger);
+}
+
+.username-validation.checking {
+    color: var(--muted);
+}

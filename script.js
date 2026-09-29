@@ -133,6 +133,43 @@ const sidebarNotificationBadge =
 const notificationSummary =
     document.getElementById("notificationSummary");
 
+    /* =========================================================
+   SITE ANNOUNCEMENT DOM
+========================================================= */
+
+const siteAnnouncement =
+    document.getElementById(
+        "siteAnnouncement"
+    );
+
+const siteAnnouncementStatus =
+    document.getElementById(
+        "siteAnnouncementStatus"
+    );
+
+const siteAnnouncementStatusDot =
+    document.getElementById(
+        "siteAnnouncementStatusDot"
+    );
+
+const siteAnnouncementStatusText =
+    document.getElementById(
+        "siteAnnouncementStatusText"
+    );
+
+const siteAnnouncementTitle =
+    document.getElementById(
+        "siteAnnouncementTitle"
+    );
+
+const siteAnnouncementMessage =
+    document.getElementById(
+        "siteAnnouncementMessage"
+    );
+
+let announcementUnsubscribe = null;
+let announcementExpiryTimer = null;
+
 const notificationsView =
     document.getElementById("notificationsView");
 
@@ -1232,11 +1269,15 @@ locationsElement.innerHTML = `
 
                 console.error(fallbackError);
 
-                locationsElement.innerHTML = `
-                    <div class="empty-state">
-                        Unable to load the location database.
-                    </div>
-                `;
+locationsElement.innerHTML = `
+    <div class="empty-state">
+        Unable to load the location database.
+    </div>
+`;
+
+showSiteStatusError(
+    "The location database could not be loaded."
+);
 
             }
 
@@ -2093,6 +2134,41 @@ const adminOpenReportsButton =
 const adminAddLocationDashboardButton =
     document.getElementById(
         "adminAddLocationDashboardButton"
+    );
+
+    const adminAnnouncementType =
+    document.getElementById(
+        "adminAnnouncementType"
+    );
+
+const adminAnnouncementTitle =
+    document.getElementById(
+        "adminAnnouncementTitle"
+    );
+
+const adminAnnouncementMessage =
+    document.getElementById(
+        "adminAnnouncementMessage"
+    );
+
+const adminAnnouncementDuration =
+    document.getElementById(
+        "adminAnnouncementDuration"
+    );
+
+const adminAnnouncementDurationUnit =
+    document.getElementById(
+        "adminAnnouncementDurationUnit"
+    );
+
+const adminCreateAnnouncementButton =
+    document.getElementById(
+        "adminCreateAnnouncementButton"
+    );
+
+const adminAnnouncementsList =
+    document.getElementById(
+        "adminAnnouncementsList"
     );
 
 
@@ -6488,6 +6564,843 @@ await createTakedownNotification({
             "Unable to decline this request."
         );
     }
+}
+
+/* =========================================================
+   SITE ANNOUNCEMENT SYSTEM
+========================================================= */
+
+const ANNOUNCEMENT_TYPES = {
+    good: {
+        label: "Operational",
+        className: "site-announcement-operational"
+    },
+
+    warning: {
+        label: "Warning",
+        className: "site-announcement-warning"
+    },
+
+    security: {
+        label: "Security",
+        className: "site-announcement-security"
+    },
+
+    safeguard: {
+        label: "PlingifyPlug - SafeGuard",
+        className: "site-announcement-safeguard"
+    }
+};
+
+
+/* ---------------------------------------------------------
+   FIRESTORE TIMESTAMP -> DATE
+--------------------------------------------------------- */
+
+function announcementTimestampToDate(timestamp) {
+
+    if (!timestamp) {
+        return null;
+    }
+
+    if (
+        typeof timestamp.toDate === "function"
+    ) {
+        return timestamp.toDate();
+    }
+
+    if (timestamp instanceof Date) {
+        return timestamp;
+    }
+
+    if (typeof timestamp === "number") {
+        return new Date(timestamp);
+    }
+
+    if (typeof timestamp === "string") {
+        return new Date(timestamp);
+    }
+
+    return null;
+}
+
+
+/* ---------------------------------------------------------
+   CHECK WHETHER ANNOUNCEMENT IS ACTIVE
+--------------------------------------------------------- */
+
+function isAnnouncementActive(announcement) {
+
+    const expiresAt =
+        announcementTimestampToDate(
+            announcement.expiresAt
+        );
+
+    if (!expiresAt) {
+        return false;
+    }
+
+    return expiresAt.getTime() > Date.now();
+}
+
+
+/* ---------------------------------------------------------
+   PUBLIC OPERATIONAL STATE
+--------------------------------------------------------- */
+
+function showOperationalStatus() {
+
+    if (!siteAnnouncement) {
+        return;
+    }
+
+    siteAnnouncement.className =
+        "site-announcement site-announcement-operational";
+
+    siteAnnouncementStatusText.textContent =
+        "Operational";
+
+    siteAnnouncementTitle.textContent =
+        "All systems operational";
+
+    siteAnnouncementMessage.textContent =
+        "PlingifyPlug Urbex Explorer is operating normally.";
+
+    siteAnnouncement.style.display =
+        "grid";
+}
+
+
+/* ---------------------------------------------------------
+   PUBLIC ERROR STATE
+--------------------------------------------------------- */
+
+function showSiteStatusError(message) {
+
+    if (!siteAnnouncement) {
+        return;
+    }
+
+    siteAnnouncement.className =
+        "site-announcement site-announcement-error";
+
+    siteAnnouncementStatusText.textContent =
+        "System status";
+
+    siteAnnouncementTitle.textContent =
+        "Unable to load site data";
+
+    siteAnnouncementMessage.textContent =
+        message ||
+        "Some parts of PlingifyPlug Urbex Explorer may be unavailable.";
+
+    siteAnnouncement.style.display =
+        "grid";
+}
+
+
+/* ---------------------------------------------------------
+   SHOW ANNOUNCEMENT
+--------------------------------------------------------- */
+
+function showSiteAnnouncement(
+    announcement
+) {
+
+    if (!siteAnnouncement) {
+        return;
+    }
+
+    const type =
+        ANNOUNCEMENT_TYPES[
+            announcement.type
+        ] ||
+        ANNOUNCEMENT_TYPES.good;
+
+    siteAnnouncement.className =
+        `site-announcement ${type.className}`;
+
+    siteAnnouncementStatusText.textContent =
+        type.label;
+
+    siteAnnouncementTitle.textContent =
+        announcement.title ||
+        "Site announcement";
+
+    siteAnnouncementMessage.textContent =
+        announcement.message ||
+        "";
+
+    siteAnnouncement.style.display =
+        "grid";
+
+    scheduleAnnouncementExpiry(
+        announcement
+    );
+}
+
+
+/* ---------------------------------------------------------
+   EXPIRY TIMER
+--------------------------------------------------------- */
+
+function scheduleAnnouncementExpiry(
+    announcement
+) {
+
+    if (announcementExpiryTimer) {
+
+        clearTimeout(
+            announcementExpiryTimer
+        );
+
+        announcementExpiryTimer = null;
+    }
+
+    const expiresAt =
+        announcementTimestampToDate(
+            announcement.expiresAt
+        );
+
+    if (!expiresAt) {
+        return;
+    }
+
+    const delay =
+        expiresAt.getTime() -
+        Date.now();
+
+    if (delay <= 0) {
+        showOperationalStatus();
+        return;
+    }
+
+    announcementExpiryTimer =
+        setTimeout(
+            () => {
+
+                loadActiveAnnouncement();
+
+            },
+            delay + 500
+        );
+}
+
+
+/* ---------------------------------------------------------
+   LOAD ACTIVE ANNOUNCEMENT
+--------------------------------------------------------- */
+
+async function loadActiveAnnouncement() {
+
+    try {
+
+        const snapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "announcements"
+                )
+            );
+
+        const activeAnnouncements =
+            snapshot.docs
+                .map(documentSnapshot => ({
+                    id: documentSnapshot.id,
+                    ...documentSnapshot.data()
+                }))
+                .filter(
+                    isAnnouncementActive
+                )
+                .sort(
+                    (a, b) => {
+
+                        const aTime =
+                            announcementTimestampToDate(
+                                a.createdAt
+                            )?.getTime() || 0;
+
+                        const bTime =
+                            announcementTimestampToDate(
+                                b.createdAt
+                            )?.getTime() || 0;
+
+                        return bTime - aTime;
+                    }
+                );
+
+        if (!activeAnnouncements.length) {
+
+            showOperationalStatus();
+
+            return;
+        }
+
+        showSiteAnnouncement(
+            activeAnnouncements[0]
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Unable to load announcements:",
+            error
+        );
+
+        showSiteStatusError(
+            "The announcement service could not be reached."
+        );
+    }
+}
+
+
+/* ---------------------------------------------------------
+   REALTIME ANNOUNCEMENT LISTENER
+--------------------------------------------------------- */
+
+function startAnnouncementListener() {
+
+    if (announcementUnsubscribe) {
+
+        announcementUnsubscribe();
+
+        announcementUnsubscribe =
+            null;
+    }
+
+    announcementUnsubscribe =
+        onSnapshot(
+            collection(
+                db,
+                "announcements"
+            ),
+
+            snapshot => {
+
+                const activeAnnouncements =
+                    snapshot.docs
+                        .map(documentSnapshot => ({
+                            id: documentSnapshot.id,
+                            ...documentSnapshot.data()
+                        }))
+                        .filter(
+                            isAnnouncementActive
+                        )
+                        .sort(
+                            (a, b) => {
+
+                                const aTime =
+                                    announcementTimestampToDate(
+                                        a.createdAt
+                                    )?.getTime() || 0;
+
+                                const bTime =
+                                    announcementTimestampToDate(
+                                        b.createdAt
+                                    )?.getTime() || 0;
+
+                                return bTime - aTime;
+                            }
+                        );
+
+                if (
+                    activeAnnouncements.length
+                ) {
+
+                    showSiteAnnouncement(
+                        activeAnnouncements[0]
+                    );
+
+                } else {
+
+                    showOperationalStatus();
+
+                }
+
+                renderAdminAnnouncements(
+                    snapshot
+                );
+
+            },
+
+            error => {
+
+                console.error(
+                    "Announcement listener error:",
+                    error
+                );
+
+                showSiteStatusError(
+                    "The announcement service is currently unavailable."
+                );
+
+            }
+        );
+}
+
+
+/* =========================================================
+   CREATE ANNOUNCEMENT
+========================================================= */
+
+async function createAdminAnnouncement() {
+
+    if (!isExplorerAdmin()) {
+
+        toast(
+            "You do not have permission to create announcements."
+        );
+
+        return;
+    }
+
+    const type =
+        adminAnnouncementType?.value ||
+        "good";
+
+    const title =
+        adminAnnouncementTitle?.value
+            ?.trim() || "";
+
+    const message =
+        adminAnnouncementMessage?.value
+            ?.trim() || "";
+
+    const duration =
+        Number(
+            adminAnnouncementDuration?.value
+        );
+
+    const unit =
+        adminAnnouncementDurationUnit?.value ||
+        "minutes";
+
+
+    if (!title) {
+
+        toast(
+            "Please enter an announcement title."
+        );
+
+        return;
+    }
+
+
+    if (!message) {
+
+        toast(
+            "Please enter an announcement message."
+        );
+
+        return;
+    }
+
+
+    if (
+        !Number.isFinite(duration) ||
+        duration <= 0
+    ) {
+
+        toast(
+            "Please enter a valid duration."
+        );
+
+        return;
+    }
+
+
+    let durationMilliseconds;
+
+
+    if (unit === "minutes") {
+
+        durationMilliseconds =
+            duration *
+            60 *
+            1000;
+
+    } else if (unit === "hours") {
+
+        durationMilliseconds =
+            duration *
+            60 *
+            60 *
+            1000;
+
+    } else if (unit === "days") {
+
+        durationMilliseconds =
+            duration *
+            24 *
+            60 *
+            60 *
+            1000;
+
+    } else {
+
+        toast(
+            "Invalid duration unit."
+        );
+
+        return;
+    }
+
+
+    const expiresAt =
+        new Date(
+            Date.now() +
+            durationMilliseconds
+        );
+
+
+    if (
+        adminCreateAnnouncementButton
+    ) {
+
+        adminCreateAnnouncementButton.disabled =
+            true;
+
+        adminCreateAnnouncementButton.textContent =
+            "Publishing...";
+    }
+
+
+    try {
+
+        await addDoc(
+            collection(
+                db,
+                "announcements"
+            ),
+            {
+
+                type,
+
+                title,
+
+                message,
+
+                createdAt:
+                    serverTimestamp(),
+
+                expiresAt,
+
+                createdBy:
+                    currentUser?.uid ||
+                    null
+
+            }
+        );
+
+
+        toast(
+            "Announcement published."
+        );
+
+
+        if (adminAnnouncementTitle) {
+            adminAnnouncementTitle.value = "";
+        }
+
+        if (adminAnnouncementMessage) {
+            adminAnnouncementMessage.value = "";
+        }
+
+        if (adminAnnouncementDuration) {
+            adminAnnouncementDuration.value = "1";
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to create announcement:",
+            error
+        );
+
+        toast(
+            error.message ||
+            "Unable to publish announcement."
+        );
+
+    } finally {
+
+        if (
+            adminCreateAnnouncementButton
+        ) {
+
+            adminCreateAnnouncementButton.disabled =
+                false;
+
+            adminCreateAnnouncementButton.textContent =
+                "Publish announcement";
+        }
+
+    }
+}
+
+/* =========================================================
+   DELETE ANNOUNCEMENT
+========================================================= */
+
+async function deleteAdminAnnouncement(
+    announcementId
+) {
+
+    if (!isExplorerAdmin()) {
+
+        toast(
+            "You do not have permission to delete announcements."
+        );
+
+        return;
+    }
+
+    if (!announcementId) {
+        return;
+    }
+
+
+    const confirmed =
+        window.confirm(
+            "Delete this announcement?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        await deleteDoc(
+            doc(
+                db,
+                "announcements",
+                announcementId
+            )
+        );
+
+
+        toast(
+            "Announcement deleted."
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Unable to delete announcement:",
+            error
+        );
+
+        toast(
+            error.message ||
+            "Unable to delete announcement."
+        );
+
+    }
+}
+
+/* =========================================================
+   RENDER ADMIN ANNOUNCEMENTS
+========================================================= */
+
+function renderAdminAnnouncements(
+    snapshot
+) {
+
+    if (!adminAnnouncementsList) {
+        return;
+    }
+
+
+    const announcements =
+        snapshot.docs
+            .map(documentSnapshot => ({
+                id: documentSnapshot.id,
+                ...documentSnapshot.data()
+            }))
+            .filter(
+                isAnnouncementActive
+            )
+            .sort(
+                (a, b) => {
+
+                    const aTime =
+                        announcementTimestampToDate(
+                            a.createdAt
+                        )?.getTime() || 0;
+
+                    const bTime =
+                        announcementTimestampToDate(
+                            b.createdAt
+                        )?.getTime() || 0;
+
+                    return bTime - aTime;
+                }
+            );
+
+
+    if (!announcements.length) {
+
+        adminAnnouncementsList.innerHTML = `
+            <div class="admin-announcements-empty">
+                No active announcements.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    adminAnnouncementsList.innerHTML =
+        announcements
+            .map(
+                announcement => {
+
+                    const type =
+                        ANNOUNCEMENT_TYPES[
+                            announcement.type
+                        ] ||
+                        ANNOUNCEMENT_TYPES.good;
+
+
+                    const expiresAt =
+                        announcementTimestampToDate(
+                            announcement.expiresAt
+                        );
+
+
+                    const expiryText =
+                        expiresAt
+                            ? `Expires ${expiresAt.toLocaleString(
+                                  "en-GB",
+                                  {
+                                      day: "numeric",
+                                      month: "short",
+                                      hour: "2-digit",
+                                      minute: "2-digit"
+                                  }
+                              )}`
+                            : "No expiry";
+
+
+                    return `
+
+                        <div
+                            class="admin-announcement-item"
+                        >
+
+                            <div
+                                class="admin-announcement-item-top"
+                            >
+
+                                <div
+                                    class="admin-announcement-item-title"
+                                >
+                                    ${escapeHtml(
+                                        announcement.title ||
+                                        "Announcement"
+                                    )}
+                                </div>
+
+                                <span
+                                    class="admin-announcement-item-type"
+                                >
+                                    ${escapeHtml(
+                                        type.label
+                                    )}
+                                </span>
+
+                            </div>
+
+
+                            <div
+                                class="admin-announcement-item-message"
+                            >
+                                ${escapeHtml(
+                                    announcement.message ||
+                                    ""
+                                )}
+                            </div>
+
+
+                            <div
+                                class="admin-announcement-item-footer"
+                            >
+
+                                <span
+                                    class="admin-announcement-expiry"
+                                >
+                                    ${expiryText}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    class="admin-announcement-delete"
+                                    data-delete-announcement="${escapeHtml(
+                                        announcement.id
+                                    )}"
+                                >
+                                    Delete
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+}
+
+/* =========================================================
+   ADMIN ANNOUNCEMENT EVENTS
+========================================================= */
+
+if (adminCreateAnnouncementButton) {
+
+    adminCreateAnnouncementButton.addEventListener(
+        "click",
+        createAdminAnnouncement
+    );
+
+}
+
+
+if (adminAnnouncementsList) {
+
+    adminAnnouncementsList.addEventListener(
+        "click",
+        async event => {
+
+            const button =
+                event.target.closest(
+                    "[data-delete-announcement]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+
+            const announcementId =
+                button.getAttribute(
+                    "data-delete-announcement"
+                );
+
+
+            await deleteAdminAnnouncement(
+                announcementId
+            );
+
+        }
+    );
+
 }
 
 
@@ -14612,6 +15525,8 @@ if (adminSendNotificationButton) {
 
 }
 
+
+
     /* =========================================================
        ADMIN MAP PICKER
     ========================================================= */
@@ -15365,19 +16280,13 @@ if (safetyInformationButton) {
 
 }
 
-
-/* =========================================================
-   INITIAL LOAD
-========================================================= */
-
-await loadLocations();
-
     /* =========================================================
        INITIAL LOAD
     ========================================================= */
 
     await loadLocations();
 
+    startAnnouncementListener();
 
     /* =========================================================
        CLOSE MODALS WHEN CLICKING OUTSIDE

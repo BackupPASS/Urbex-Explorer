@@ -9890,3 +9890,357 @@ body.modal-open {
     border-color: rgba(255,89,104,0.5);
 
 }
+
+/* =========================================================
+   MOBILE + TABLET RESPONSIVE SYSTEM
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .navbar {
+        height: 64px;
+        padding: 0 14px;
+    }
+
+    .nav-actions {
+        gap: 4px;
+    }
+
+    .nav-button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0 10px;
+    }
+
+    .nav-button svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    .brand-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .map-container {
+        height: clamp(420px, 58vh, 560px);
+    }
+
+        .leaflet-control-zoom a {
+        width: 44px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+        font-size: 20px !important;
+    }
+
+    .map-control {
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+
+    .map-layer-button {
+        min-height: 40px;
+        padding: 9px 12px;
+        font-size: 11px;
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    body {
+        font-size: 14px;
+    }
+
+    .hero p {
+        font-size: 14px;
+        line-height: 1.65;
+    }
+
+    .location-description {
+        font-size: 14px;
+        line-height: 1.65;
+    }
+
+    .location-name {
+        font-size: 19px;
+    }
+
+    .filter {
+        font-size: 12px;
+        padding: 9px 12px;
+        min-height: 40px;
+    }
+
+    .map-container {
+        height: 58vh;
+        min-height: 380px;
+        max-height: 500px;
+    }
+
+        .filters {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+
+        padding-bottom: 5px;
+
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .filters::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filter {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+      .search-wrapper.active {
+        position: fixed;
+
+        top: 72px;
+        left: 10px;
+        right: 10px;
+
+        width: auto;
+
+        z-index: 3000;
+
+        padding: 4px;
+
+        background: var(--bg);
+        border-radius: 12px;
+    }
+
+    .navbar-search {
+        height: 46px;
+        font-size: 16px;
+        padding: 0 14px;
+    }
+
+       .sidebar {
+        width: 100%;
+        max-width: 100%;
+        padding:
+            calc(16px + env(safe-area-inset-top))
+            16px
+            calc(16px + env(safe-area-inset-bottom))
+            16px;
+    }
+
+    .sidebar-header {
+        margin: -16px -16px 20px;
+        padding: 16px;
+    }
+
+    .close-button {
+        width: 44px;
+        height: 44px;
+    }
+
+        .site-announcement {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .site-announcement-status {
+        width: 100%;
+        min-height: 40px;
+    }
+
+    .site-announcement-content {
+        width: 100%;
+        padding: 12px 14px;
+    }
+
+       .location-card {
+        padding: 18px;
+        border-radius: 14px;
+    }
+
+    .location-name {
+        font-size: 19px;
+    }
+
+    .location-description {
+        font-size: 14px;
+        line-height: 1.65;
+    }
+
+    .tags {
+        gap: 6px;
+    }
+
+    .tag {
+        padding: 7px 9px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 700px) {
+
+    .modal-overlay {
+        padding: 8px;
+        align-items: flex-end;
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100dvh - 16px);
+
+        padding: 20px;
+
+        border-radius: 16px 16px 10px 10px;
+
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+        input,
+    select,
+    textarea,
+    .input {
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+    textarea {
+        min-height: 120px;
+    }
+
+    .button {
+        min-height: 44px;
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
+        .modal.admin-dashboard-modal {
+        width: calc(100vw - 16px);
+        max-width: none;
+
+        max-height: calc(100dvh - 16px);
+
+        padding: 14px;
+    }
+
+    .admin-dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-dashboard-layout
+    .admin-dashboard-notifications {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 1000px) {
+
+    .admin-dashboard-layout {
+        grid-template-columns: 1fr 1fr;
+    }
+
+        .admin-dashboard-layout
+    .admin-dashboard-notifications {
+        grid-column: 1 / -1;
+    }
+
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+
+    main {
+        width: calc(100% - 32px);
+        max-width: 100%;
+    }
+
+    .hero h1 {
+        font-size: 40px;
+    }
+
+    .hero p {
+        font-size: 14px;
+        max-width: 760px;
+    }
+
+    .map-container {
+        height: 55vh;
+        min-height: 480px;
+        max-height: 650px;
+    }
+
+    .locations {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .location-card {
+        padding: 18px;
+    }
+
+    .filter {
+        min-height: 42px;
+        padding: 9px 13px;
+        font-size: 12px;
+    }
+
+}
+
+@media (min-width: 601px) and (max-width: 1024px) {
+
+    main {
+        width: calc(100% - 32px);
+        max-width: 100%;
+    }
+
+    .hero h1 {
+        font-size: 40px;
+    }
+
+    .hero p {
+        font-size: 14px;
+        max-width: 760px;
+    }
+
+    .map-container {
+        height: 55vh;
+        min-height: 480px;
+        max-height: 650px;
+    }
+
+    .locations {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .location-card {
+        padding: 18px;
+    }
+
+    .filter {
+        min-height: 42px;
+        padding: 9px 13px;
+        font-size: 12px;
+    }
+
+}
+
+@media (hover: none) and (pointer: coarse) {
+
+    button,
+    a,
+    .filter,
+    .map-control,
+    .map-layer-button {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    button:hover,
+    .filter:hover,
+    .map-control:hover,
+    .map-layer-button:hover {
+        transform: none;
+    }
+
+}

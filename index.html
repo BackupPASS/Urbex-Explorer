@@ -114,20 +114,64 @@
 
     <section class="hero">
 
-        <div class="hero-kicker">
-            PlingifyPlug
+    <div class="hero-kicker">
+        PlingifyPlug
+    </div>
+
+    <h1>
+        Urbex Explorer
+    </h1>
+
+    <p>
+        Explore publicly shareable urban exploration locations
+        across the United Kingdom.
+    </p>
+
+    <!-- =====================================================
+         SITE STATUS / ANNOUNCEMENT
+    ====================================================== -->
+
+    <div
+        id="siteAnnouncement"
+        class="site-announcement site-announcement-operational"
+        style="display:none;"
+    >
+
+        <div
+            id="siteAnnouncementStatus"
+            class="site-announcement-status"
+        >
+            <span
+                id="siteAnnouncementStatusDot"
+                class="site-announcement-status-dot"
+            ></span>
+
+            <span id="siteAnnouncementStatusText">
+                OPERATIONAL
+            </span>
         </div>
 
-        <h1>
-            Urbex Explorer
-        </h1>
+        <div class="site-announcement-content">
 
-        <p>
-            Explore publicly shareable urban exploration locations
-            across the United Kingdom.
-        </p>
+            <div
+                id="siteAnnouncementTitle"
+                class="site-announcement-title"
+            >
+                All systems operational
+            </div>
 
-    </section>
+            <div
+                id="siteAnnouncementMessage"
+                class="site-announcement-message"
+            >
+                PlingifyPlug Urbex Explorer is operating normally.
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
 
 
     <!-- =========================
@@ -3148,6 +3192,181 @@
                         </span>
 
                     </button>
+
+                </div>
+
+                                <!-- =================================================
+                     SITE ANNOUNCEMENTS
+                ================================================== -->
+
+                <div class="admin-announcements-panel">
+
+                    <div class="admin-announcements-header">
+
+                        <div>
+                            <div class="admin-dashboard-column-title">
+                                Site announcements
+                            </div>
+
+                            <div class="admin-dashboard-column-subtitle">
+                                Control the public site status message
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <!-- CREATE ANNOUNCEMENT -->
+
+                    <div class="admin-announcement-form">
+
+                        <div class="form-group">
+
+                            <label for="adminAnnouncementType">
+                                Status
+                            </label>
+
+                            <select
+                                id="adminAnnouncementType"
+                                class="input"
+                            >
+
+                                <option value="good">
+                                    Good
+                                </option>
+
+                                <option value="warning">
+                                    Warning
+                                </option>
+
+                                <option value="security">
+                                    Security
+                                </option>
+
+                                <option value="safeguard">
+                                    PlingifyPlug SafeGuard
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="adminAnnouncementTitle">
+                                Title
+                            </label>
+
+                            <input
+                                id="adminAnnouncementTitle"
+                                class="input"
+                                type="text"
+                                maxlength="100"
+                                placeholder="Announcement title..."
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="adminAnnouncementMessage">
+                                Message
+                            </label>
+
+                            <textarea
+                                id="adminAnnouncementMessage"
+                                class="input"
+                                rows="3"
+                                maxlength="500"
+                                placeholder="Write the announcement..."
+                            ></textarea>
+
+                        </div>
+
+
+                        <div class="admin-announcement-duration">
+
+                            <div class="form-group">
+
+                                <label for="adminAnnouncementDuration">
+                                    Show for
+                                </label>
+
+                                <input
+                                    id="adminAnnouncementDuration"
+                                    class="input"
+                                    type="number"
+                                    min="1"
+                                    value="1"
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label for="adminAnnouncementDurationUnit">
+                                    Unit
+                                </label>
+
+                                <select
+                                    id="adminAnnouncementDurationUnit"
+                                    class="input"
+                                >
+
+                                    <option value="minutes">
+                                        Minutes
+                                    </option>
+
+                                    <option value="hours">
+                                        Hours
+                                    </option>
+
+                                    <option value="days">
+                                        Days
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            id="adminCreateAnnouncementButton"
+                            class="button primary full"
+                            type="button"
+                        >
+                            Publish announcement
+                        </button>
+
+                    </div>
+
+
+                    <!-- CURRENT ANNOUNCEMENTS -->
+
+                    <div class="admin-announcements-current">
+
+                        <div class="admin-announcements-current-title">
+                            Currently active
+                        </div>
+
+                        <div
+                            id="adminAnnouncementsList"
+                            class="admin-announcements-list"
+                        >
+
+                            <div class="admin-announcements-empty">
+                                No active announcements.
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 

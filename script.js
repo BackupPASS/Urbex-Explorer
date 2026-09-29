@@ -925,31 +925,26 @@ markNotificationsReadButton?.addEventListener(
        MAP
     ========================================================= */
 
-    const map = L.map("map", {
-        minZoom: 5,
-        maxZoom: 18
-    }).setView(
-        [54.5, -3],
-        6
-    );
+const map = new L.Map("map", {
+    minZoom: 5,
+    maxZoom: 18
+}).setView(
+    [54.5, -3],
+    6
+);
 
     // ==========================================
 // ADMIN LOCATION PICKER MAP
 // ==========================================
 
 const locationPickerMap =
-    L.map("locationPickerMap", {
+    new L.Map("locationPickerMap", {
         minZoom: 5,
         maxZoom: 18
     }).setView(
         [54.5, -3],
         6
     );
-
-
-
-
-
     /* =========================================================
        UK CHECK
     ========================================================= */
@@ -1351,7 +1346,7 @@ showSiteStatusError(
     // EXPLORED = GREEN
     if (isExplored) {
 
-        return L.divIcon({
+        return new L.DivIcon({
             className: "custom-location-marker",
 
             html: `
@@ -1370,7 +1365,7 @@ showSiteStatusError(
     // SAVED = RED
     if (isSaved) {
 
-        return L.divIcon({
+        return new L.DivIcon({
             className: "custom-location-marker",
 
             html: `
@@ -1402,12 +1397,23 @@ showSiteStatusError(
 
    function createMarker(location) {
 
-    if (
-        typeof location.latitude !== "number" ||
-        typeof location.longitude !== "number"
-    ) {
-        return;
-    }
+const latitude = Number(location.latitude);
+const longitude = Number(location.longitude);
+
+if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+) {
+    console.warn(
+        "Invalid coordinates for location:",
+        location.id,
+        location.name,
+        location.latitude,
+        location.longitude
+    );
+
+    return;
+}
     
 const markerIcon = getLocationMarkerIcon(location);
 
@@ -1417,10 +1423,10 @@ if (markerIcon) {
     markerOptions.icon = markerIcon;
 }
 
-const marker = L.marker(
+const marker = new L.Marker(
     [
-        location.latitude,
-        location.longitude
+        latitude,
+        longitude
     ],
     markerOptions
 ).addTo(map);
@@ -15590,7 +15596,7 @@ if (adminSendNotificationButton) {
         } else {
 
             adminMarker =
-                L.marker(
+               new L.Marker(
                     [lat, lng],
                     {
                         draggable: true
@@ -15982,7 +15988,7 @@ if (adminSendNotificationButton) {
 
 
                 adminMarker =
-                    L.marker(
+                    new L.Marker(
                         [
                             location.latitude,
                             location.longitude
@@ -16178,7 +16184,7 @@ setTimeout(() => {
                         );
 
 
-                        L.circleMarker(
+                       new L.CircleMarker(
                             [lat, lng],
                             {
                                 radius: 8
@@ -16321,15 +16327,15 @@ if (safetyInformationButton) {
 
 /* MAIN MAP */
 
-const mainStreetLayer = L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+const mainStreetLayer = new L.TileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         attribution:
             '&copy; OpenStreetMap contributors'
     }
 );
 
-const mainSatelliteLayer = L.tileLayer(
+const mainSatelliteLayer = new L.TileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     {
         attribution:
@@ -16340,15 +16346,15 @@ const mainSatelliteLayer = L.tileLayer(
 
 /* ADMIN PICKER */
 
-const pickerStreetLayer = L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+const pickerStreetLayer = new L.TileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         attribution:
             '&copy; OpenStreetMap contributors'
     }
 );
 
-const pickerSatelliteLayer = L.tileLayer(
+const pickerSatelliteLayer = new L.TileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     {
         attribution:

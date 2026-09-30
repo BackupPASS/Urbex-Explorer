@@ -991,21 +991,46 @@ const locationPickerMap =
        MODALS
     ========================================================= */
 
-    function openModal(id) {
+function openModal(id) {
 
-        document
-            .getElementById(id)
-            .classList
-            .add("open");
+    const modal = document.getElementById(id);
+
+    if (!modal) {
+        return;
     }
 
-    function closeModal(id) {
+    modal.classList.add("open");
 
-        document
-            .getElementById(id)
-            .classList
-            .remove("open");
+    document.body.classList.add("modal-open");
+}
+
+function closeModal(id) {
+
+    const modal = document.getElementById(id);
+
+    if (!modal) {
+        return;
     }
+
+    modal.classList.remove("open");
+
+    /*
+        Only unlock the page when there are
+        no other open modal overlays.
+    */
+    const anotherModalOpen =
+        document.querySelector(
+            ".modal-overlay.open"
+        );
+
+    const safetyOpen =
+        document.getElementById("safetyNotice")
+            ?.classList.contains("hidden") === false;
+
+    if (!anotherModalOpen && !safetyOpen) {
+        document.body.classList.remove("modal-open");
+    }
+}
 
 
     document.querySelectorAll(
@@ -16520,6 +16545,9 @@ if (safetyNotice) {
     // Show the safety notice when the site loads
     safetyNotice.classList.remove("hidden");
 
+    // Prevent the page behind it from scrolling
+    document.body.classList.add("modal-open");
+
 }
 
 
@@ -16529,14 +16557,24 @@ if (safetyNotice) {
 
 if (safetyAgree) {
 
-    safetyAgree.addEventListener(
-        "click",
-        () => {
+safetyAgree.addEventListener(
+    "click",
+    () => {
 
-            safetyNotice.classList.add("hidden");
+        safetyNotice.classList.add(
+            "hidden"
+        );
 
+        /*
+            The safety notice is now closed,
+            so allow the main page to scroll.
+        */
+        if (!document.querySelector(".modal-overlay.open")) {
+            document.body.classList.remove("modal-open");
         }
-    );
+
+    }
+);
 
 }
 
@@ -17558,3 +17596,4 @@ document.addEventListener(
 
     }
 );
+

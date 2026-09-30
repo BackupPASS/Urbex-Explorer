@@ -10244,3 +10244,145 @@ body.modal-open {
     }
 
 }
+
+/* =========================================================
+   ADMIN ACCOUNT ACTIONS
+========================================================= */
+
+.admin-user-account-actions-section {
+    margin-top: 14px;
+}
+
+
+.admin-user-account-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+
+.admin-account-action-description {
+    margin-top: 9px;
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+
+.admin-delete-account-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    margin-bottom: 15px;
+    padding: 11px;
+
+    background: rgba(255, 70, 70, 0.05);
+
+    border: 1px solid rgba(255, 70, 70, 0.18);
+    border-radius: 8px;
+}
+
+
+.admin-delete-account-summary-name {
+    color: var(--text);
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+.admin-delete-account-summary-email {
+    color: var(--muted);
+
+    font-size: 9px;
+}
+
+
+.admin-delete-account-summary-uid {
+    color: var(--muted);
+
+    font-size: 8px;
+
+    word-break: break-all;
+}
+
+
+#adminChangeUsernameModal .modal,
+#adminDeleteAccountModal .modal {
+    max-width: 430px;
+}
+
+
+#adminChangeUsernameModal .modal-header,
+#adminDeleteAccountModal .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 18px;
+}
+
+
+#adminChangeUsernameModal .modal-title,
+#adminDeleteAccountModal .modal-title {
+    margin: 0;
+
+    color: var(--text);
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+
+#adminChangeUsernameModal .modal-subtitle,
+#adminDeleteAccountModal .modal-subtitle {
+    margin-top: 4px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+
+#adminChangeUsernameModal .modal-actions,
+#adminDeleteAccountModal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    margin-top: 18px;
+}
+
+
+#adminChangeUsernameModal .auth-message,
+#adminDeleteAccountModal .auth-message {
+    margin-top: 10px;
+}
+
+
+@media (max-width: 600px) {
+
+    .admin-user-account-actions {
+        flex-direction: column;
+    }
+
+    .admin-user-account-actions .button {
+        width: 100%;
+    }
+
+    #adminChangeUsernameModal .modal-actions,
+    #adminDeleteAccountModal .modal-actions {
+        flex-direction: column;
+    }
+
+    #adminChangeUsernameModal .modal-actions .button,
+    #adminDeleteAccountModal .modal-actions .button {
+        width: 100%;
+    }
+
+}

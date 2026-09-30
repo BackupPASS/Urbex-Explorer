@@ -35,6 +35,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
+
     /* =========================================================
        CONFIG
     ========================================================= */
@@ -75,6 +76,10 @@ import {
     let currentUser = null;
     let currentUsername = "";
     let currentUserData = {};
+
+    let authStateVersion = 0;
+
+    let accountWelcomeTimer = null;
 
     let safeguardUserUnsubscribe = null;
     let safeguardBanUnsubscribe = null;
@@ -12828,103 +12833,156 @@ function showUsernameValidation(
        AUTH UI
     ========================================================= */
 
-    let authMode = "signin";
-
-    function setAuthMode(mode) {
-
-        authMode = mode;
-
-        const signInTab =
-            document.getElementById("signInTab");
-
-        const registerTab =
-            document.getElementById("registerTab");
-
-        const usernameGroup =
-            document.getElementById("usernameGroup");
-
-        const submit =
-            document.getElementById("authSubmit");
-
-            const forgotPasswordButton =
-    document.getElementById("forgotPasswordButton");
-
-        signInTab.classList.toggle(
-            "active",
-            mode === "signin"
-        );
-
-        registerTab.classList.toggle(
-            "active",
-            mode === "register"
-        );
-
-        usernameGroup.style.display =
-            mode === "register"
-                ? "block"
-                : "none";
-
-                forgotPasswordButton.style.display =
-    mode === "signin"
-        ? "block"
-        : "none";
-
-        submit.textContent =
-            mode === "register"
-                ? "Create account"
-                : "Sign in";
-
-        document.getElementById(
-            "authMessage"
-        ).textContent = "";
-
-    }
-
-
-    document
-        .getElementById("signInTab")
-        .addEventListener(
-            "click",
-            () => setAuthMode("signin")
-        );
-
-    document
-        .getElementById("registerTab")
-        .addEventListener(
-            "click",
-            () => setAuthMode("register")
-        );
-
-
-    document
-        .getElementById("openAuthButton")
-        .addEventListener(
-            "click",
-            () => {
-
-                closeSidebar();
-
-                setAuthMode("signin");
-
-                openModal("authModal");
-
-            }
-        );
-
-        /* =========================================================
-   LIVE REGISTRATION USERNAME CHECK
-========================================================= */
+let authMode = "signin";
 
 const authUsername =
-    document.getElementById(
-        "authUsername"
-    );
+    document.getElementById("authUsername");
 
 const authUsernameValidation =
     document.getElementById(
         "authUsernameValidation"
     );
 
+function setAuthMode(mode) {
+
+    authMode = mode;
+
+    const signInTab =
+        document.getElementById("signInTab");
+
+    const registerTab =
+        document.getElementById("registerTab");
+
+    const usernameGroup =
+        document.getElementById("usernameGroup");
+
+    const submit =
+        document.getElementById("authSubmit");
+
+    const forgotPasswordButton =
+        document.getElementById(
+            "forgotPasswordButton"
+        );
+
+    signInTab.classList.toggle(
+        "active",
+        mode === "signin"
+    );
+
+    registerTab.classList.toggle(
+        "active",
+        mode === "register"
+    );
+
+    usernameGroup.style.display =
+        mode === "register"
+            ? "block"
+            : "none";
+
+    /*
+        Username is only required when
+        creating an account.
+    */
+    authUsername.required =
+        mode === "register";
+
+    /*
+        Clear any previous browser
+        validation state when switching
+        back to sign in.
+    */
+    authUsername.setCustomValidity("");
+
+    if (mode === "signin") {
+
+        authUsernameValidation.textContent = "";
+
+        authUsernameValidation.className =
+            "username-validation";
+
+    }
+
+    forgotPasswordButton.style.display =
+        mode === "signin"
+            ? "block"
+            : "none";
+
+    submit.textContent =
+        mode === "register"
+            ? "Create account"
+            : "Sign in";
+
+    document.getElementById(
+        "authMessage"
+    ).textContent = "";
+
+}
+
+/* =========================================================
+   AUTH BUTTON EVENTS
+========================================================= */
+
+document
+    .getElementById("signInTab")
+    .addEventListener(
+        "click",
+        () => setAuthMode("signin")
+    );
+
+document
+    .getElementById("registerTab")
+    .addEventListener(
+        "click",
+        () => setAuthMode("register")
+    );
+
+document
+    .getElementById("openAuthButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            closeSidebar();
+
+            setAuthMode("signin");
+
+            openModal("authModal");
+
+        }
+    );
+
+document
+    .getElementById("signInTab")
+    .addEventListener(
+        "click",
+        () => setAuthMode("signin")
+    );
+
+document
+    .getElementById("registerTab")
+    .addEventListener(
+        "click",
+        () => setAuthMode("register")
+    );
+
+document
+    .getElementById("openAuthButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            closeSidebar();
+
+            setAuthMode("signin");
+
+            openModal("authModal");
+
+        }
+    );
+
+        /* =========================================================
+   LIVE REGISTRATION USERNAME CHECK
+========================================================= */
 
 authUsername?.addEventListener(
     "input",
@@ -12971,11 +13029,33 @@ authUsername?.addEventListener(
                         "authMessage"
                     );
 
-                message.className =
-                    "auth-message";
+message.className =
+    "auth-message";
 
-                message.textContent =
-                    "Please wait...";
+message.textContent =
+    authMode === "register"
+        ? "Creating your account..."
+        : "Signing you in...";
+
+const submitButton =
+    document.getElementById(
+        "authSubmit"
+    );
+
+if (submitButton) {
+
+    submitButton.disabled = true;
+
+    submitButton.dataset.originalText =
+        submitButton.textContent;
+
+    submitButton.textContent =
+        authMode === "register"
+            ? "Creating account..."
+            : "Signing in...";
+
+}
+
 
                 try {
 
@@ -13093,17 +13173,31 @@ authUsername?.addEventListener(
 
                     }
 
-                } catch (error) {
+               } catch (error) {
 
-                    console.error(error);
+    console.error(error);
 
-                    message.className =
-                        "auth-message error";
+    message.className =
+        "auth-message error";
 
-                    message.textContent =
-                        friendlyAuthError(error);
+    message.textContent =
+        friendlyAuthError(error);
 
-                }
+    if (submitButton) {
+
+        submitButton.disabled = false;
+
+        submitButton.textContent =
+            submitButton.dataset.originalText ||
+            (
+                authMode === "register"
+                    ? "Create account"
+                    : "Sign in"
+            );
+
+    }
+
+}
 
             }
         );
@@ -13218,29 +13312,160 @@ function updateAccountUI() {
 
 }
 
-    /* =========================================================
-       AUTH STATE
-    ========================================================= */
+/* =========================================================
+   NAVBAR ACCOUNT UI
+========================================================= */
 
-    onAuthStateChanged(
+function updateNavbarAccount(user, username = null, showWelcome = false) {
+
+    const accountButton =
+        document.getElementById("accountButton");
+
+    const accountButtonText =
+        document.getElementById("accountButtonText");
+
+    const accountAvatar =
+        document.getElementById("accountAvatar");
+
+    if (!accountButton || !accountButtonText || !accountAvatar) {
+        return;
+    }
+
+    /*
+        Cancel any previous welcome animation.
+    */
+    if (accountWelcomeTimer) {
+
+        clearTimeout(accountWelcomeTimer);
+
+        accountWelcomeTimer = null;
+
+    }
+
+    /*
+        Remove the welcome state first.
+    */
+    accountButton.classList.remove("account-welcome");
+
+    /*
+        LOGGED OUT
+    */
+    if (!user) {
+
+        accountAvatar.textContent = "?";
+        accountButtonText.textContent = "Account";
+
+        return;
+    }
+
+    /*
+        LOGGED IN
+    */
+
+    const displayUsername =
+        username ||
+        user.email?.split("@")[0] ||
+        "User";
+
+    accountAvatar.textContent =
+        getInitials(displayUsername);
+
+    accountButtonText.textContent =
+        displayUsername;
+
+    /*
+        Optional welcome animation.
+    */
+    if (showWelcome) {
+
+        requestAnimationFrame(() => {
+
+            /*
+                Make sure the user is still logged in
+                before starting the animation.
+            */
+            if (
+                !auth.currentUser ||
+                auth.currentUser.uid !== user.uid
+            ) {
+                return;
+            }
+
+            accountButton.classList.add(
+                "account-welcome"
+            );
+
+            accountButtonText.textContent =
+                `Welcome back, ${displayUsername}`;
+
+        });
+
+        accountWelcomeTimer =
+            setTimeout(() => {
+
+                /*
+                    Do not restore the old username
+                    after the user has logged out.
+                */
+                if (
+                    !auth.currentUser ||
+                    auth.currentUser.uid !== user.uid
+                ) {
+                    return;
+                }
+
+                accountButtonText.textContent =
+                    displayUsername;
+
+                accountButton.classList.remove(
+                    "account-welcome"
+                );
+
+                accountWelcomeTimer = null;
+
+            }, 5000);
+
+    }
+
+}
+
+/* =========================================================
+   AUTH STATE
+========================================================= */
+
+onAuthStateChanged(
     auth,
     async user => {
+
+        /*
+            Every auth-state change gets its own version.
+
+            This prevents an older async callback from
+            changing the UI after a newer auth state has
+            already happened.
+        */
+        const thisAuthState =
+            ++authStateVersion;
 
         currentUser = user;
 
         /*
-            Immediately update the account UI.
-            This prevents the logged-in section
-            from staying hidden while Firestore loads.
-        */
+            Update the account UI immediately.
 
+            Do NOT wait for Firestore or any other
+            asynchronous operation.
+        */
         updateAccountUI();
 
-        if (user) {
+        /*
+            LOGGED OUT
+        */
+        if (!user) {
 
-            await loadUserExploreData();
+            stopSafeguardListener();
 
-        } else {
+            currentUsername = "";
+            currentUserData = {};
 
             currentUserSavedLocations = [];
             currentUserViewedLocations = [];
@@ -13248,273 +13473,320 @@ function updateAccountUI() {
 
             updateUserStats();
 
+            /*
+                Immediately reset the navbar.
+            */
+            updateNavbarAccount(
+                null
+            );
+
+            /*
+                Reset account sidebar.
+            */
+            const loggedOutAccount =
+                document.getElementById(
+                    "loggedOutAccount"
+                );
+
+            const loggedInAccount =
+                document.getElementById(
+                    "loggedInAccount"
+                );
+
+            const adminSection =
+                document.getElementById(
+                    "adminSection"
+                );
+
+            if (loggedOutAccount) {
+                loggedOutAccount.style.display =
+                    "block";
+            }
+
+            if (loggedInAccount) {
+                loggedInAccount.style.display =
+                    "none";
+            }
+
+            if (adminSection) {
+                adminSection.style.display =
+                    "none";
+            }
+
+            renderLocations();
+
+            return;
         }
 
 
-if (!user) {
+        /*
+            LOGGED IN
+        */
 
-    stopSafeguardListener();
+        let username =
+            user.email?.split("@")[0] ||
+            "User";
 
-    currentUsername = "";
 
-                currentUserData = {};
+        /*
+            Load the Firestore profile FIRST.
 
-                document.getElementById(
-                    "loggedOutAccount"
-                ).style.display = "block";
+            This is important because we want the
+            navbar username as soon as possible.
+        */
+        try {
 
-                document.getElementById(
-                    "loggedInAccount"
-                ).style.display = "none";
+            const userSnapshot =
+                await getDoc(
+                    doc(
+                        db,
+                        "users",
+                        user.uid
+                    )
+                );
 
-                document.getElementById(
-                    "accountAvatar"
-                ).textContent = "?";
 
-                document.getElementById(
-                    "accountButtonText"
-                ).textContent = "Account";
-
-                document.getElementById(
-                    "adminSection"
-                ).style.display = "none";
-
-                renderLocations();
-
+            /*
+                Make sure this auth callback is
+                still the current one.
+            */
+            if (
+                thisAuthState !== authStateVersion ||
+                auth.currentUser?.uid !== user.uid
+            ) {
                 return;
             }
 
 
-            try {
+            if (userSnapshot.exists()) {
 
-                const userSnapshot =
-                    await getDoc(
+                const userData =
+                    userSnapshot.data();
+
+                currentUserData =
+                    userData;
+
+                username =
+                    userData.username ||
+                    username;
+
+                currentUsername =
+                    username;
+
+                updateUserStats(
+                    userData
+                );
+
+            } else {
+
+                /*
+                    Authentication exists but
+                    the Firestore profile doesn't.
+                */
+
+                currentUsername =
+                    username;
+
+                try {
+
+                    await setDoc(
                         doc(
                             db,
                             "users",
                             user.uid
-                        )
+                        ),
+                        {
+                            username,
+                            email:
+                                user.email || "",
+                            createdAt:
+                                serverTimestamp()
+                        }
                     );
 
-if (userSnapshot.exists()) {
+                } catch (profileError) {
 
-    const userData =
-        userSnapshot.data();
+                    console.error(
+                        "Unable to create user profile:",
+                        profileError
+                    );
 
-    currentUserData =
-        userData;
-
-    currentUsername =
-        userData.username ||
-        user.email?.split("@")[0] ||
-        "User";
-
-    updateUserStats(userData);
-
-} else {
-
-    // The Firebase Authentication account exists,
-    // but the Firestore profile does not.
-    //
-    // Create it automatically.
-
-    currentUsername =
-        user.email?.split("@")[0] ||
-        "User";
-
-    try {
-
-        await setDoc(
-            doc(
-                db,
-                "users",
-                user.uid
-            ),
-            {
-                username: currentUsername,
-                email: user.email || "",
-                createdAt: serverTimestamp()
-            }
-        );
-
-    } catch (profileError) {
-
-        console.error(
-            "Unable to create user profile:",
-            profileError
-        );
-
-    }
-}
-
-            } catch {
-
-                currentUsername =
-                    user.email?.split("@")[0] ||
-                    "User";
+                }
 
             }
 
-const isSafeguardBanned =
-    await checkCurrentUserSafeguardBan();
+        } catch (error) {
 
-/*
-    Start realtime SafeGuard monitoring.
+            console.error(
+                "Unable to load user profile:",
+                error
+            );
 
-    This means:
-    - bans made while the user is online appear immediately
-    - bans still apply after a page reload
-    - unbans are detected immediately
-    - temporary ban expiry is detected
-*/
-
-startSafeguardListener();
-
-
-if (isSafeguardBanned) {
-
-    /*
-        Do not initialise the normal Explorer
-        interface for a suspended account.
-    */
-
-    return;
-}
-
-
-await syncPublicProfile();
-
-const initials =
-    getInitials(currentUsername);
-
-
-const accountButton =
-    document.getElementById(
-        "accountButton"
-    );
-
-const accountButtonText =
-    document.getElementById(
-        "accountButtonText"
-    );
-
-const accountAvatar =
-    document.getElementById(
-        "accountAvatar"
-    );
-
-
-/*
-    Set the avatar.
-*/
-accountAvatar.textContent =
-    initials;
-
-
-/*
-    Set the normal username.
-*/
-accountButtonText.textContent =
-    currentUsername;
-
-
-/*
-    Start the welcome animation.
-*/
-requestAnimationFrame(() => {
-
-    accountButton.classList.add(
-        "account-welcome"
-    );
-
-    accountButtonText.textContent =
-        `Welcome back, ${currentUsername}`;
-
-});
-
-
-/*
-    Return to the normal username
-    after 7 seconds.
-*/
-setTimeout(() => {
-
-    accountButtonText.textContent =
-        currentUsername;
-
-    accountButton.classList.remove(
-        "account-welcome"
-    );
-
-}, 5000);
-
-
-            document.getElementById(
-                "sidebarAvatar"
-            ).textContent =
-                initials;
-
-            document.getElementById(
-                "sidebarUsername"
-            ).textContent =
-                currentUsername;
-
-            document.getElementById(
-                "sidebarEmail"
-            ).textContent =
-                user.email || "";
-
-                const accountDetailUsername =
-    document.getElementById(
-        "accountDetailUsername"
-    );
-
-const accountDetailEmail =
-    document.getElementById(
-        "accountDetailEmail"
-    );
-
-
-if (accountDetailUsername) {
-
-    accountDetailUsername.textContent =
-        username;
-
-}
-
-
-if (accountDetailEmail) {
-
-    accountDetailEmail.textContent =
-        email;
-
-}
-
-
-           updateAccountUI();
-
-
-            if (
-                user.uid === ADMIN_UID
-            ) {
-
-                document.getElementById(
-                    "adminSection"
-                ).style.display = "block";
-
-            } else {
-
-                document.getElementById(
-                    "adminSection"
-                ).style.display = "none";
-
-            }
-
-
-            renderLocations();
+            currentUsername =
+                username;
 
         }
-    );
+
+
+        /*
+            Make absolutely sure this callback is
+            still valid before touching the UI.
+        */
+        if (
+            thisAuthState !== authStateVersion ||
+            auth.currentUser?.uid !== user.uid
+        ) {
+            return;
+        }
+
+
+        /*
+            UPDATE NAVBAR NOW.
+
+            This happens BEFORE:
+            - loading explore data
+            - SafeGuard checks
+            - public profile syncing
+            - location rendering
+        */
+
+        updateNavbarAccount(
+            user,
+            currentUsername,
+            true
+        );
+
+
+        /*
+            Update the logged-in account sidebar.
+        */
+
+        const sidebarAvatar =
+            document.getElementById(
+                "sidebarAvatar"
+            );
+
+        const sidebarUsername =
+            document.getElementById(
+                "sidebarUsername"
+            );
+
+        const sidebarEmail =
+            document.getElementById(
+                "sidebarEmail"
+            );
+
+        const initials =
+            getInitials(
+                currentUsername
+            );
+
+        if (sidebarAvatar) {
+
+            sidebarAvatar.textContent =
+                initials;
+
+        }
+
+        if (sidebarUsername) {
+
+            sidebarUsername.textContent =
+                currentUsername;
+
+        }
+
+        if (sidebarEmail) {
+
+            sidebarEmail.textContent =
+                user.email || "";
+
+        }
+
+
+        /*
+            Keep the logged-in account section visible.
+        */
+        updateAccountUI();
+
+
+        /*
+            NOW do the slower background work.
+
+            The navbar has already been updated,
+            so the user doesn't have to wait for
+            these operations.
+        */
+
+        await loadUserExploreData();
+
+
+        /*
+            Check again after the async operation.
+        */
+        if (
+            thisAuthState !== authStateVersion ||
+            auth.currentUser?.uid !== user.uid
+        ) {
+            return;
+        }
+
+
+        /*
+            SafeGuard check.
+        */
+        const isSafeguardBanned =
+            await checkCurrentUserSafeguardBan();
+
+
+        if (
+            thisAuthState !== authStateVersion ||
+            auth.currentUser?.uid !== user.uid
+        ) {
+            return;
+        }
+
+
+        /*
+            Start realtime SafeGuard monitoring.
+        */
+        startSafeguardListener();
+
+
+        /*
+            Suspended account.
+        */
+        if (isSafeguardBanned) {
+
+            return;
+
+        }
+
+
+        /*
+            Public profile synchronisation.
+        */
+        await syncPublicProfile();
+
+
+        /*
+            Final auth-state check.
+        */
+        if (
+            thisAuthState !== authStateVersion ||
+            auth.currentUser?.uid !== user.uid
+        ) {
+            return;
+        }
+
+
+        /*
+            Render locations after authentication
+            has fully finished.
+        */
+        renderLocations();
+
+    }
+);
 
 
     function getInitials(username) {
@@ -13565,20 +13837,33 @@ document.addEventListener("click", event => {
        SIGN OUT
     ========================================================= */
 
-    document
-        .getElementById("signOutButton")
-        .addEventListener(
-            "click",
-            async () => {
+document
+    .getElementById("signOutButton")
+    .addEventListener(
+        "click",
+        async () => {
 
-                await signOut(auth);
+            try {
 
-                closeSidebar();
+await signOut(auth);
 
-                toast("Signed out.");
+window.location.reload();
+
+            } catch (error) {
+
+                console.error(
+                    "Unable to sign out:",
+                    error
+                );
+
+                toast(
+                    "Unable to sign out. Please try again."
+                );
 
             }
-        );
+
+        }
+    );
 
 
     /* =========================================================
@@ -14636,6 +14921,8 @@ console.log(
     "DELETE: Firebase Auth account deleted"
 );
 
+window.location.reload();
+
 
 // ==========================================
 // 9. FINISHED
@@ -14645,15 +14932,6 @@ console.log(
                 // 6. FINISHED
                 // ==========================================
 
-                closeModal(
-                    "deleteAccountModal"
-                );
-
-                closeSidebar();
-
-                toast(
-                    "Account deleted."
-                );
 
             } catch (error) {
 

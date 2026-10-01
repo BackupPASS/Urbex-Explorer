@@ -932,7 +932,18 @@ markNotificationsReadButton?.addEventListener(
 
 const map = new L.Map("map", {
     minZoom: 5,
-    maxZoom: 18
+    maxZoom: 18,
+
+    // Mobile stability
+    zoomAnimation: false,
+    fadeAnimation: false,
+    markerZoomAnimation: false,
+
+    // Touch zoom
+    touchZoom: true,
+
+    // Don't keep bouncing at zoom limits
+    bounceAtZoomLimits: false
 }).setView(
     [54.5, -3],
     6
@@ -945,7 +956,14 @@ const map = new L.Map("map", {
 const locationPickerMap =
     new L.Map("locationPickerMap", {
         minZoom: 5,
-        maxZoom: 18
+        maxZoom: 18,
+
+        zoomAnimation: false,
+        fadeAnimation: false,
+        markerZoomAnimation: false,
+        bounceAtZoomLimits: false,
+
+        touchZoom: true
     }).setView(
         [54.5, -3],
         6
@@ -16647,7 +16665,18 @@ const mainStreetLayer = new L.TileLayer(
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         attribution:
-            '&copy; OpenStreetMap contributors'
+            '&copy; OpenStreetMap contributors',
+
+        // Mobile performance
+        updateWhenZooming: false,
+        updateWhenIdle: true,
+        updateInterval: 300,
+
+        // Keep fewer off-screen tiles
+        keepBuffer: 1,
+
+        // Prevent unnecessary world wrapping
+        noWrap: true
     }
 );
 
@@ -16655,18 +16684,28 @@ const mainSatelliteLayer = new L.TileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     {
         attribution:
-            'Tiles &copy; Esri'
+            "Tiles &copy; Esri",
+
+        updateWhenZooming: false,
+        updateWhenIdle: true,
+        updateInterval: 300,
+        keepBuffer: 1,
+        noWrap: true
     }
 );
-
-
 /* ADMIN PICKER */
 
 const pickerStreetLayer = new L.TileLayer(
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         attribution:
-            '&copy; OpenStreetMap contributors'
+            "&copy; OpenStreetMap contributors",
+
+        updateWhenZooming: false,
+        updateWhenIdle: true,
+        updateInterval: 300,
+        keepBuffer: 1,
+        noWrap: true
     }
 );
 

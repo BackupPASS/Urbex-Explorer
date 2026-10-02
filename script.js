@@ -930,7 +930,7 @@ markNotificationsReadButton?.addEventListener(
        MAP
     ========================================================= */
 
-const map = new L.Map("map", {
+const map = L.map("map", {
     minZoom: 5,
     maxZoom: 18,
 
@@ -954,7 +954,7 @@ const map = new L.Map("map", {
 // ==========================================
 
 const locationPickerMap =
-    new L.Map("locationPickerMap", {
+    L.map("locationPickerMap", {
         minZoom: 5,
         maxZoom: 18,
 
@@ -1394,7 +1394,7 @@ showSiteStatusError(
     // EXPLORED = GREEN
     if (isExplored) {
 
-        return new L.DivIcon({
+        return L.divIcon({
             className: "custom-location-marker",
 
             html: `
@@ -1413,7 +1413,7 @@ showSiteStatusError(
     // SAVED = RED
     if (isSaved) {
 
-        return new L.DivIcon({
+        return L.divIcon({
             className: "custom-location-marker",
 
             html: `
@@ -1471,7 +1471,7 @@ if (markerIcon) {
     markerOptions.icon = markerIcon;
 }
 
-const marker = new L.Marker(
+const marker = L.marker(
     [
         latitude,
         longitude
@@ -15917,7 +15917,7 @@ if (adminSendNotificationButton) {
         } else {
 
             adminMarker =
-               new L.Marker(
+                L.marker(
                     [lat, lng],
                     {
                         draggable: true
@@ -16309,7 +16309,7 @@ if (adminSendNotificationButton) {
 
 
                 adminMarker =
-                    new L.Marker(
+                     L.marker(
                         [
                             location.latitude,
                             location.longitude
@@ -16505,7 +16505,7 @@ setTimeout(() => {
                         );
 
 
-                       new L.CircleMarker(
+                        L.circleMarker(
                             [lat, lng],
                             {
                                 radius: 8
@@ -16515,7 +16515,7 @@ setTimeout(() => {
                         .bindPopup(
                             "Your location"
                         )
-                        .openPopup();
+                        .openPopu-p();
 
 
                     },
@@ -16661,7 +16661,7 @@ if (safetyInformationButton) {
 
 /* MAIN MAP */
 
-const mainStreetLayer = new L.TileLayer(
+const mainStreetLayer = L.tileLayer(
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         attribution:
@@ -16680,7 +16680,7 @@ const mainStreetLayer = new L.TileLayer(
     }
 );
 
-const mainSatelliteLayer = new L.TileLayer(
+const mainSatelliteLayer = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     {
         attribution:
@@ -16695,7 +16695,7 @@ const mainSatelliteLayer = new L.TileLayer(
 );
 /* ADMIN PICKER */
 
-const pickerStreetLayer = new L.TileLayer(
+const pickerStreetLayer = L.tileLayer(
     "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
         attribution:
@@ -16709,7 +16709,7 @@ const pickerStreetLayer = new L.TileLayer(
     }
 );
 
-const pickerSatelliteLayer = new L.TileLayer(
+const pickerSatelliteLayer = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     {
         attribution:

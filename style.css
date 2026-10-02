@@ -13973,3 +13973,43 @@ iframe {
     }
 }
 
+
+/* =========================================================
+   MOBILE SAFARI PINCH-ZOOM STABILITY
+   Keep Leaflet transforms working
+========================================================= */
+
+@media (max-width: 600px) {
+
+    /* Disable problematic effects everywhere EXCEPT Leaflet */
+    *:not(#map):not(#map *) ,
+    *:not(#map):not(#map *)::before,
+    *:not(#map):not(#map *)::after {
+        animation: none !important;
+        animation-duration: 0s !important;
+        animation-delay: 0s !important;
+
+        transition: none !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+
+        transform: none !important;
+    }
+
+
+    /* -----------------------------------------------------
+       SIDEBAR
+       Replace its transform animation with right positioning
+    ----------------------------------------------------- */
+
+    .sidebar {
+        transform: none !important;
+        right: -100% !important;
+    }
+
+    .sidebar.open {
+        transform: none !important;
+        right: 0 !important;
+    }
+
+}

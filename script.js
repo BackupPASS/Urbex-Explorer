@@ -34,29 +34,8 @@ import {
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-document.addEventListener('gesturestart', function (e) {
-    e.preventDefault();
-}, { passive: false });
 
-document.addEventListener('gesturechange', function (e) {
-    e.preventDefault();
-}, { passive: false });
 
-document.addEventListener('gestureend', function (e) {
-    e.preventDefault();
-}, { passive: false });
-
-let lastTouchCount = 0;
-
-document.addEventListener("touchstart", (e) => {
-    lastTouchCount = e.touches.length;
-}, { passive: true });
-
-document.addEventListener("touchmove", (e) => {
-    if (e.touches.length >= 2) {
-        e.preventDefault();
-    }
-}, { passive: false });
     /* =========================================================
        CONFIG
     ========================================================= */
